@@ -1,7 +1,7 @@
 # PROJECT MEETING MINUTES — SESSION #01
 
 > **Project:** Meeting Intelligence Assistant  
-> **Track:** D  
+> **Domain:** D  
 > **Course Code:** CSC10014 — Computational Thinking  
 
 ---
@@ -32,14 +32,12 @@
 
 ### 1.1. Decision
 
-> ✅ **The team officially selects Track D — Meeting Intelligence Assistant.**
+> **The team officially selected Domain D — Meeting Intelligence Assistant.**
 
 ### 1.2. Reasons for Choosing Track D
 
 - Track D has clear real-world applicability with a well-defined target audience: **Leaders and members of working/study groups**.
 - Other tracks were either too technically heavy or too vague, lacking a distinct focus.
-
-> ⚠️ **Constraint:** Topic must be finalized and slides submitted before the course deadline.
 
 ---
 
@@ -87,8 +85,6 @@ The team defines this product as a **Leader support tool** — not a replacement
 | P3 | **Meeting Schedule Suggestion** | Suggests optimal meeting times based on members' availability (calendar integration) |
 | P4 | **Previous Session Recap** | Summarizes what was decided last time and what is still in progress |
 
-> ⚠️ Keep this phase lean — avoid overlapping with the Leader's own responsibilities.
-
 ---
 
 ### 3.2. In-Meeting *(core focus)*
@@ -115,47 +111,13 @@ The team defines this product as a **Leader support tool** — not a replacement
 | A4 | **Export Meeting Minutes** | Exports a professional Markdown / DOCX file |
 | A5 | **Context for Next Session** | Saves session data → used as input to power suggestions in the next meeting |
 
-> 💡 **Assignee Suggestion Example:**  
+> **Assignee Suggestion Example:**  
 > *"Khôi handled the database connection last week → suggesting Khôi take on the API integration this week."*
 
-> 🎯 **Golden Rule:** The app **only suggests assignments** — the Leader is always the final decision-maker.
+> **Golden Rule:** The app **only suggests assignments** — the Leader is always the final decision-maker.
 
----
 
-## 4. ARCHITECTURE & TECHNOLOGY
-
-### 4.1. System Approach
-
-```
-[Audio / Video Input]
-        │
-        ▼
-[Speech-to-Text]  ──▶  [Raw Transcript]
-        │
-        ▼
-[Multi-Agent Pipeline]
-  ├── Agent A: Speaker Diarization (identify who is speaking)
-  ├── Agent B: Keyword & Intent Detection
-  ├── Agent C: Segment Summarization
-  └── Agent D: Action Item Extraction
-        │
-        ▼
-[Orchestrator Agent]  ──▶  [Output: Summary / Minutes / Deadline Table]
-```
-
-### 4.2. UI/UX
-
-- **Mini-window / Overlay** — a small panel displayed alongside the main screen, non-intrusive.
-- **On-demand activation** — opens only when the user clicks it; does not run in the background.
-- **Web App or Desktop App** → **not yet decided** — see Open Issues.
-
-### 4.3. Language
-
-- **Language:** Python (3.13+)
-
----
-
-## 5. OPEN ISSUES — TO BE DECIDED
+## 4. OPEN ISSUES — TO BE DECIDED
 
 The following technical and architectural questions remain unresolved and will be voted on at the next meeting:
 
@@ -189,7 +151,7 @@ The following technical and architectural questions remain unresolved and will b
 
 ---
 
-## 📅 NEXT MEETING — TENTATIVE AGENDA
+## NEXT MEETING — TENTATIVE AGENDA
 
 - **Date:** *(TBD)*
 - **Agenda:**
@@ -199,6 +161,3 @@ The following technical and architectural questions remain unresolved and will b
   4. Review proposal before submission
 
 ---
-
-> 📝 *Minutes compiled from raw notes taken during the session. Members listed in Action Items, please update your progress before the next meeting.*  
-> *For corrections or additions, please open an Issue or Pull Request on GitHub.*
