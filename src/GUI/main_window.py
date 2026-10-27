@@ -1,14 +1,17 @@
 import tkinter as tk
 from tkinter import filedialog
 
-from document.document import Document
-from GUI.config import *
-from modules.audio.recorder import Recorder
+from ..audio.recorder import Recorder
+from ..document.document import Document
+from .config import (
+    WindowConfig, ButtonConfig, EditorConfig,
+    open_button, save_button, save_as_button,
+    record_button, stop_button, play_button,
+)
 
 FILE_TYPES = [("Text", "*.txt"), ("Markdown", "*.md")]
 DEFAULT_EXTENSION = ".txt"
 REFRESH_MS = 100
-
 
 class MainWindow(tk.Tk):
     def __init__(self, path=None):
