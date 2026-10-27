@@ -222,3 +222,6 @@ __marimo__/
 # Binary data
 *.bin
 *.pdf
+
+#AI
+CLAUDE.md
