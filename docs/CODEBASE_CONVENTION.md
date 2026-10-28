@@ -20,12 +20,11 @@ root
 ├── .github/                 
 ├── docs/                    
 ├── src/
-|   ├── meeting_virtual_assistant/
-|   |   ├── app.py
-|   |   ├── modules_1st/
-|   |   ├── modules_2nd/
-|   |   ├── modules_nth/
-|   |   └── ...
+|   ├── app.py
+|   ├── modules_1st/
+|   ├── modules_2nd/
+|   ├── modules_nth/
+|   └── ...
 ├── tests/
 ├── tools/
 ├── pyproject.toml          
