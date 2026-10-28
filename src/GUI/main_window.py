@@ -38,12 +38,7 @@ class MainWindow(tk.Tk):
             (save_as_button, self._save_file_as),
         ]
         for button_config, command in buttons:
-            tk.Button(toolbar,
-                      text=button_config.text,
-                      bg=button_config.bg,
-                      padx=button_config.padx,
-                      pady=button_config.pady,
-                      command=command).pack(side="left")
+            self._make_button(toolbar, button_config, command).pack(side="left")
 
     def _make_audio_bar(self):
         audio_bar = tk.Frame(self)
@@ -56,12 +51,21 @@ class MainWindow(tk.Tk):
             (play_button, self._play),
         ]
         for button_config, command in buttons:
-            tk.Button(audio_bar,
-                      text=button_config.text,
-                      bg=button_config.bg,
-                      padx=button_config.padx,
-                      pady=button_config.pady,
-                      command=command).pack(side="left")
+            self._make_button(audio_bar, button_config, command).pack(side="left")
+
+    def _make_button(self, parent, button_config, command):
+        # tk.Button ignores bg on macOS (native Aqua), so use a styled Label instead
+        button = tk.Label(parent,
+                          text=button_config.text,
+                          bg=button_config.bg,
+                          padx=button_config.padx,
+                          pady=button_config.pady,
+                          relief="raised",
+                          bd=2,
+                          cursor="hand2")
+        button.bind("<ButtonPress-1>", lambda _: button.config(relief="sunken"))
+        button.bind("<ButtonRelease-1>", lambda _: (button.config(relief="raised"), command()))
+        return button
 
     def _make_editor(self):
         editor_config = EditorConfig()
