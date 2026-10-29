@@ -56,8 +56,8 @@ def main():
         freq, audio = read("record.wav")
         sd.play(audio, samplerate=freq)
 
-    record_button = Button(root, text="Record", command=record).pack(pady=10)
-    stop_button = Button(root, text="Stop", command=stop_record).pack(pady=10)
+    record_button = Button(root, text="Record", command=record).pack(padx = 20, pady=10)
+    stop_button = Button(root, text="Stop", command=stop_record).pack(pady=(5, 10))
     play_button = Button(root, text="Play", command=play).pack(pady=10)
 
     root.mainloop()
