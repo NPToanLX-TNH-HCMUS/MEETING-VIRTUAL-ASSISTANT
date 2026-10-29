@@ -31,12 +31,9 @@ def search(query, top_k=3):
     query_embedding = model.encode([query], batch_size=32, convert_to_numpy=True, normalize_embeddings=True)
 
     scores, indices = index.search(query_embedding, top_k)
-    return scores, indices
+    return scores[0], indices[0]
 
-
-scr_raw, idx_raw = search("SEGMENT TREE", top_k=10)
-index = idx_raw[0]
-score = scr_raw[0]
+score, index = search("SEGMENT TREE", top_k=10)
 
 for i in range(len(index)):
     print(f"Score: {score[i]}, Top {i + 1}: {title_chunk[index[i]]}")
