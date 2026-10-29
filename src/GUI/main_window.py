@@ -4,14 +4,20 @@ from tkinter import filedialog
 from ..audio.recorder import Recorder
 from ..document.document import Document
 from .config import (
-    WindowConfig, ButtonConfig, EditorConfig,
-    open_button, save_button, save_as_button,
-    record_button, stop_button, play_button,
+    EditorConfig,
+    WindowConfig,
+    open_button,
+    play_button,
+    record_button,
+    save_as_button,
+    save_button,
+    stop_button,
 )
 
 FILE_TYPES = [("Text", "*.txt"), ("Markdown", "*.md")]
 DEFAULT_EXTENSION = ".txt"
 REFRESH_MS = 100
+
 
 class MainWindow(tk.Tk):
     def __init__(self, path=None):
@@ -38,12 +44,14 @@ class MainWindow(tk.Tk):
             (save_as_button, self._save_file_as),
         ]
         for button_config, command in buttons:
-            tk.Button(toolbar,
-                      text=button_config.text,
-                      bg=button_config.bg,
-                      padx=button_config.padx,
-                      pady=button_config.pady,
-                      command=command).pack(side="left")
+            tk.Button(
+                toolbar,
+                text=button_config.text,
+                bg=button_config.bg,
+                padx=button_config.padx,
+                pady=button_config.pady,
+                command=command,
+            ).pack(side="left")
 
     def _make_audio_bar(self):
         audio_bar = tk.Frame(self)
@@ -56,12 +64,14 @@ class MainWindow(tk.Tk):
             (play_button, self._play),
         ]
         for button_config, command in buttons:
-            tk.Button(audio_bar,
-                      text=button_config.text,
-                      bg=button_config.bg,
-                      padx=button_config.padx,
-                      pady=button_config.pady,
-                      command=command).pack(side="left")
+            tk.Button(
+                audio_bar,
+                text=button_config.text,
+                bg=button_config.bg,
+                padx=button_config.padx,
+                pady=button_config.pady,
+                command=command,
+            ).pack(side="left")
 
     def _make_editor(self):
         editor_config = EditorConfig()
@@ -89,8 +99,9 @@ class MainWindow(tk.Tk):
             self._save_file_as()
 
     def _save_file_as(self):
-        path = filedialog.asksaveasfilename(filetypes=FILE_TYPES,
-                                            defaultextension=DEFAULT_EXTENSION)
+        path = filedialog.asksaveasfilename(
+            filetypes=FILE_TYPES, defaultextension=DEFAULT_EXTENSION
+        )
         if path:
             self._document.save(self._get_text(), path)
 
