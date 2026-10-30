@@ -288,3 +288,8 @@ Backups.backupdb
 .MobileBackups.trash
 MobileBackups.trash
 tmbootpicker.efi
+
+# Local audio recordings
+meeting.wav
+record.wav
+transcript.txt
