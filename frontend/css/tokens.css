@@ -1,0 +1,49 @@
+:root {
+  /* Colour */
+  --c-bg: #f1f5f5;
+  --c-surface: #ffffff;
+  --c-surface-muted: #e7ecee;
+  --c-border: #dde3e6;
+  --c-border-strong: #c3ccd1;
+  --c-text: #14202b;
+  --c-text-muted: #56636e;
+  --c-primary: #0e7882;
+  --c-primary-hover: #0b636b;
+  --c-primary-soft: #e3f2f1;
+  --c-on-primary: #ffffff;
+  --c-ink: #14202b;
+  --c-warn-bg: #fbf0d4;
+  --c-warn-border: #f0d68f;
+  --c-warn-text: #6b4a00;
+  --c-info-bg: #e5ebf5;
+  --c-error-bg: #fbe4e4;
+  --c-error-border: #eeb4b4;
+  --c-error-text: #8a1c1c;
+  --c-success: #2f7d4f;
+  --c-success-soft: #e4f3e9;
+  --c-focus: #3a8fd9;
+
+  /* Type: stacks chosen for full Vietnamese coverage incl. stacked tone marks */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Noto Sans Mono", "Liberation Mono", monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+  --lh: 1.55;
+
+  /* Space & shape */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(20, 32, 43, 0.04);
+  --header-h: 64px;
+}

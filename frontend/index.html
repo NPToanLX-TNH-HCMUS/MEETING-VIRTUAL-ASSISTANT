@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Meeting Virtual Assistant</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <!--
+      File này chỉ là KHUNG. Chữ và dữ liệu từ backend được js/main.js điền vào các phần có id.
+      Phần nào có thuộc tính `hidden` thì main.js sẽ bật/tắt theo trạng thái.
+    -->
+    <header class="app-header">
+      <div class="brand">Meeting Virtual Assistant</div>
+    </header>
+
+    <main class="layout">
+      <!-- ============ TRÁI: thông tin cuộc họp ============ -->
+      <section class="column column--details">
+        <div class="card">
+          <div class="card__head"><h1 class="card__title">Thông tin cuộc họp</h1></div>
+
+          <div class="field">
+            <label class="field__label" for="topic">Chủ đề</label>
+            <input id="topic" class="input" type="text" autocomplete="off" placeholder="VD: Sprint review và kế hoạch frontend" />
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label class="field__label" for="language">Ngôn ngữ cuộc họp</label>
+              <select id="language" class="select">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="duration">Thời lượng (phút)</label>
+              <input id="duration" class="input input--narrow" type="text" inputmode="numeric" value="60" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="points">Các ý bạn dự định trình bày (mỗi dòng một ý)</label>
+            <textarea id="points" class="input" rows="3"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="files">Tài liệu bối cảnh (.md, .txt, tối đa 10 MB)</label>
+            <input id="files" type="file" accept=".md,.txt" multiple />
+            <ul id="file-list" class="muted"></ul>
+          </div>
+
+          <button id="generate" type="button" class="btn btn--primary btn--block">Tạo agenda</button>
+          <p id="details-locked" class="field__hint" hidden>
+            Cuộc họp đã được tạo trên backend nên không đổi được thông tin. Muốn đổi, hãy
+            <button id="restart" type="button" class="btn btn--sm">làm lại từ đầu</button>.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ PHẢI: agenda đề xuất ============ -->
+      <section class="column column--main">
+        <div class="card">
+          <div id="error" class="banner banner--error" role="alert" hidden></div>
+
+          <div class="card__head">
+            <h2 class="card__title">Agenda đề xuất</h2>
+            <span id="planned" class="planned" hidden></span>
+          </div>
+
+          <div id="agenda-empty" class="empty">
+            <p class="empty__title">Chưa có agenda</p>
+            <p>Điền thông tin, thêm tài liệu rồi nhấn “Tạo agenda”.</p>
+          </div>
+          <div id="agenda-loading" class="empty" aria-live="polite" hidden>
+            <p class="empty__title">Đang lập agenda…</p>
+          </div>
+
+          <div id="agenda-content" hidden>
+            <p id="agenda-note" class="muted"></p>
+
+            <table class="agenda-table">
+              <thead>
+                <tr>
+                  <th>Nội dung</th>
+                  <th>Nguồn</th>
+                  <th>Thời lượng</th>
+                  <th><span class="visually-hidden">Di chuyển</span></th>
+                </tr>
+              </thead>
+              <tbody id="agenda-rows"></tbody>
+            </table>
+            <p id="agenda-invalid" class="field__error" hidden>Mỗi mục cần có tiêu đề và thời lượng từ 1 đến 480 phút.</p>
+
+            <div id="dropped"></div>
+
+            <div class="btn-row">
+              <button id="regenerate" type="button" class="btn">Tạo lại</button>
+              <button id="confirm" type="button" class="btn btn--primary">Xác nhận agenda</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Mẫu cho MỖI hàng agenda. main.js sao chép mẫu này cho từng mục backend trả về. -->
+    <template id="tpl-row">
+      <tr class="agenda-row">
+        <td>
+          <div class="agenda-row__title">
+            <input class="cell-input" data-field="title" type="text" aria-label="Tiêu đề" />
+            <span class="badge badge--proposed" data-field="badge" hidden>Đề xuất</span>
+          </div>
+        </td>
+        <td class="muted nowrap" data-field="source"></td>
+        <td>
+          <div class="time-cell">
+            <input class="cell-input cell-input--time" data-field="minutes" type="text" inputmode="numeric" aria-label="Số phút" />
+            <span class="muted">phút</span>
+          </div>
+        </td>
+        <td>
+          <div class="reorder">
+            <button type="button" class="icon-btn" data-field="up" aria-label="Lên">↑</button>
+            <button type="button" class="icon-btn" data-field="down" aria-label="Xuống">↓</button>
+          </div>
+        </td>
+      </tr>
+    </template>
+
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>
