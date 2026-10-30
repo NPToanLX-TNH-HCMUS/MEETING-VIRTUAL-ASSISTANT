@@ -1,0 +1,76 @@
+{
+    "expected_topics": [
+        {
+            "section_id": "Section 1",
+            "title": "Segment Tree Theory Review & Consensus",
+            "key_points": [
+                "Segment Tree is a binary tree for interval information storage",
+                "Range query and point update both run in O(log N)",
+                "1D array of size N requires tree array of size 4*N",
+                "Full team consensus reached on this definition"
+            ]
+        },
+        {
+            "section_id": "Section 2",
+            "title": "PoC Task Assignment & Deadlines",
+            "key_points": [
+                "An Binh: Build and Query functions — Saturday 24/10 at 21:00",
+                "Lazy Propagation documentation — Sunday 25/10, assignee TBD on Discord",
+                "Phuoc Toan: Create shared Google Sheet for tech links — ASAP"
+            ]
+        },
+        {
+            "section_id": "Section 3",
+            "title": "Module Integration Discussion",
+            "key_points": [
+                "Remaining Points Tracker input is plain text from Document Converter",
+                "Phuoc Toan's converter must output clean plain text for Dang Khoi's module"
+            ]
+        }
+    ],
+    "expected_entities": [
+        {
+            "category": "MAIN_CONTENT",
+            "summary": "Segment Tree definition and complexity agreed upon by full team",
+            "speaker": "Dang Khoi",
+            "has_consensus": true
+        },
+        {
+            "category": "IDEA",
+            "summary": "Tkinter animation for node color changes during query traversal",
+            "speaker": "Phuoc Toan",
+            "has_consensus": false,
+            "expected_status": "UNCONFIRMED"
+        },
+        {
+            "category": "DEADLINE",
+            "summary": "Implement Segment Tree Build and Query functions",
+            "assignee": "An Binh",
+            "due_date": "Saturday 24/10 21:00",
+            "has_consensus": true,
+            "expected_status": "CONFIRMED"
+        },
+        {
+            "category": "DEADLINE",
+            "summary": "Write Lazy Propagation technical documentation",
+            "assignee": null,
+            "due_date": "Sunday 25/10",
+            "has_consensus": false,
+            "expected_status": "UNCONFIRMED"
+        },
+        {
+            "category": "DEADLINE",
+            "summary": "Create shared Google Sheet for team tech links and API references",
+            "assignee": "Phuoc Toan",
+            "due_date": null,
+            "has_consensus": false,
+            "expected_status": "UNCONFIRMED"
+        },
+        {
+            "category": "MAIN_CONTENT",
+            "summary": "Remaining Points Tracker will receive plain text from Document Converter as input",
+            "speaker": "Thanh Tai",
+            "has_consensus": true
+        }
+    ]
+}

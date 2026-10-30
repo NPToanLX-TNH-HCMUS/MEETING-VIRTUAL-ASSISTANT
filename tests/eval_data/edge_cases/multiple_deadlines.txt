@@ -1,0 +1,3 @@
+[00:10] Thanh Tai: Heads up team, it's going to be a heavy week — we have the slide deck due Wednesday, the progress report due Thursday, all code pushed by Saturday, and the Lazy Propagation documentation done by Sunday.
+[00:22] Khanh Ann: That's four separate deadlines in five days. Who's responsible for each one?
+[00:30] Thanh Tai: We haven't assigned owners yet. Let's sort it all out tonight on Discord.

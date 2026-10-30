@@ -1,0 +1,35 @@
+[00:05] Thanh Tai: Alright everyone, let's get started. Today's goal is to finalize the Segment Tree theory and divide the PoC tasks for next week.
+
+[00:20] Dang Khoi: Sure. So to recap — a Segment Tree is a binary tree data structure used to store information about intervals or segments. Both range queries and point updates run in O(log N) time. For a 1D array of size N, the tree array must be allocated at size 4*N to guarantee no out-of-bounds access. The team agrees on this definition, right?
+
+[00:42] An Binh: Agreed. That aligns with what I found in the references too.
+
+[00:47] Khanh Ann: Yes, confirmed on my end as well.
+
+[00:51] Phuoc Toan: Same here. By the way, random idea — what if we used Tkinter to animate the node color changes each time the query function traverses the tree? Could look really cool for the demo.
+
+[01:10] Khanh Ann: That sounds fun actually, but we're pretty tight on time this week. Let's park that idea and revisit it next meeting if we have bandwidth.
+
+[01:22] Thanh Tai: Agreed, we'll put that on the backlog. Now let's split the work. An Binh, I'd like you to own the implementation of the Build and Query functions — the core of the tree. Hard deadline is Saturday the 24th at 9 PM. You need to push to GitHub by then.
+
+[01:40] An Binh: Got it. I'll take the Build and Query functions, Saturday 24th, 9 PM.
+
+[01:45] Thanh Tai: Perfect. Next — someone needs to write the technical documentation covering Lazy Propagation. This is due Sunday the 25th by end of day.
+
+[02:00] Khanh Hung: Hold on Tai — who's actually assigned to the Lazy Propagation documentation? You mentioned the deadline but didn't assign it to anyone.
+
+[02:10] Thanh Tai: You're right, my bad. We don't have a clear owner for that yet. Let's sort it out tonight on Discord — whoever has capacity, please claim it.
+
+[02:20] Khanh Ann: Noted. I'll remind everyone in the Discord channel after this call.
+
+[02:28] Thanh Tai: Also, Phuoc Toan — could you create a shared Google Sheet where everyone can log their tech links and API references? No hard deadline, but try to get it up before our next sync.
+
+[02:38] Phuoc Toan: Sure, I can do that tonight.
+
+[02:42] Dang Khoi: One more thing — for the Remaining Points Tracker, should the input be the plain text from the agenda document, or does it need to go through the Document Converter first?
+
+[02:55] Thanh Tai: Good question. Let's assume the input to your tracker will be the plain text already extracted by Toan's converter. So your dependency is on Toan's module.
+
+[03:05] Phuoc Toan: Understood. I'll make sure my converter outputs clean plain text that Khoi can directly feed into his tracker.
+
+[03:12] Thanh Tai: Great. Let's wrap up — An Binh has Build and Query by Saturday 9 PM, Lazy Propagation documentation is unassigned pending Discord volunteer, Toan creates the Google Sheet tonight, and everyone checks Discord within 24 hours. Meeting adjourned.
