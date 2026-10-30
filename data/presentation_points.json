@@ -1,0 +1,330 @@
+{
+  "source_file": "data/text_chunking.json",
+  "points": [
+    {
+      "title": "Động cơ và bối cảnh hình thành cấu trúc dữ liệu Segment Tree",
+      "description": "Giải thích bài toán xử lý mảng n phần tử với q truy vấn trên đoạn liên tiếp và cập nhật dữ liệu. Nếu dùng mảng thông thường, mỗi truy vấn mất O(n), dẫn đến tổng chi phí O(n*q) quá lớn khi n và q lớn. Segment Tree được hình thành nhằm lưu trữ và tái sử dụng thông tin tổng hợp của các đoạn để tối ưu hóa thời gian xử lý.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        2
+      ],
+      "id": 1,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Khái niệm và nguyên tắc tổ chức của Segment Tree",
+      "description": "Segment Tree là cấu trúc dữ liệu dạng cây nhị phân lưu trữ và xử lý thông tin trên các đoạn liên tiếp của mảng. Node gốc quản lý toàn bộ mảng, các node con quản lý đoạn nhỏ hơn, và node lá đại diện cho từng phần tử riêng lẻ. Thông tin node cha được tính toán từ các node con, và cây thường được biểu diễn logic qua mảng.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        3
+      ],
+      "id": 2,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Phạm vi bài toán phù hợp và giới hạn của Segment Tree",
+      "description": "Segment Tree đặc biệt phù hợp cho các bài toán kết hợp truy vấn đoạn (tổng, min/max, đếm tần suất) và cập nhật dữ liệu động (cập nhật điểm hoặc đoạn qua Lazy Propagation). Tuy nhiên, với dữ liệu tĩnh chỉ truy vấn tổng thì Prefix Sum đơn giản hơn, hoặc chỉ cập nhật điểm và tính tổng thì Fenwick Tree gọn nhẹ hơn.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        4
+      ],
+      "id": 3,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Độ phức tạp thời gian và không gian của Segment Tree cơ bản",
+      "description": "Segment Tree cơ bản có thời gian xây dựng cây là O(n), truy vấn trên đoạn mất O(log n), cập nhật một phần tử mất O(log n), và bộ nhớ sử dụng là O(n). Độ phức tạp này phụ thuộc vào giả định phép kết hợp thông tin giữa hai node con mất thời gian O(1).",
+      "parent_title": "",
+      "source_chunk_ids": [
+        5
+      ],
+      "id": 4,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Nguyên lý phân rã đoạn trong Segment Tree",
+      "description": "Segment Tree phân rã đoạn [l, r] theo cách đệ quy bằng cách tính điểm giữa mid = floor((l + r) / 2) thành hai đoạn con không chồng lấn [l, mid] và [mid + 1, r]. Quá trình phân rã tiếp tục cho đến khi l = r, tương ứng với các node lá quản lý một phần tử.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        6
+      ],
+      "id": 5,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Cấu trúc node và cách lưu trữ Segment Tree bằng mảng",
+      "description": "Mỗi node trong Segment Tree quản lý một khoảng chỉ số, giá trị tổng hợp và liên kết đến các node con. Trong cách triển khai bằng mảng bắt đầu từ chỉ số 1, khoảng chỉ số [l, r] thường được truyền qua tham số đệ quy, còn node con trái và node con phải của node v được lưu lần lượt tại vị trí 2v và 2v + 1.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        7
+      ],
+      "id": 6,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Phân tích chiều cao cây và quy ước cấp phát bộ nhớ 4n",
+      "description": "Do độ dài đoạn giảm đi một nửa qua mỗi tầng, chiều cao của Segment Tree là O(log n) và tổng số node là O(n). Khi triển khai đệ quy bằng mảng, kích thước an toàn và phổ biến được cấp phát trước là 4 * n phần tử để tránh tràn bộ nhớ.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        9
+      ],
+      "id": 7,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Quy trình xây dựng Segment Tree",
+      "description": "Trình bày cách thức xây dựng Segment Tree đệ quy từ mảng ban đầu, bao gồm xác định thông tin cần lưu tại mỗi node (tổng, min, max), thiết lập giá trị cho node lá khi l = r, và kết hợp thông tin từ hai node con cho node trong.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        10,
+        11,
+        12,
+        13
+      ],
+      "id": 8,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Thuật toán và pseudocode hàm BUILD trong Segment Tree",
+      "description": "Giải thích chi tiết thuật toán BUILD(v, l, r): nếu l == r thì gán tree[v] = A[l]; ngược lại chia đôi đoạn tại mid, gọi đệ quy xây dựng cây con trái 2v và cây con phải 2v + 1, sau đó gán tree[v] = MERGE(tree[2v], tree[2v + 1]).",
+      "parent_title": "Quy trình xây dựng Segment Tree",
+      "source_chunk_ids": [
+        11,
+        12,
+        13
+      ],
+      "id": 9,
+      "status": "pending",
+      "parent_id": 8
+    },
+    {
+      "title": "Độ phức tạp xây dựng Segment Tree",
+      "description": "Xây dựng Segment Tree có độ phức tạp thời gian O(n) do mỗi node được xử lý một lần với thao tác kết hợp O(1). Bộ nhớ lưu cây tốn O(n) và ngăn xếp đệ quy sử dụng thêm O(log n) tương ứng với chiều cao của cây.",
+      "parent_title": "Quy trình xây dựng Segment Tree",
+      "source_chunk_ids": [
+        14
+      ],
+      "id": 10,
+      "status": "pending",
+      "parent_id": 8
+    },
+    {
+      "title": "Cơ chế truy vấn trên đoạn trong Segment Tree",
+      "description": "Giải thích nguyên lý trả lời truy vấn trên đoạn [L, R] nhằm tính toán đại lượng tổng hợp (tổng, min, max) mà không cần duyệt qua từng phần tử, dựa trên việc duyệt cây và phân loại các trường hợp giao nhau giữa đoạn của node và đoạn truy vấn.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        15,
+        16,
+        18,
+        19
+      ],
+      "id": 11,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Ba trường hợp giao đoạn khi xử lý truy vấn Segment Tree",
+      "description": "Khi truy vấn node quản lý [l, r] với đoạn truy vấn [L, R]: Trường hợp 1 là không giao nhau thì trả về giá trị trung hòa (0 cho tổng, +vô cùng cho min, -vô cùng cho max); Trường hợp 2 là nằm hoàn toàn bên trong thì trả về ngay giá trị tree[v]; Trường hợp 3 là giao một phần thì đệ quy xuống hai node con và gộp kết quả.",
+      "parent_title": "Cơ chế truy vấn trên đoạn trong Segment Tree",
+      "source_chunk_ids": [
+        16,
+        18
+      ],
+      "id": 12,
+      "status": "pending",
+      "parent_id": 11
+    },
+    {
+      "title": "Phân tích độ phức tạp thời gian O(log n) của thao tác truy vấn",
+      "description": "Trong quá trình truy vấn, mỗi tầng của Segment Tree chỉ có tối đa một số hằng số node nằm ở biên cần phân rã tiếp, còn các node nằm hoàn toàn bên trong đoạn được trả về trực tiếp. Do đó, số node được duyệt bị chặn ở mức O(log n), đảm bảo thời gian truy vấn là O(log n).",
+      "parent_title": "Cơ chế truy vấn trên đoạn trong Segment Tree",
+      "source_chunk_ids": [
+        19
+      ],
+      "id": 13,
+      "status": "pending",
+      "parent_id": 11
+    },
+    {
+      "title": "Thao tác cập nhật một phần tử trong Segment Tree",
+      "description": "Giải thích bài toán và quy trình cập nhật điểm khi giá trị tại vị trí p thay đổi. Thuật toán đi từ gốc xuống node lá tương ứng với p, cập nhật giá trị mới tại lá, sau đó quay ngược lên trên để tính toán và cập nhật lại giá trị tổng hợp tại tất cả các node tổ tiên dọc theo đường đi.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        20,
+        21,
+        22
+      ],
+      "id": 14,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Độ phức tạp thời gian của thao tác cập nhật điểm",
+      "description": "Vì mỗi lần cập nhật điểm chỉ đi qua duy nhất một đường đi từ node gốc đến node lá và chiều cao cây là O(log n), tổng số node cần tính lại là O(log n). Do đó, thời gian cập nhật một phần tử là O(log n), vượt trội so với việc tính lại toàn bộ mảng.",
+      "parent_title": "Thao tác cập nhật một phần tử trong Segment Tree",
+      "source_chunk_ids": [
+        23
+      ],
+      "id": 15,
+      "status": "pending",
+      "parent_id": 14
+    },
+    {
+      "title": "Kỹ thuật Lazy Propagation cho thao tác cập nhật trên đoạn",
+      "description": "Giới thiệu kỹ thuật Lazy Propagation (lan truyền lười) nhằm khắc phục nhược điểm mất O(n log n) khi cập nhật từng phần tử trên đoạn. Kỹ thuật này trì hoãn việc cập nhật xuống các node con bằng cách cập nhật thông tin tổng hợp tại node cha và ghi nhận lượng thay đổi đang chờ vào mảng lazy.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        24,
+        25,
+        26
+      ],
+      "id": 16,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Cấu trúc dữ liệu và cơ chế mảng lazy trong bài toán cộng đoạn",
+      "description": "Trong bài toán cộng giá trị d vào đoạn và truy vấn tổng, sử dụng mảng tree[v] để lưu tổng đoạn và lazy[v] lưu giá trị đang chờ truyền xuống. Khi áp dụng cập nhật vào node v quản lý đoạn [l, r], tổng tree[v] tăng thêm d * (r - l + 1) và lazy[v] tăng thêm d.",
+      "parent_title": "Kỹ thuật Lazy Propagation cho thao tác cập nhật trên đoạn",
+      "source_chunk_ids": [
+        26,
+        29
+      ],
+      "id": 17,
+      "status": "pending",
+      "parent_id": 16
+    },
+    {
+      "title": "Hàm đẩy giá trị lazy (push) xuống các node con",
+      "description": "Hàm push được gọi khi cần đi sâu xuống các node con. Lượng cập nhật đang chờ tại lazy[v] được áp dụng vào hai node con theo đúng độ dài đoạn tương ứng của chúng, giá trị lazy của các node con được cộng dồn, và sau đó lazy[v] của node cha được đặt lại về 0.",
+      "parent_title": "Kỹ thuật Lazy Propagation cho thao tác cập nhật trên đoạn",
+      "source_chunk_ids": [
+        27,
+        29
+      ],
+      "id": 18,
+      "status": "pending",
+      "parent_id": 16
+    },
+    {
+      "title": "Quy trình cập nhật đoạn và truy vấn khi có Lazy Propagation",
+      "description": "Khi cập nhật đoạn: nếu không giao thì bỏ qua; nếu nằm hoàn toàn bên trong thì cập nhật trực tiếp node đó và lưu lazy; nếu giao một phần thì gọi hàm push đẩy lazy xuống rồi cập nhật đệ quy hai con và tính lại node cha. Khi truy vấn, chỉ cần push lazy xuống trước khi rẽ nhánh vào các node con giao một phần.",
+      "parent_title": "Kỹ thuật Lazy Propagation cho thao tác cập nhật trên đoạn",
+      "source_chunk_ids": [
+        28,
+        29,
+        30,
+        32
+      ],
+      "id": 19,
+      "status": "pending",
+      "parent_id": 16
+    },
+    {
+      "title": "Các phép kết hợp và biến thể phổ biến của Segment Tree",
+      "description": "Trình bày các biến thể của Segment Tree theo phép toán tổng hợp (truy vấn tổng, min, max, hoặc kết hợp đồng thời nhiều thông tin) cùng các điều kiện toán học bắt buộc của phép kết hợp (tính kết hợp và phần tử trung hòa).",
+      "parent_title": "",
+      "source_chunk_ids": [
+        33,
+        34,
+        35,
+        36,
+        37
+      ],
+      "id": 20,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Segment Tree lặp và Segment Tree động",
+      "description": "Giới thiệu hai biến thể triển khai nâng cao: Segment Tree lặp xây dựng từ dưới lên bằng mảng giúp loại bỏ chi phí đệ quy; và Segment Tree động chỉ cấp phát node khi cần truy cập, phù hợp với không gian chỉ số cực lớn (lên tới 10^9) nhưng số phần tử thực tế xuất hiện ít.",
+      "parent_title": "Các phép kết hợp và biến thể phổ biến của Segment Tree",
+      "source_chunk_ids": [
+        38,
+        39
+      ],
+      "id": 21,
+      "status": "pending",
+      "parent_id": 20
+    },
+    {
+      "title": "So sánh Segment Tree với các cấu trúc dữ liệu khác",
+      "description": "So sánh ưu nhược điểm và độ phức tạp thao tác của Segment Tree với mảng thông thường, Prefix Sum, Fenwick Tree (Binary Indexed Tree) và Sparse Table trên các khía cạnh: truy vấn đoạn, cập nhật điểm, cập nhật đoạn và tính phù hợp với dữ liệu động.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        40,
+        41,
+        42,
+        43,
+        44
+      ],
+      "id": 22,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Ứng dụng thực tế của Segment Tree trong phần mềm và thi đấu",
+      "description": "Giới thiệu các ứng dụng thực tế của Segment Tree như quản lý doanh thu theo ngày, phân tích điểm số học viên, xử lý truy vấn trực tuyến trong lập trình thi đấu, đếm tần suất để tìm phần tử thứ k trong O(log n), và quản lý sự kiện/khoảng thời gian kết hợp nén tọa độ.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        45,
+        46,
+        47,
+        48,
+        49
+      ],
+      "id": 23,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Các lỗi thường gặp khi cài đặt Segment Tree và Lazy Propagation",
+      "description": "Tổng hợp các lỗi lập trình phổ biến cần tránh: sai lệch chỉ số (nhầm lẫn giữa 0-index và 1-index hoặc tính sai độ dài đoạn đóng), sai điều kiện kiểm tra giao nhau, quên cập nhật lại node cha sau khi sửa lá, đẩy lazy sai thời điểm hoặc không nhất quán, và tràn số nguyên 32-bit khi tính tổng lớn.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        50,
+        51,
+        52,
+        53,
+        54
+      ],
+      "id": 24,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Phương pháp kiểm thử Segment Tree bằng vét cạn và các trường hợp biên",
+      "description": "Phương pháp stress testing bằng cách so sánh kết quả thao tác ngẫu nhiên giữa Segment Tree và một mảng duyệt vét cạn thông thường để phát hiện sai khác. Cần chú trọng các trường hợp biên như mảng 1 phần tử, truy vấn/cập nhật toàn mảng, cập nhật chồng lấn, mảng có số âm và dữ liệu gây tràn số.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        55,
+        56
+      ],
+      "id": 25,
+      "status": "pending",
+      "parent_id": null
+    },
+    {
+      "title": "Định hướng triển khai chuẩn và tiêu chí đánh giá code Segment Tree trong C++",
+      "description": "Hướng dẫn phân chia các thành phần code (mảng dữ liệu, build, query, update, merge, lazy/push), thống nhất giao diện hàm nhận (v, l, r) và đoạn đóng [L, R], module hóa kiểm thử, cùng các tiêu chí đánh giá về độ chính xác sau nhiều cập nhật liên tiếp, độ phức tạp thời gian/bộ nhớ và xử lý trường hợp biên.",
+      "parent_title": "",
+      "source_chunk_ids": [
+        57,
+        58,
+        59,
+        60
+      ],
+      "id": 26,
+      "status": "pending",
+      "parent_id": null
+    }
+  ]
+}
