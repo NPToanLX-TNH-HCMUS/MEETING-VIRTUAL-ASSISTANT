@@ -12,7 +12,7 @@ def clean_heading(line: str) -> str:
 
 def chunk_markdown(
     input_path: str | Path = "data/segment_tree.md",
-    output_path: str | Path = "data/text_chunking.json",
+    output_path: str | Path | None = None,
 ) -> list[dict]:
     """
     Split a Markdown document into chunks using level-2 headings (##).
@@ -21,7 +21,6 @@ def chunk_markdown(
     The level-1 heading (#) is retained as parent context without Markdown markers.
     """
     input_path = Path(input_path)
-    output_path = Path(output_path)
 
     if not input_path.exists():
         raise FileNotFoundError(f"Input Markdown file was not found: {input_path}")
@@ -77,14 +76,19 @@ def chunk_markdown(
             "level-2 headings (##) with content."
         )
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        json.dumps(chunks, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-
     print(f"Chunking completed. Total chunks: {len(chunks)}")
-    print(f"Output file: {output_path}")
+
+# Save chunks to JSON only when output_path is provided.
+    if output_path is not None:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        output_path.write_text(
+            json.dumps(chunks, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+        print(f"Output file: {output_path}")
     return chunks
 
 
