@@ -70,7 +70,9 @@ class MeetingContentAnalyzer:
             "Rules:\n"
             "1. Segment the conversation into logical Topics (Section 1, Section 2...) "
             "and summarize key points under each topic.\n"
-            "2. Classify notable statements into MAIN_CONTENT, DEADLINE, or IDEA.\n"
+            "2. Classify notable statements into MAIN_CONTENT, DEADLINE, or IDEA. "
+            "Classify any actionable task or assignment directed to an individual as DEADLINE, "
+            "even if the deadline/timeframe is unspecified or missing (set due_date to null).\n"
             "3. Never fabricate assignees or deadlines. Leave them null if not explicitly stated."
         )
 
@@ -228,9 +230,9 @@ class MeetingContentAnalyzer:
             "### 3.1. Main Discussion Content (`[MAIN_CONTENT]`)",
         ])
         for item in buckets[ContentCategory.MAIN_CONTENT]:
-            badge = "✅ CONFIRMED" if item.status == ResolutionStatus.CONFIRMED else "⚠️ UNCONFIRMED"
+            badge = "[CONFIRMED]" if item.status == ResolutionStatus.CONFIRMED else "[UNCONFIRMED]"
             lines.append(
-                f"- **[{badge}]** {item.summary}  \n"
+                f"- **{badge}** {item.summary}  \n"
                 f"  *Audit:* {item.audit_notes} | *Evidence:* \"{item.evidence_quote}\""
             )
 
@@ -241,7 +243,7 @@ class MeetingContentAnalyzer:
             "| :--- | :--- | :--- | :--- | :--- |",
         ])
         for item in buckets[ContentCategory.DEADLINE]:
-            badge = "✅ CONFIRMED" if item.status == ResolutionStatus.CONFIRMED else "⚠️ UNCONFIRMED"
+            badge = "CONFIRMED" if item.status == ResolutionStatus.CONFIRMED else "UNCONFIRMED"
             lines.append(
                 f"| {item.summary} | {item.assignee} | {item.due_date} | **{badge}** | {item.audit_notes} |"
             )
@@ -251,9 +253,9 @@ class MeetingContentAnalyzer:
             "### 3.3. Ideas & Proposals (`[IDEA]`)",
         ])
         for item in buckets[ContentCategory.IDEA]:
-            badge = "✅ ADOPTED" if item.status == ResolutionStatus.CONFIRMED else "💡 OPEN PROPOSAL"
+            badge = "[ADOPTED]" if item.status == ResolutionStatus.CONFIRMED else "[OPEN PROPOSAL]"
             lines.append(
-                f"- **[{badge}]** *(Proposed by: {item.speaker})* — {item.summary}  \n"
+                f"- **{badge}** *(Proposed by: {item.speaker})* - {item.summary}  \n"
                 f"  *Audit:* {item.audit_notes} | *Evidence:* \"{item.evidence_quote}\""
             )
 
