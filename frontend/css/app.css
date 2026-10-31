@@ -302,38 +302,68 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  margin-bottom: var(--s-2);
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+}
+
+.file-list:empty {
+  display: none;
 }
 
 .file-card {
   display: flex;
   align-items: center;
   gap: var(--s-3);
-  padding: var(--s-3) var(--s-4);
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
   border: 1px solid var(--c-border);
   border-radius: var(--r-md);
   background: var(--c-surface);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.15s;
+  animation: file-in 0.2s ease-out;
 }
 
-.file-card--active {
-  border-color: var(--c-primary);
-  box-shadow: 0 0 0 1px var(--c-primary);
+.file-card:hover {
+  border-color: var(--c-border-strong);
 }
 
-.file-card__open {
+@keyframes file-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.file-card__type {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.file-card__type--md {
+  background: var(--c-info-bg);
+  color: var(--c-ink);
+}
+
+.file-card__body {
   flex: 1;
   min-width: 0;
-  border: 0;
-  background: none;
-  text-align: left;
-  cursor: pointer;
-  padding: 0;
 }
 
 .file-card__name {
   display: block;
-  font-family: var(--font-mono);
   font-size: var(--fs-sm);
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -345,8 +375,50 @@ textarea {
   color: var(--c-text-muted);
 }
 
-.file-card__meta--warn {
-  color: var(--c-warn-text);
+/* Trạng thái luôn có chữ, không chỉ dựa vào màu. */
+.file-status {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+}
+
+.file-status--uploading {
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+}
+
+.file-status--uploading::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.file-status--done {
+  background: var(--c-success-soft);
+  color: var(--c-success);
+}
+
+.file-status--error {
+  background: var(--c-error-bg);
+  color: var(--c-error-text);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .icon-btn {
@@ -372,18 +444,54 @@ textarea {
 }
 
 .dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
   border: 1.5px dashed var(--c-border-strong);
-  border-radius: var(--r-md);
+  border-radius: var(--r-lg);
   padding: var(--s-5) var(--s-4);
+  background: var(--c-surface);
   text-align: center;
   color: var(--c-text-muted);
   font-size: var(--fs-sm);
-  transition: background 0.15s, border-color 0.15s;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.dropzone:hover {
+  background: var(--c-primary-soft);
+  border-color: var(--c-primary);
 }
 
 .dropzone--over {
   background: var(--c-primary-soft);
   border-color: var(--c-primary);
+  border-style: solid;
+  transform: scale(1.01);
+}
+
+.dropzone--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.dropzone__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c-primary-soft);
+  color: var(--c-primary);
+  transition: transform 0.15s;
+}
+
+.dropzone:hover .dropzone__icon,
+.dropzone--over .dropzone__icon {
+  background: var(--c-surface);
+  transform: translateY(-2px);
 }
 
 .dropzone__browse {
@@ -391,14 +499,34 @@ textarea {
   background: none;
   padding: 0;
   color: var(--c-primary);
-  text-decoration: underline;
+  font-weight: 600;
   cursor: pointer;
 }
 
+.dropzone__browse:hover {
+  text-decoration: underline;
+}
+
 .dropzone__hint {
-  display: block;
-  margin-top: var(--s-1);
   font-size: var(--fs-xs);
+}
+
+.file-count {
+  color: var(--c-text-muted);
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .file-card,
+  .file-status--uploading::before {
+    animation: none;
+  }
+
+  .dropzone,
+  .dropzone__icon {
+    transition: none;
+    transform: none !important;
+  }
 }
 
 /* ---------- Buttons ---------- */

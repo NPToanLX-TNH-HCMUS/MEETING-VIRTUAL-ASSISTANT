@@ -227,3 +227,11 @@ __marimo__/
 CLAUDE.md
 .note
 .prompt
+.claude
+.codegraph
+
+# Front end (Vite)
+frontend/node_modules/
+frontend/dist/
+
+.env.example

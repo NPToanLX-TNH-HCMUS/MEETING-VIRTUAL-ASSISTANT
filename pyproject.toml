@@ -14,7 +14,10 @@ dependencies = [
     "google-api-python-client>=2.100.0",
     "google-genai>=2.31.0",
     "sounddevice>=0.5.6",
-    "scipy>=1.18.1"
+    "scipy>=1.18.1",
+    "fastapi",
+    "uvicorn",
+    "google"
 ]
 
 [tool.hatch.build.targets.wheel]

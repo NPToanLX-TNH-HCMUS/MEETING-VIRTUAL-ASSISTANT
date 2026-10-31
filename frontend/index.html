@@ -47,9 +47,19 @@
           </div>
 
           <div class="field">
-            <label class="field__label" for="files">Tài liệu bối cảnh (.md, .txt, tối đa 10 MB)</label>
-            <input id="files" type="file" accept=".md,.txt" multiple />
-            <ul id="file-list" class="muted"></ul>
+            <label class="field__label" for="files">Tài liệu bối cảnh<span id="file-count" class="file-count"></span></label>
+            <input id="files" class="visually-hidden" type="file" accept=".md,.txt" multiple />
+            <!-- Vùng kéo thả: bấm vào bất kỳ đâu cũng mở hộp chọn tệp. -->
+            <div id="dropzone" class="dropzone">
+              <span class="dropzone__icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 16V4" /><path d="m6 10 6-6 6 6" /><path d="M4 20h16" />
+                </svg>
+              </span>
+              <span>Kéo thả tệp vào đây hoặc <button id="browse" type="button" class="dropzone__browse">chọn tệp</button></span>
+              <span class="dropzone__hint">.md, .txt · tối đa 10 MB</span>
+            </div>
+            <ul id="file-list" class="file-list" aria-live="polite"></ul>
           </div>
 
           <button id="generate" type="button" class="btn btn--primary btn--block">Tạo agenda</button>

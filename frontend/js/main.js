@@ -1,24 +1,19 @@
-// Toàn bộ logic của trang "Tạo agenda". Đọc từ trên xuống dưới là hiểu:
-//   1. Dữ liệu của trang (biến)           2. Hiển thị (render*)
-//   3. Hành động (generate, confirm, ...) 4. Gắn sự kiện (click, input)
-//
-// Luồng chính:  bấm "Tạo agenda" -> generate() -> api.* (api.js) -> lưu kết quả vào `agenda`
-//               -> render() đọc `agenda` và điền vào các ô có id trong index.html.
 import { api, ApiError } from './api.js';
 
-const $ = (id) => document.getElementById(id); // lấy phần tử HTML theo id
-const MAX_FILE_BYTES = 10 * 1024 * 1024; // giới hạn upload trong API contract
+const $ = (id) => document.getElementById(id); 
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
-// ============ 1. DỮ LIỆU (nằm trong bộ nhớ, tải lại trang là mất) ============
-let meeting = null; // cuộc họp backend trả về sau khi tạo: { id, status, duration_minutes, ... }
-let files = []; // các File người dùng đã chọn
-const uploaded = new Set(); // các File đã gửi lên backend (để không gửi lại)
-let agenda = null; // { items, dropped, duration, confirmed, edited } hoặc null khi chưa tạo
-let loading = false; // đang tạo agenda
-let confirming = false; // đang lưu agenda
-let errorMessage = ''; // chữ hiện ở banner đỏ, '' = không có lỗi
+let meeting = null;
+let files = []; 
+const uploaded = new Set();
+const uploading = new Set(); // file đang gửi lên backend
+const failed = new Map(); // file -> mã lỗi backend trả về (ApiError.code)
+let agenda = null; // { items, dropped, duration, confirmed, edited } or null 
+let loading = false;
+let confirming = false;
+let errorMessage = '';
 
-// ============ 2. HIỂN THỊ ============
+// Display, chỗ này là phần dịch của web, mốt muốn làm song ngữ thì tự dịch xong import 2 cái ver dịch vào
 const SOURCE_LABEL = {
   carry_over: 'Từ buổi trước',
   planned_point: 'Ý dự định trình bày',
@@ -26,12 +21,35 @@ const SOURCE_LABEL = {
   manual: 'Thêm thủ công',
 };
 const REASON_LABEL = { exceeds_remaining_time: 'không vừa thời gian còn lại' };
+const UPLOAD_ERROR_LABEL = {
+  FILE_TOO_LARGE: 'Tệp quá lớn',
+  UNSUPPORTED_FILE_TYPE: 'Định dạng không hỗ trợ',
+};
+
+const numberFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
+function formatSize(bytes) {
+  if (bytes < 1024) return '< 1 KB';
+  if (bytes < 1024 * 1024) return `${numberFormat.format(Math.ceil(bytes / 1024))} KB`;
+  return `${numberFormat.format(bytes / (1024 * 1024))} MB`;
+}
+
+function fileStatus(file) {
+  if (uploaded.has(file)) return { kind: 'done', label: 'Đã gửi ✓' };
+  if (uploading.has(file)) return { kind: 'uploading', label: 'Đang gửi…' };
+  if (failed.has(file)) {
+    const code = failed.get(file);
+    return { kind: 'error', label: `Lỗi · ${UPLOAD_ERROR_LABEL[code] ?? 'không gửi được'}` };
+  }
+  return { kind: 'pending', label: 'Chờ gửi' };
+}
+
+const REMOVE_ICON =
+  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
 const isMinutesValid = (m) => Number.isInteger(m) && m >= 1 && m <= 480;
 const isItemValid = (it) => !!it.title?.trim() && isMinutesValid(it.estimated_minutes);
 const flag = (input, bad) => (bad ? input.setAttribute('aria-invalid', 'true') : input.removeAttribute('aria-invalid'));
 
-// Vẽ lại toàn bộ trang từ các biến ở mục 1.
 function render() {
   $('error').hidden = !errorMessage;
   $('error').textContent = errorMessage;
@@ -56,22 +74,53 @@ function render() {
 }
 
 function renderFileList() {
+  $('dropzone').classList.toggle('dropzone--disabled', loading);
+  $('file-count').textContent = files.length ? ` · ${files.length} tệp` : '';
+
   $('file-list').replaceChildren(
     ...files.map((file) => {
       const li = document.createElement('li');
-      li.textContent = `${file.name} · ${Math.ceil(file.size / 1024)} KB`;
+      li.className = 'file-card';
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const type = document.createElement('span');
+      type.className = `file-card__type file-card__type--${ext}`;
+      type.setAttribute('aria-hidden', 'true');
+      type.textContent = ext;
+
+      // Cắt tên dài bằng CSS (ellipsis), không cắt chuỗi trong JS để giữ nguyên dấu tiếng Việt.
+      const body = document.createElement('div');
+      body.className = 'file-card__body';
+      const name = document.createElement('span');
+      name.className = 'file-card__name';
+      name.textContent = file.name;
+      name.title = file.name;
+      const meta = document.createElement('span');
+      meta.className = 'file-card__meta';
+      meta.textContent = formatSize(file.size);
+      body.append(name, meta);
+
+      const { kind, label } = fileStatus(file);
+      const status = document.createElement('span');
+      status.className = `file-status file-status--${kind}`;
+      status.textContent = label;
+
+      li.append(type, body, status);
+
       // Backend chưa có API xoá tài liệu, nên file đã gửi lên thì không bỏ được.
       if (!uploaded.has(file)) {
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'icon-btn';
-        remove.textContent = '×';
+        remove.innerHTML = REMOVE_ICON;
+        remove.disabled = uploading.has(file);
         remove.setAttribute('aria-label', `Bỏ ${file.name}`);
         remove.addEventListener('click', () => {
           files = files.filter((f) => f !== file);
+          failed.delete(file);
           render();
         });
-        li.append(' ', remove);
+        li.append(remove);
       }
       return li;
     }),
@@ -210,8 +259,18 @@ async function generate() {
     // Backend sẽ đọc file .md và tự tách thành các đầu mục; UI chỉ gửi file nguyên bản.
     for (const file of files) {
       if (uploaded.has(file)) continue;
-      await api.uploadDocument(meeting.id, file);
-      uploaded.add(file);
+      failed.delete(file);
+      uploading.add(file);
+      renderFileList();
+      try {
+        await api.uploadDocument(meeting.id, file);
+        uploaded.add(file);
+      } catch (e) {
+        failed.set(file, e instanceof ApiError ? e.code : 'UNKNOWN');
+        throw e;
+      } finally {
+        uploading.delete(file);
+      }
     }
 
     const res = await api.generateAgenda(meeting.id);
@@ -291,7 +350,6 @@ function addFiles(picked) {
   render();
 }
 
-// ============ 4. GẮN SỰ KIỆN ============
 $('generate').addEventListener('click', generate);
 $('regenerate').addEventListener('click', regenerate);
 $('confirm').addEventListener('click', confirm);
@@ -300,5 +358,32 @@ $('files').addEventListener('change', (e) => {
   addFiles([...e.target.files]);
   e.target.value = ''; // cho phép chọn lại cùng một file
 });
+
+// Bấm vào vùng kéo thả (hoặc nút "chọn tệp") đều mở hộp chọn tệp.
+$('dropzone').addEventListener('click', () => {
+  if (!loading) $('files').click();
+});
+
+// Đếm độ sâu vì dragenter/dragleave bắn cả khi rê qua phần tử con, nếu không viền sẽ nhấp nháy.
+let dragDepth = 0;
+const dropzone = $('dropzone');
+dropzone.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  dragDepth += 1;
+  dropzone.classList.add('dropzone--over');
+});
+dropzone.addEventListener('dragover', (e) => e.preventDefault());
+dropzone.addEventListener('dragleave', () => {
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) dropzone.classList.remove('dropzone--over');
+});
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  dropzone.classList.remove('dropzone--over');
+  if (!loading) addFiles([...e.dataTransfer.files]);
+});
+// Thả tệp lệch ra ngoài vùng thì trình duyệt sẽ mở tệp và mất trang; chặn lại.
+for (const type of ['dragover', 'drop']) window.addEventListener(type, (e) => e.preventDefault());
 
 render();
