@@ -15,7 +15,6 @@ Contract: docs/system_design/api-contract.md (sections 5 and 6).
 
 """
 
-import os
 import re
 from datetime import datetime
 from typing import Literal
@@ -23,14 +22,9 @@ from typing import Literal
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import JSONResponse
 
-from .gemini_agenda import GeminiError
-from .gemini_agenda import extract_topics as extract_topics_gemini
 from .objects import *
-from .ollama_agenda import extract_topics as extract_topics_ollama
-
-# Which model reads the notes: "gemini" (cloud, needs GEMINI_API_KEY) or "ollama" (local small model).
-# Set LLM_PROVIDER in .env.example; it is loaded when gemini_agenda is imported above.
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
+from .llm_common import LLMError
+from .openrouter_agenda import extract_topics
 
 app = FastAPI()
 
@@ -188,13 +182,13 @@ def build_candidates(meeting_id: str) -> list[dict]:
     stored = meetings[meeting_id]
     meeting = stored["meeting"]
 
-    # The LLM reads the planned points and the document texts together (gemini_agenda.py / ollama_agenda.py).
-    extract_topics = extract_topics_ollama if LLM_PROVIDER == "ollama" else extract_topics_gemini
-    candidates = extract_topics(meeting["planned_points"], stored["documents"], meeting["language"])
+    # The LLM reads the planned points and the document texts together, and sizes the topics to the
+    # meeting length (see openrouter_agenda.py). The user can still change each time in the UI.
+    candidates = extract_topics(meeting["planned_points"], stored["documents"], meeting["duration_minutes"])
 
     for candidate in candidates:
         candidate.update(importance=None, urgency=None, relevance=None, priority_score=None,
-                         estimated_minutes=PLACEHOLDER_MINUTES)
+                         estimated_minutes=candidate.get("estimated_minutes") or PLACEHOLDER_MINUTES)
     return candidates
 
 
@@ -225,7 +219,7 @@ def generate_agenda(meeting_id: str):
 
     try:
         candidates = build_candidates(meeting_id)
-    except GeminiError as e:  # contract: 503 LLM_UNAVAILABLE / 422 LLM_BAD_OUTPUT
+    except LLMError as e:  # contract: 503 LLM_UNAVAILABLE / 422 LLM_BAD_OUTPUT
         return error(e.status, e.code, str(e))
     chosen, dropped = select_by_time(candidates, meeting["duration_minutes"])
 

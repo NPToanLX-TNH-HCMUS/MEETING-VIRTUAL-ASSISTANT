@@ -17,7 +17,8 @@ dependencies = [
     "scipy>=1.18.1",
     "fastapi",
     "uvicorn",
-    "google"
+    "google",
+    "requests"
 ]
 
 [tool.hatch.build.targets.wheel]
