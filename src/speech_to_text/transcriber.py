@@ -1,5 +1,5 @@
-
 import os
+import json
 import wave
 from pathlib import Path
 
@@ -15,6 +15,16 @@ DEFAULT_TIMEOUT = 180
 
 class AudioTranscriptionError(Exception):
     """Raised when audio transcription fails."""
+
+    def __init__(
+        self,
+        message: str,
+        reason: str = "unknown",
+        status_code: int | None = None,
+    ):
+        super().__init__(message)
+        self.reason = reason
+        self.status_code = status_code
 
 
 class ElevenLabsTranscriber:
@@ -63,12 +73,15 @@ class ElevenLabsTranscriber:
                             "audio/wav",
                         ),
                     },
+                    
                     data={
                         "model_id": DEFAULT_MODEL_ID,
-                        "language_code": "vie",
-                        "diarize": "false",
+                        "language_code": "eng",
+                        "diarize": "true",
+                        "timestamps_granularity": "word",
                         "tag_audio_events": "false",
                     },
+
                     timeout=self._timeout,
                 )
         except requests.Timeout as exc:
@@ -99,10 +112,83 @@ class ElevenLabsTranscriber:
                 "No transcript returned by ElevenLabs"
             )
 
+        
         transcript = transcript.strip()
 
-        # Save the transcription to a text file
+        # Save the complete API response for diarization
+        # and timestamp processing.
+        json_path = Path("transcript.json")
+        json_path.write_text(
+            json.dumps(result, ensure_ascii=False, indent=2),
+            encoding="utf-8"
+        )
+
+        
+        # Format transcript with speaker IDs and timestamps
+        words = result.get("words", [])
+        formatted_transcript = format_diarized_transcript(words)
+
+        # Save the diarized transcript to TXT
         output_path = Path("transcript.txt")
-        output_path.write_text(transcript, encoding="utf-8")
+        output_path.write_text(
+            formatted_transcript or transcript,
+            encoding="utf-8"
+        )
 
         return transcript
+
+
+
+def format_diarized_transcript(words: list[dict]) -> str:
+    def format_time(seconds: float) -> str:
+        minutes = int(seconds) // 60
+        remaining = seconds % 60
+        return f"{minutes:02d}:{remaining:05.2f}"
+
+    segments = []
+    current_speaker = None
+    start_time = None
+    end_time = None
+    text_parts = []
+
+    for item in words:
+        token_type = item.get("type")
+
+        # Preserve spaces returned by ElevenLabs.
+        if token_type == "spacing":
+            if text_parts:
+                text_parts.append(item.get("text", " "))
+            continue
+
+        if token_type != "word":
+            continue
+
+        speaker = item.get("speaker_id") or "unknown"
+
+        # A speaker change indicates a new segment.
+        if speaker != current_speaker and text_parts:
+            segments.append(
+                f"[{format_time(start_time)} - "
+                f"{format_time(end_time)}] "
+                f"{current_speaker}:\n"
+                f"{''.join(text_parts).strip()}"
+            )
+            text_parts = []
+
+        if not text_parts:
+            current_speaker = speaker
+            start_time = item.get("start", 0)
+
+        text_parts.append(item.get("text", ""))
+        end_time = item.get("end", start_time)
+
+    # Save the last speaker segment.
+    if text_parts:
+        segments.append(
+            f"[{format_time(start_time)} - "
+            f"{format_time(end_time)}] "
+            f"{current_speaker}:\n"
+            f"{''.join(text_parts).strip()}"
+        )
+
+    return "\n\n".join(segments)
