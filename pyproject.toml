@@ -15,6 +15,7 @@ dependencies = [
     "google-genai>=2.31.0",
     "sounddevice>=0.5.6",
     "scipy>=1.18.1",
+    "markitdown[pdf,docx,doc]",
 ]
 
 [tool.hatch.build.targets.wheel]
