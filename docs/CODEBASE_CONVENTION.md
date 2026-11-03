@@ -12,16 +12,22 @@
 | Ngô Phước Toàn | 25127522 | Member | 
 
 ## Project Architecture & Directory Structure
-
+> [!NOTE]
+> `src-layout` structure
 
 ```text
 root
 ├── .github/                 
 ├── docs/                    
 ├── src/
+|   ├── app.py
+|   ├── modules_1st/
+|   ├── modules_2nd/
+|   ├── modules_nth/
+|   └── ...
 ├── tests/
+├── tools/
 ├── pyproject.toml          
-├── REQUIREMENTS.txt
 └── README.md
 ```
 
