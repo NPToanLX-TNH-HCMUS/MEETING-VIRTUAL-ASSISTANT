@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog
 
-from ..audio.recorder import Recorder
-from ..document.document import Document
+from ...backend.audio.recorder import Recorder
+from ...backend.document.document import Document
 from .config import (
     EditorConfig,
     WindowConfig,
