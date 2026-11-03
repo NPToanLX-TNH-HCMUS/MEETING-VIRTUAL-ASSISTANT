@@ -15,7 +15,10 @@ import requests
 from .llm_common import LLMError, build_prompt, parse_topics, system_prompt
 
 URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = os.getenv("OPENROUTER_MODEL", "google/gemma-4-31b-it:free")
+
+MODEL_API = "nvidia/nemotron-3.5-super-vl:free"
+
+MODEL = os.getenv("OPENROUTER_MODEL", MODEL_API)
 FALLBACK_MODEL = "openrouter/free"  # OpenRouter picks whichever free model is available right now
 
 # Not every free model accepts a JSON schema, but all accept "json_object", so the shape is described in words.
