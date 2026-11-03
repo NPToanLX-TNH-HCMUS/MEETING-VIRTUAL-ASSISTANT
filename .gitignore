@@ -234,6 +234,15 @@ test_files
 CLAUDE.md
 .note
 .prompt
+.claude
+.codegraph
+
+# Front end (Vite)
+frontend/node_modules/
+frontend/dist/
+
+.env.example
+
 
 # macOS
 # General
@@ -296,10 +305,6 @@ Backups.backupdb
 MobileBackups.trash
 tmbootpicker.efi
 
-# Local audio recordings
-meeting.wav
-record.wav
-transcript.txt
-transcript.json
-ES2002a.Mix-Headset.wav
-meeting_3speakers.wav
+# CLAUDE
+.codegraph
+.claude
