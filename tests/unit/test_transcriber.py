@@ -6,7 +6,7 @@ import wave
 from pathlib import Path
 from unittest.mock import patch
 
-from src.speech_to_text.transcriber import ElevenLabsTranscriber
+from src.backend.speech_to_text.transcriber import ElevenLabsTranscriber
 
 
 class TestElevenLabsTranscriber(unittest.TestCase):
@@ -47,7 +47,7 @@ class TestElevenLabsTranscriber(unittest.TestCase):
             }
 
             with patch(
-                "src.speech_to_text.transcriber.requests.post"
+                "src.backend.speech_to_text.transcriber.requests.post"
             ) as mock_post, patch(
                 "pathlib.Path.write_text"
             ) as mock_write:
