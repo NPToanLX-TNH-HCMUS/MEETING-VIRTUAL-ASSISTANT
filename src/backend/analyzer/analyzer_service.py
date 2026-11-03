@@ -1,9 +1,16 @@
 import json
 import logging
 import os
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Dict, List
+
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except ImportError:
+    pass
 
 from google import genai
 from google.genai import types
@@ -80,16 +87,35 @@ class MeetingContentAnalyzer:
         )
 
         logger.info("Sending transcript payload to %s...", self._model_id)
-        response = self._client.models.generate_content(
-            model=self._model_id,
-            contents=transcript_text,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=LOW_TEMPERATURE,
-                response_mime_type="application/json",
-                response_schema=TranscriptAnalysisPayload,
-            ),
-        )
+        max_retries = 3
+        retry_delay = 2.0
+        response = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = self._client.models.generate_content(
+                    model=self._model_id,
+                    contents=transcript_text,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_instruction,
+                        temperature=LOW_TEMPERATURE,
+                        response_mime_type="application/json",
+                        response_schema=TranscriptAnalysisPayload,
+                    ),
+                )
+                break
+            except Exception as exc:
+                logger.warning(
+                    "API call failed on attempt %d/%d (error: %s)",
+                    attempt,
+                    max_retries,
+                    exc,
+                )
+                if attempt == max_retries:
+                    logger.error("All %d retry attempts failed for %s.", max_retries, self._model_id)
+                    raise
+                time.sleep(retry_delay)
+                retry_delay *= 2
 
         try:
             return TranscriptAnalysisPayload.model_validate_json(response.text)
