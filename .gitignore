@@ -222,6 +222,13 @@ __marimo__/
 # Binary data
 *.bin
 *.pdf
+*.docx
+*.wav
+*.mp3
+*.mp4
+
+# test_files
+test_files
 
 # AI
 CLAUDE.md
