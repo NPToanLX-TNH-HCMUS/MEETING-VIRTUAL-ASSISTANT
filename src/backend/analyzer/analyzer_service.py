@@ -25,6 +25,9 @@ logging.basicConfig(
     format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("ContentAnalyzer")
+# Project root and runtime data directory resolution
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+DATA_DIR = PROJECT_ROOT / "data"
 
 
 @dataclass(frozen=True)
@@ -133,13 +136,17 @@ class MeetingContentAnalyzer:
 
     def analyze_from_file(
         self,
-        input_file_path: str | Path,
-        markdown_out_path: str | Path = "meeting_analysis_report.md",
-        json_out_path: str | Path = "meeting_analysis_data.json",
+        input_file_path: str | Path | None = None,
+        markdown_out_path: str | Path | None = None,
+        json_out_path: str | Path | None = None,
     ) -> Dict:
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
         # Why: Decoupling file I/O from core analysis logic allows the service
         # to process both external text files and in-memory streams seamlessly.
-        in_path = Path(input_file_path)
+        in_path = Path(input_file_path) if input_file_path else DATA_DIR / "transcript.txt"
+        out_md = Path(markdown_out_path) if markdown_out_path else DATA_DIR / "meeting_analysis_report.md"
+        out_json = Path(json_out_path) if json_out_path else DATA_DIR / "meeting_analysis_data.json"
+
         if not in_path.exists() or not in_path.is_file():
             raise FileNotFoundError(f"Input transcript file not found: {in_path.resolve()}")
 
@@ -148,15 +155,15 @@ class MeetingContentAnalyzer:
 
         return self.analyze_and_export(
             transcript_text=transcript_text,
-            markdown_out_path=markdown_out_path,
-            json_out_path=json_out_path,
+            markdown_out_path=out_md,
+            json_out_path=out_json,
         )
 
     def analyze_and_export(
         self,
         transcript_text: str,
-        markdown_out_path: str | Path = "meeting_analysis_report.md",
-        json_out_path: str | Path = "meeting_analysis_data.json",
+        markdown_out_path: str | Path | None = None,
+        json_out_path: str | Path | None = None,
     ) -> Dict:
         raw_payload = self.extract_semantics_via_api(transcript_text)
 
@@ -171,7 +178,8 @@ class MeetingContentAnalyzer:
             audited_items,
         )
 
-        md_path = Path(markdown_out_path)
+        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        md_path = Path(markdown_out_path) if markdown_out_path else DATA_DIR / "meeting_analysis_report.md"
         md_path.write_text(markdown_report, encoding="utf-8")
         logger.info("Markdown report exported to: %s", md_path.resolve())
 
@@ -183,7 +191,7 @@ class MeetingContentAnalyzer:
             "topics": [topic.model_dump() for topic in raw_payload.topics],
             "audited_entities": [asdict(item) for item in audited_items],
         }
-        json_path = Path(json_out_path)
+        json_path = Path(json_out_path) if json_out_path else DATA_DIR / "meeting_analysis_data.json"
         json_path.write_text(
             json.dumps(structured_export, ensure_ascii=False, indent=2),
             encoding="utf-8",
