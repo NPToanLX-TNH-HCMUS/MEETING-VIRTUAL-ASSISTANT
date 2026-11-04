@@ -234,6 +234,15 @@ test_files
 CLAUDE.md
 .note
 .prompt
+.claude
+.codegraph
+
+# Front end (Vite)
+frontend/node_modules/
+frontend/dist/
+
+.env.example
+
 
 # macOS
 # General
@@ -295,3 +304,7 @@ Backups.backupdb
 .MobileBackups.trash
 MobileBackups.trash
 tmbootpicker.efi
+
+# CLAUDE
+.codegraph
+.claude
