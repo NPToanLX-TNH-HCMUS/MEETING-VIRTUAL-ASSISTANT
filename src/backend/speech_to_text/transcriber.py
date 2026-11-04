@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import wave
 from pathlib import Path
 
@@ -39,13 +39,15 @@ class ElevenLabsTranscriber:
         if not self._api_key:
             raise ValueError("Missing ELEVENLABS_API_KEY")
 
-    def transcribe_file(self, audio_path: str | Path) -> str:
+    def transcribe_file(
+        self,
+        audio_path: str | Path,
+        output_path: str | Path | None = "transcript.txt",
+    ) -> str:
         path = Path(audio_path)
 
         if not path.is_file():
-            raise FileNotFoundError(
-                f"Audio file not found: {path}"
-            )
+            raise FileNotFoundError(f"Audio file not found: {path}")
 
         if path.suffix.lower() != ".wav":
             raise ValueError("Only WAV files are supported")
@@ -73,7 +75,6 @@ class ElevenLabsTranscriber:
                             "audio/wav",
                         ),
                     },
-                    
                     data={
                         "model_id": DEFAULT_MODEL_ID,
                         "language_code": "eng",
@@ -81,17 +82,13 @@ class ElevenLabsTranscriber:
                         "timestamps_granularity": "word",
                         "tag_audio_events": "false",
                     },
-
                     timeout=self._timeout,
                 )
+
         except requests.Timeout as exc:
-            raise AudioTranscriptionError(
-                "Transcription request timed out"
-            ) from exc
+            raise AudioTranscriptionError("Transcription request timed out") from exc
         except requests.RequestException as exc:
-            raise AudioTranscriptionError(
-                "Unable to connect to ElevenLabs"
-            ) from exc
+            raise AudioTranscriptionError("Unable to connect to ElevenLabs") from exc
 
         if not response.ok:
             raise AudioTranscriptionError(
@@ -108,38 +105,33 @@ class ElevenLabsTranscriber:
         transcript = result.get("text")
 
         if not isinstance(transcript, str) or not transcript.strip():
-            raise AudioTranscriptionError(
-                "No transcript returned by ElevenLabs"
-            )
+            raise AudioTranscriptionError("No transcript returned by ElevenLabs")
 
-        
         transcript = transcript.strip()
 
         # Save the complete API response for diarization
         # and timestamp processing.
         json_path = Path("transcript.json")
         json_path.write_text(
-            json.dumps(result, ensure_ascii=False, indent=2),
-            encoding="utf-8"
+            json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-        
         # Format transcript with speaker IDs and timestamps
         words = result.get("words", [])
-        formatted_transcript = format_diarized_transcript(words)
+        formatted_transcript = _format_diarized_transcript(words)
 
         # Save the diarized transcript to TXT
-        output_path = Path("transcript.txt")
-        output_path.write_text(
-            formatted_transcript or transcript,
-            encoding="utf-8"
-        )
+        if output_path is not None:
+            txt_path = Path(output_path)
+            if txt_path.parent and str(txt_path.parent) not in ("", "."):
+                txt_path.parent.mkdir(parents=True, exist_ok=True)
+            txt_path.write_text(formatted_transcript or transcript, encoding="utf-8")
+        output_path.write_text(formatted_transcript or transcript, encoding="utf-8")
 
         return transcript
 
 
-
-def format_diarized_transcript(words: list[dict]) -> str:
+def _format_diarized_transcript(words: list[dict]) -> str:
     def format_time(seconds: float) -> str:
         minutes = int(seconds) // 60
         remaining = seconds % 60
