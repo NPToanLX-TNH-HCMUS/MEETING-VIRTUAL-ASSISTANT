@@ -222,11 +222,27 @@ __marimo__/
 # Binary data
 *.bin
 *.pdf
+*.docx
+*.wav
+*.mp3
+*.mp4
+
+# test_files
+test_files
 
 # AI
 CLAUDE.md
 .note
 .prompt
+.claude
+.codegraph
+
+# Front end (Vite)
+frontend/node_modules/
+frontend/dist/
+
+.env.example
+
 
 # macOS
 # General
@@ -288,3 +304,7 @@ Backups.backupdb
 .MobileBackups.trash
 MobileBackups.trash
 tmbootpicker.efi
+
+# CLAUDE
+.codegraph
+.claude

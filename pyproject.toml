@@ -16,6 +16,10 @@ dependencies = [
     "sounddevice>=0.5.6",
     "scipy>=1.18.1",
     "markitdown[pdf,docx,doc]",
+    "fastapi",
+    "uvicorn",
+    "google",
+    "requests",
 ]
 
 [tool.hatch.build.targets.wheel]
