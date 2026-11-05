@@ -25,6 +25,8 @@ from fastapi.responses import JSONResponse
 from .objects import *
 from .llm_common import LLMError
 from .openrouter_agenda import extract_topics
+from ..backend.during_meeting.agenda import receive_agenda
+from ..backend.during_meeting.print_agenda import print_agenda
 
 app = FastAPI()
 
@@ -56,8 +58,8 @@ def meeting_not_found(meeting_id: str) -> JSONResponse:
 
 
 def log(step: str, data) -> None:
-    # Shows in the uvicorn terminal, so you can watch what goes between front and back end.
-    print(f"[BACKEND] {step}: {data}")
+    # print(f"[BACKEND] {step}: {data}")
+    pass
 
 
 # ======================================================================================
@@ -291,6 +293,8 @@ def save_agenda(meeting_id: str, body: AgendaEdit):
 
     stored["agenda"] = saved
     stored["meeting"]["status"] = "ready"
+    receive_agenda(meeting_id, saved)
+    print_agenda(meeting_id) 
     return {"items": saved}
 
 
