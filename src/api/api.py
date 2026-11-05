@@ -26,7 +26,7 @@ from .objects import *
 from .llm_common import LLMError
 from .openrouter_agenda import extract_topics
 from ..backend.during_meeting.agenda import receive_agenda
-from ..backend.during_meeting.print_agenda import print_agenda
+from ..backend.main import main
 
 app = FastAPI()
 
@@ -114,7 +114,7 @@ def read_meeting(meeting_id: str):
 # ======================================================================================
 
 MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB
-MIME_TYPES = {".md": "markdown", ".txt": "text"}
+MIME_TYPES = {".md": "markdown", ".txt": "text", ".pdf": "pdf", ".docx": "docx", ".doc": "doc"}
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 
 
@@ -144,7 +144,7 @@ async def upload_document(meeting_id: str, file: UploadFile):
     filename = file.filename or ""
     extension = filename[filename.rfind("."):].lower() if "." in filename else ""
     if extension not in MIME_TYPES:
-        return error(415, "UNSUPPORTED_FILE_TYPE", f"Only .md and .txt are accepted, got {filename!r}")
+        return error(415, "UNSUPPORTED_FILE_TYPE", f"Only .md, .txt, .pdf and .docx are accepted, got {filename!r}")
 
     content = await file.read()
     if len(content) > MAX_FILE_BYTES:
@@ -294,7 +294,7 @@ def save_agenda(meeting_id: str, body: AgendaEdit):
     stored["agenda"] = saved
     stored["meeting"]["status"] = "ready"
     receive_agenda(meeting_id, saved)
-    print_agenda(meeting_id) 
+    main(meeting_id) 
     return {"items": saved}
 
 

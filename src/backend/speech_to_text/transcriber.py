@@ -126,7 +126,6 @@ class ElevenLabsTranscriber:
             if txt_path.parent and str(txt_path.parent) not in ("", "."):
                 txt_path.parent.mkdir(parents=True, exist_ok=True)
             txt_path.write_text(formatted_transcript or transcript, encoding="utf-8")
-        output_path.write_text(formatted_transcript or transcript, encoding="utf-8")
 
         return transcript
 

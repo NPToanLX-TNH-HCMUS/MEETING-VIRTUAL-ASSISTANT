@@ -48,7 +48,7 @@
 
           <div class="field">
             <label class="field__label" for="files">Tài liệu bối cảnh<span id="file-count" class="file-count"></span></label>
-            <input id="files" class="visually-hidden" type="file" accept=".md,.txt" multiple />
+            <input id="files" class="visually-hidden" type="file" accept=".md,.txt,.pdf,.docx,.doc" multiple />
             <!-- Vùng kéo thả: bấm vào bất kỳ đâu cũng mở hộp chọn tệp. -->
             <div id="dropzone" class="dropzone">
               <span class="dropzone__icon" aria-hidden="true">
@@ -57,7 +57,7 @@
                 </svg>
               </span>
               <span>Kéo thả tệp vào đây hoặc <button id="browse" type="button" class="dropzone__browse">chọn tệp</button></span>
-              <span class="dropzone__hint">.md, .txt · tối đa 10 MB</span>
+              <span class="dropzone__hint">.md, .txt, .pdf, . docx · tối đa 10 MB</span>
             </div>
             <ul id="file-list" class="file-list" aria-live="polite"></ul>
           </div>
