@@ -16,16 +16,20 @@ Contract: docs/system_design/api-contract.md (sections 5 and 6).
 """
 
 import re
+import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from .objects import *
 from .llm_common import LLMError
 from .openrouter_agenda import extract_topics
 from ..backend.during_meeting.agenda import receive_agenda
+from ..backend.document.markdown_converter import FileConversionError, MarkDownConverter
 from ..backend.main import main
 
 app = FastAPI()
@@ -131,13 +135,18 @@ def split_markdown_headings(text: str) -> list[str]:
             headings.append(match.group(2))
     return headings
 
+converter = MarkDownConverter()
+
+
+def convert_to_markdown(content: bytes, extension: str) -> str:
+    with tempfile.TemporaryDirectory() as tmp:
+        source = Path(tmp) / f"upload{extension}"
+        source.write_bytes(content)
+        return converter.convert(source, Path(tmp) / "upload.md").read_text(encoding="utf-8")
+
 
 @app.post("/api/v1/meetings/{meeting_id}/documents", status_code=201, response_model=Document)
 async def upload_document(meeting_id: str, file: UploadFile):
-    """
-    FRONT END SENDS:  multipart/form-data with one field "file"
-    BACK END RETURNS: Document (no file content in the reply)
-    """
     if meeting_id not in meetings:
         return meeting_not_found(meeting_id)
 
@@ -150,9 +159,16 @@ async def upload_document(meeting_id: str, file: UploadFile):
     if len(content) > MAX_FILE_BYTES:
         return error(413, "FILE_TOO_LARGE", f"{filename} is larger than 10 MB")
 
-    # utf-8-sig also removes the BOM some Windows editors add; Vietnamese diacritics are kept.
-    text = content.decode("utf-8-sig", errors="replace")
-    headings = split_markdown_headings(text) if extension == ".md" else []
+    if extension in MarkDownConverter.SUPPORTED_EXTENSIONS:
+        try:
+            text = convert_to_markdown(content, extension)
+        except FileConversionError as exc:
+            return error(415, "UNSUPPORTED_FILE_TYPE", f"Could not read {filename!r}: {exc}")
+        headings = split_markdown_headings(text)
+    else:
+        # utf-8-sig also removes the BOM some Windows editors add; Vietnamese diacritics are kept.
+        text = content.decode("utf-8-sig", errors="replace")
+        headings = split_markdown_headings(text) if extension == ".md" else []
 
     stored = meetings[meeting_id]
     document = {
@@ -164,7 +180,6 @@ async def upload_document(meeting_id: str, file: UploadFile):
         "uploaded_at": now(),
     }
     stored["documents"].append({**document, "text": text, "headings": headings})
-    log("2. upload document, received", {"filename": filename, "size_bytes": len(content), "headings": headings})
     return document
 
 
