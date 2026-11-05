@@ -1,14 +1,14 @@
 """
-Unit test suite for Audio Recorder & Player (Thành Tài - In-meeting).
+Unit test suite for Audio Recorder & Player (In-meeting Phase).
 
 Covers:
-- TC-TAI-01: Audio recording produces valid .wav files with correct headers
-- TC-TAI-02: Playback control transitions and state flags (idle -> recording -> stopped)
-- TC-TAI-03: Graceful exception handling when microphone is disconnected
+- TC-TAI-01: Audio recording produces valid RIFF/WAVE files with strictly 44.1kHz / 16-bit PCM headers.
+- TC-TAI-02: Playback control transitions, idempotency (double-start prevention), and safe idle states.
+- TC-TAI-03: Graceful exception handling and state recovery when microphone drivers raise PortAudioError.
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -25,82 +25,110 @@ from backend.audio.recorder import (
 
 @pytest.fixture
 def recorder() -> Recorder:
-    """Fixture providing a fresh Recorder instance for each test case."""
+    """Fixture providing an isolated Recorder instance for each test phase."""
     return Recorder()
 
 
 class TestAudioRecorder:
-    """Unit tests validating microphone recording stability, file integrity, and state transitions."""
+    """Unit tests validating microphone stream stability, I/O file integrity, and exact state machines."""
 
     def test_record_creates_valid_wav_file(
         self, recorder: Recorder, tmp_path: Path
     ) -> None:
         """
-        TC-TAI-01: Recording for a duration must output a valid RIFF/WAVE file
-        with size > 0 bytes, proper 44.1kHz sample rate, and 16-bit PCM format.
+        TC-TAI-01: Validates the full recording lifecycle (start -> time elapse -> stop)
+        ensuring the output is a correctly formatted 44.1kHz, 16-bit PCM WAV file.
         """
+        # Arrange
         output_wav = tmp_path / "meeting_recording.wav"
+        simulated_duration = 2.0  # Simulate 2 seconds of recording
 
-        # Mock buffer âm thanh giả lập do sounddevice tạo ra
-        dummy_buffer = np.zeros((MAX_SECONDS * SAMPLE_RATE, 1), dtype=np.int16)
+        # Pre-allocate a dummy buffer identical to what sounddevice.rec generates internally
+        dummy_buffer = np.zeros((MAX_SECONDS * SAMPLE_RATE, CHANNELS), dtype=np.int16)
 
         with patch("sounddevice.rec", return_value=dummy_buffer) as mock_rec, \
-             patch("sounddevice.stop") as mock_stop:
+             patch("sounddevice.stop") as mock_stop, \
+             patch("time.monotonic") as mock_monotonic:
 
-            # Bắt đầu thu âm
+            # Act 1: Initialize recording (mock monotonic time starts at 100.0)
+            mock_monotonic.return_value = 100.0
             recorder.start()
+
+            # Assert 1: State transitioned correctly
             assert recorder.is_recording is True
             mock_rec.assert_called_once()
 
-            # Dừng thu âm và ghi ra file WAV
-            duration = recorder.stop(path=str(output_wav))
+            # Act 2: Fast-forward time and halt recording
+            mock_monotonic.return_value = 100.0 + simulated_duration
+            actual_duration = recorder.stop(path=str(output_wav))
 
-            # Kiểm tra trạng thái và file đầu ra
+            # Assert 2: Final states and hardware release
             assert recorder.is_recording is False
             mock_stop.assert_called_once()
-            assert output_wav.exists()
-            assert output_wav.stat().st_size > 0
+            assert actual_duration == simulated_duration
 
-            # Kiểm tra định dạng kỹ thuật của file WAV vừa tạo
-            sample_rate, audio_data = read(str(output_wav))
-            assert sample_rate == SAMPLE_RATE
-            assert audio_data.dtype == np.int16
+            # Assert 3: Binary file integrity checks
+            assert output_wav.exists(), "WAV file was not persisted to disk."
+            assert output_wav.stat().st_size > 0, "WAV file is empty (0 bytes)."
 
-    def test_playback_controls_state_transitions(
+            # Assert 4: Verify acoustic headers (RIFF format)
+            written_rate, written_audio_data = read(str(output_wav))
+            assert written_rate == SAMPLE_RATE
+            assert written_audio_data.dtype == np.int16
+
+            # The length of the array should match the simulated duration exactly
+            expected_frames = int(simulated_duration * SAMPLE_RATE)
+            assert len(written_audio_data) == expected_frames
+
+    def test_playback_controls_and_idempotent_states(
         self, recorder: Recorder, tmp_path: Path
     ) -> None:
         """
-        TC-TAI-02: Verify idle state, idempotent start calls, safe stop when idle,
-        and audio playback invocation.
+        TC-TAI-02: Verifies idempotent start calls, safe stop executions from an idle state, 
+        and hardware playback invocation routing.
         """
-        # 1. Trạng thái khởi tạo ban đầu
+        # 1. Validate Initial Idle State
         assert recorder.is_recording is False
         assert recorder.elapsed == 0.0
 
-        # 2. Gọi stop() khi chưa từng start() -> Không được crash, trả về 0.0
+        # 2. Idempotency Check: Calling stop() safely returns 0.0 without throwing exceptions
         assert recorder.stop() == 0.0
 
-        # 3. Tạo một file audio mẫu để kiểm tra hàm play()
+        # 3. Hardware Routing Check: Ensure play() delegates correctly to sounddevice.play
         dummy_wav = tmp_path / "playback_sample.wav"
         dummy_audio = np.zeros(SAMPLE_RATE, dtype=np.int16)
         write(str(dummy_wav), SAMPLE_RATE, dummy_audio)
 
         with patch("sounddevice.play") as mock_play:
             recorder.play(path=str(dummy_wav))
+
+            # Assert playback engine was triggered
             mock_play.assert_called_once()
+
+        # 4. Concurrency Protection Check: Double start should not crash or override
+        with patch("sounddevice.rec") as mock_rec:
+            recorder.start()
+            recorder.start()  # Immediate second click
+
+            # Assert underlying hardware trigger is strictly called once
+            mock_rec.assert_called_once()
 
     def test_handle_missing_audio_input_device_gracefully(
         self, recorder: Recorder
     ) -> None:
         """
-        TC-TAI-03: If no microphone or audio input device is detected,
-        sounddevice raises PortAudioError. The module state must remain safe.
+        TC-TAI-03: When hardware access fails (e.g., driver issues, missing mic), 
+        the recorder must propagate the PortAudioError but cleanly reset its internal flags.
         """
-        # Giả lập driver âm thanh không tìm thấy micro
-        with patch("sounddevice.rec", side_effect=sd.PortAudioError("No input device found")):
+        # Arrange: Simulate OS-level audio driver failure
+        simulated_error = sd.PortAudioError("No input device found")
+
+        # Act & Assert
+        with patch("sounddevice.rec", side_effect=simulated_error):
             with pytest.raises(sd.PortAudioError, match="No input device found"):
                 recorder.start()
 
-            # Đảm bảo cờ is_recording không bị kẹt ở trạng thái True
+            # The system must not be stuck in a 'recording' limbo state
             assert recorder.is_recording is False
             assert recorder.elapsed == 0.0
+            
