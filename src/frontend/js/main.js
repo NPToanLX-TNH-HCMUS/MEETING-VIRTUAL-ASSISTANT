@@ -68,6 +68,8 @@ function render() {
   $('planned').hidden = !agenda;
   if (!agenda) return;
 
+  $('go-during-box').hidden = !(agenda.confirmed && meeting);
+  if (meeting) $('go-during').href = `/during.html?meeting=${encodeURIComponent(meeting.id)}`;
   renderRows();
   renderDropped();
   renderSummary();
