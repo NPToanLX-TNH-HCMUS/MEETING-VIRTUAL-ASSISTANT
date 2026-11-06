@@ -30,15 +30,21 @@ from .llm_common import LLMError
 from .openrouter_agenda import extract_topics
 from ..backend.during_meeting.agenda import receive_agenda
 from ..backend.document.markdown_converter import FileConversionError, MarkDownConverter
+from ..backend.audio.recorder import Recorder
+from ..backend.speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
 from ..backend.main import main
+from ..backend.meeting_manager.meeting_manager import MeetingManager
+from ..backend.meeting_manager.storage_manager import StorageManager
 
 app = FastAPI()
+meeting_manager = MeetingManager(StorageManager())
 
 # Kept in memory: every restart (including uvicorn --reload after you save this file) empties it.
 # meetings[meeting_id] = {
 #     "meeting":   Meeting fields (what GET /meetings/{id} returns),
 #     "documents": [ {document fields..., "text": str, "headings": [str, ...]} ],
 #     "agenda":    [ AgendaItem fields ]   (proposed, then confirmed),
+#     "context":   MeetingContext (id + data/<id>/ folders from MeetingManager),
 # }
 meetings: dict[str, dict] = {}
 
@@ -89,7 +95,8 @@ def create_meeting(body: NewMeeting):
     """
     log("1. create meeting, received", body.model_dump())
 
-    meeting_id = f"mtg_{len(meetings) + 1:03d}"
+    context = meeting_manager.create_meeting()  # unique id + data/<id>/ folders
+    meeting_id = context.meeting_id
     meeting = {
         "id": meeting_id,
         "topic": body.topic,
@@ -102,7 +109,7 @@ def create_meeting(body: NewMeeting):
         "started_at": None,
         "ended_at": None,
     }
-    meetings[meeting_id] = {"meeting": meeting, "documents": [], "agenda": []}
+    meetings[meeting_id] = {"meeting": meeting, "documents": [], "agenda": [], "context": context}
     return meeting
 
 
@@ -322,3 +329,62 @@ def read_agenda(meeting_id: str):
     if meeting_id not in meetings:
         return meeting_not_found(meeting_id)
     return {"items": meetings[meeting_id]["agenda"]}
+
+
+# ======================================================================================
+# 6. STAGE 2 (during meeting): POST /api/v1/meetings/{id}/recording/start | stop
+# ======================================================================================
+
+recorders: dict[str, Recorder] = {}
+
+
+@app.post("/api/v1/meetings/{meeting_id}/recording/start", response_model=Meeting)
+def start_recording(meeting_id: str):
+    if meeting_id not in meetings:
+        return meeting_not_found(meeting_id)
+    meeting = meetings[meeting_id]["meeting"]
+    if meeting["status"] != "ready":
+        return error(409, "INVALID_MEETING_STATE", f"Cannot start recording while the meeting is {meeting['status']}")
+    try:
+        recorder = Recorder()
+        recorder.start()
+    except Exception as exc:  # sounddevice raises PortAudioError when there is no microphone / no permission
+        return error(500, "RECORDER_FAILED", str(exc))
+    recorders[meeting_id] = recorder
+    meeting["status"] = "live"
+    meeting["started_at"] = now()
+    return meeting
+
+
+@app.post("/api/v1/meetings/{meeting_id}/recording/stop", response_model=Meeting)
+def stop_recording(meeting_id: str):
+    if meeting_id not in meetings:
+        return meeting_not_found(meeting_id)
+    stored = meetings[meeting_id]
+    meeting = stored["meeting"]
+    recorder = recorders.pop(meeting_id, None)
+    if meeting["status"] != "live" or recorder is None:
+        return error(409, "INVALID_MEETING_STATE", f"Cannot stop recording while the meeting is {meeting['status']}")
+    path = stored["context"].during_meeting_dir / "audio" / "record.wav"
+    recorder.stop(str(path))
+    meeting["status"] = "processing"
+    meeting["ended_at"] = now()
+    return meeting
+
+
+@app.post("/api/v1/meetings/{meeting_id}/transcribe")
+def transcribe_recording(meeting_id: str):
+    if meeting_id not in meetings:
+        return meeting_not_found(meeting_id)
+    context = meetings[meeting_id]["context"]
+    audio = context.during_meeting_dir / "audio" / "record.wav"
+    if not audio.is_file():
+        return error(409, "INVALID_MEETING_STATE", "There is no recording to transcribe yet")
+    try:
+        text = ElevenLabsTranscriber().transcribe_file(audio, context.during_meeting_dir / "transcript" / "transcript.txt")
+        print(text)
+    except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
+        return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
+    except AudioTranscriptionError as exc:
+        return error(502, "TRANSCRIPTION_FAILED", str(exc))
+    return {"transcript": text}
