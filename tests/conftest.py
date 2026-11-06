@@ -29,7 +29,7 @@ def sample_transcript_path() -> Path:
 
 @pytest.fixture
 def sample_audio_path() -> Path:
-    return EVAL_DATA_DIR / "input_audio" / "sample_meeting_01.wav"
+    return EVAL_DATA_DIR / "input_audio" / "clean_sample_01.wav"
 
 @pytest.fixture
 def ground_truth_entities_path() -> Path:
@@ -39,3 +39,16 @@ def ground_truth_entities_path() -> Path:
 def reference_agenda_path() -> Path:
     return EVAL_DATA_DIR / "ground_truth" / "agenda_tracker" / "reference_agenda.json"
     
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Automatically assign pytest markers based on test directory tier."""
+    for item in items:
+        rel_path = Path(item.fspath).relative_to(Path(__file__).parent)
+        parts = rel_path.parts
+        if "unit" in parts:
+            item.add_marker(pytest.mark.unit)
+        elif "integration" in parts:
+            item.add_marker(pytest.mark.integration)
+        elif "evaluation" in parts:
+            item.add_marker(pytest.mark.evaluation)
+        elif "e2e" in parts:
+            item.add_marker(pytest.mark.e2e)

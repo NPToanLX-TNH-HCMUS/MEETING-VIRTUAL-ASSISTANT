@@ -227,6 +227,9 @@ __marimo__/
 *.mp3
 *.mp4
 
+# Allow evaluation audio test assets in tests/eval_data
+!tests/eval_data/**/*.wav
+
 # test_files
 test_files
 

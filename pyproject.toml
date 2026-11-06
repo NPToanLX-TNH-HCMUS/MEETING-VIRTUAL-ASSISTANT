@@ -29,3 +29,18 @@ packages = ["src"]
 
 [project.scripts]
 mia = "src.app:main"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers -ra"
+markers = [
+    "unit: Unit tests (fast, isolated, mocked I/O and hardware)",
+    "integration: Cross-module data pipeline handoff tests",
+    "evaluation: Quantitative SLA benchmark tests (WER, Precision, Recall, F1)",
+    "e2e: End-to-End full meeting lifecycle tests",
+]
