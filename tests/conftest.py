@@ -33,9 +33,9 @@ def sample_audio_path() -> Path:
 
 @pytest.fixture
 def ground_truth_entities_path() -> Path:
-    return EVAL_DATA_DIR / "ground_truth" / "ground_truth_entities.json"
+    return EVAL_DATA_DIR / "ground_truth" / "content_analyzer" / "ground_truth_entities.json"
 
 @pytest.fixture
 def reference_agenda_path() -> Path:
-    return EVAL_DATA_DIR / "ground_truth" / "reference_agenda.json"
+    return EVAL_DATA_DIR / "ground_truth" / "agenda_tracker" / "reference_agenda.json"
     
