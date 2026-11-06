@@ -26,8 +26,8 @@ from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from .objects import *
-from .llm_common import LLMError
-from .openrouter_agenda import extract_topics
+from .llm_common import extract_topics
+from ..backend.utils.llm import LLMCallError
 from ..backend.during_meeting.agenda import receive_agenda
 from ..backend.document.markdown_converter import FileConversionError, MarkDownConverter
 from ..backend.audio.recorder import Recorder
@@ -206,8 +206,6 @@ def build_candidates(meeting_id: str) -> list[dict]:
     stored = meetings[meeting_id]
     meeting = stored["meeting"]
 
-    # The LLM reads the planned points and the document texts together, and sizes the topics to the
-    # meeting length (see openrouter_agenda.py). The user can still change each time in the UI.
     candidates = extract_topics(meeting["planned_points"], stored["documents"], meeting["duration_minutes"])
 
     for candidate in candidates:
@@ -243,7 +241,7 @@ def generate_agenda(meeting_id: str):
 
     try:
         candidates = build_candidates(meeting_id)
-    except LLMError as e:  # contract: 503 LLM_UNAVAILABLE / 422 LLM_BAD_OUTPUT
+    except LLMCallError as e:  # contract: 503 LLM_UNAVAILABLE / 422 LLM_BAD_OUTPUT
         return error(e.status, e.code, str(e))
     chosen, dropped = select_by_time(candidates, meeting["duration_minutes"])
 
