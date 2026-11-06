@@ -1,5 +1,5 @@
 """
-Integration test suite: Document Conversion & Meeting Storage Pipeline (Toàn <-> GUI / Storage).
+Integration test suite: Document Conversion & Meeting Storage Pipeline (Converter <-> Storage).
 
 Validates the full pre-meeting ingestion pipeline:
 1. Meeting directory creation via StorageManager.

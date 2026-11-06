@@ -52,7 +52,7 @@ class TestRemainingPointsEvaluationMetrics:
 
     def test_perfect_tracking_step1_yields_f1_one(self):
         """
-        TC-KHOI-02: Perfect tracking after Snippet Step 1 (Theory discussed).
+        TC-TRK-01: Perfect tracking after Snippet Step 1 (Theory discussed).
         All points: {1, 2, 3}.
         Ground truth: Point 1 discussed -> Remaining: {2, 3}.
         Predicted: Tracker crossed off Point 1 -> Remaining: {2, 3}.
@@ -69,7 +69,7 @@ class TestRemainingPointsEvaluationMetrics:
 
     def test_false_positive_penalty_on_small_talk(self):
         """
-        TC-KHOI-03: Robustness against false strike-outs during small talk.
+        TC-TRK-02: Robustness against false strike-outs during small talk.
         Suppose tracker prematurely strikes off Point 2 when only greeting occurred.
         Ground truth: Nothing discussed yet -> Covered: {} (Remaining: {1, 2, 3}).
         Predicted: Crossed off Point 2 -> Covered: {2} (Remaining: {1, 3}).

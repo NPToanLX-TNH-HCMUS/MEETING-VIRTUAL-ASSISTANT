@@ -28,7 +28,7 @@ class TestFullPipelineE2E:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """
-        E2E-01: Executes a complete simulated meeting session from workspace creation
+        E2E-LFC-01: Executes a complete simulated meeting session from workspace creation
         and document ingestion through live audio capture, STT transcription, and
         human-in-the-loop post-meeting minutes approval.
         """

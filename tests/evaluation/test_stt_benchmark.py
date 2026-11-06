@@ -66,14 +66,14 @@ class TestSTTEvaluationMetrics:
     """Mathematical validation of the STT evaluation formulas."""
 
     def test_wer_perfect_transcription_zero_error(self):
-        """TC-BINH-01: When hypothesis matches reference verbatim, WER must be 0.0."""
+        """TC-STT-01: When hypothesis matches reference verbatim, WER must be 0.0."""
         ref = "Segment Tree is a binary tree data structure used for interval information"
         hyp = "Segment Tree is a binary tree data structure used for interval information"
         assert compute_wer(ref, hyp) == 0.0
 
     def test_wer_calculation_with_substitutions_and_deletions(self):
         """
-        TC-BINH-02: Quantitative error calculation.
+        TC-STT-02: Quantitative error calculation.
         Reference: 10 words.
         - Deletion (1): missing 'tree'
         - Substitution (1): 'four' -> '4'

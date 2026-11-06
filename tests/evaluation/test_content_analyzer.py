@@ -57,7 +57,7 @@ class TestContentAnalyzerEvaluationMetrics:
 
     def test_perfect_entity_extraction_achieves_target_sla(self):
         """
-        TC-HUNG-01: Perfect match against Ground Truth must yield P = 1.0, R = 1.0, F1 = 1.0.
+        TC-ANL-01: Perfect match against Ground Truth must yield P = 1.0, R = 1.0, F1 = 1.0.
         SLA Target: Precision >= 90%, Recall >= 85%, F1 >= 85%.
         """
         gt_set = {
@@ -92,7 +92,7 @@ class TestContentAnalyzerEvaluationMetrics:
 
     def test_rule_audit_accuracy_deterministic_100_percent(self):
         """
-        TC-HUNG-02: Rule engine deterministic audit accuracy.
+        TC-ANL-02: Rule engine deterministic audit accuracy.
         Out of 4 evaluated cases (1 complete, 2 incomplete deadlines, 1 tentative idea),
         all 4 must be flagged with 100% accuracy.
         """

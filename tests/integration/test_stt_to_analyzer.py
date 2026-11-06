@@ -1,5 +1,5 @@
 """
-Integration test suite: STT to Content Analyzer Pipeline (An Binh <-> Khanh Hung).
+Integration test suite: STT to Content Analyzer Pipeline (STT <-> Analyzer).
 
 Validates the handoff from transcribed speech to semantic information extraction:
 1. Ingestion of diarized transcript texts with timestamps into Analyzer input schema.

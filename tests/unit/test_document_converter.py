@@ -1,10 +1,10 @@
 """
-Unit test suite for Document Ingestion & Converter (Phước Toàn - Pre-meeting).
+Unit test suite for Document Ingestion & Converter (Pre-meeting Phase).
 
 Covers:
-- TC-TOAN-01: Document conversion from .pdf/.docx to Markdown (.md)
-- TC-TOAN-02: Automatic creation of storage and reading directory structure
-- TC-TOAN-03: Handling corrupt, empty, or unsupported file formats
+- TC-CNV-01: Document conversion from .pdf/.docx to Markdown (.md)
+- TC-CNV-02: Automatic creation of storage and reading directory structure
+- TC-CNV-03: Handling corrupt, empty, or unsupported file formats
 
 Status: Skeleton defined. Blocked by implementation in src/document/.
 """
@@ -33,7 +33,7 @@ class TestDocumentConverter:
 
     def test_convert_pdf_to_markdown_preserves_content(self, converter: MarkDownConverter, tmp_path: Path) -> None:
         """
-        TC-TOAN-01: Successfully convert .pdf/.docx to Markdown.
+        TC-CNV-01: Successfully convert .pdf/.docx to Markdown.
         Expectation: Output .md file preserves content and UTF-8 encoding.
         """
         # Arrange
@@ -58,7 +58,7 @@ class TestDocumentConverter:
         self, converter: MarkDownConverter, tmp_path: Path
     ) -> None:
         """
-        TC-TOAN-02: Auto-create directory tree if destination folder is missing.
+        TC-CNV-02: Auto-create directory tree if destination folder is missing.
         Expectation: No FileNotFoundError is raised when writing to a nested, non-existent path.
         """
         # Arrange
@@ -83,7 +83,7 @@ class TestDocumentConverter:
         self, converter: MarkDownConverter, tmp_path: Path
     ) -> None:
         """
-        TC-TOAN-03a: Reject non-existent files.
+        TC-CNV-03a: Reject non-existent files.
         Expectation: Raises FileNotFoundError and creates no garbage output.
         """
         out_file = tmp_path / "output.md"
@@ -98,7 +98,7 @@ class TestDocumentConverter:
         self, converter: MarkDownConverter, tmp_path: Path
     ) -> None:
         """
-        TC-TOAN-03b: Reject 0-byte (empty) files.
+        TC-CNV-03b: Reject 0-byte (empty) files.
         Expectation: Raises EmptyFileError and creates no garbage output.
         """
         out_file = tmp_path / "output.md"
@@ -114,7 +114,7 @@ class TestDocumentConverter:
         self, converter: MarkDownConverter, tmp_path: Path
     ) -> None:
         """
-        TC-TOAN-03c: Reject unsupported file formats (e.g., .exe).
+        TC-CNV-03c: Reject unsupported file formats (e.g., .exe).
         Expectation: Raises UnsupportedFileTypeError and creates no garbage output.
         """
         out_file = tmp_path / "output.md"

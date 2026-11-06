@@ -2,10 +2,10 @@
 Unit test suite for Meeting Manager & Storage Manager (PR #8).
 
 Covers:
-- TC-MM-01: Generating unique UUIDv4 and initializing MeetingContext.
-- TC-MM-02: Complete creation of all 7 runtime subdirectories.
-- TC-MM-03: Preventing overwrites on duplicate meeting IDs (FileExistsError).
-- TC-MM-04: Graceful rollback (directory deletion) when subdirectory creation fails.
+- TC-STG-01: Generating unique UUIDv4 and initializing MeetingContext.
+- TC-STG-02: Complete creation of all 7 runtime subdirectories.
+- TC-STG-03: Preventing overwrites on duplicate meeting IDs (FileExistsError).
+- TC-STG-04: Graceful rollback (directory deletion) when subdirectory creation fails.
 """
 
 import uuid
@@ -37,7 +37,7 @@ class TestMeetingManager:
         self, manager: MeetingManager, tmp_path: Path
     ) -> None:
         """
-        TC-MM-01: create_meeting() must generate a valid UUIDv4 identifier
+        TC-STG-01: create_meeting() must generate a valid UUIDv4 identifier
         and return a correctly configured MeetingContext dataclass.
         """
         # Act
@@ -62,7 +62,7 @@ class TestMeetingManager:
         self, storage: StorageManager, tmp_path: Path
     ) -> None:
         """
-        TC-MM-02: create_meeting_directory() must instantiate all 7 required
+        TC-STG-02: create_meeting_directory() must instantiate all 7 required
         lifecycle subdirectories under the meeting root directory.
         """
         # Arrange
@@ -93,7 +93,7 @@ class TestMeetingManager:
         self, storage: StorageManager
     ) -> None:
         """
-        TC-MM-03: Calling create_meeting_directory with an existing meeting_id
+        TC-STG-03: Calling create_meeting_directory with an existing meeting_id
         must raise FileExistsError to protect previously persisted records.
         """
         # Arrange
@@ -108,7 +108,7 @@ class TestMeetingManager:
         self, storage: StorageManager, tmp_path: Path
     ) -> None:
         """
-        TC-MM-04: If an unexpected error occurs during subdirectory creation,
+        TC-STG-04: If an unexpected error occurs during subdirectory creation,
         the storage manager must rollback by deleting the partially created meeting directory.
         """
         # Arrange

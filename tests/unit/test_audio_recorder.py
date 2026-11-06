@@ -2,9 +2,9 @@
 Unit test suite for Audio Recorder & Player (In-meeting Phase).
 
 Covers:
-- TC-TAI-01: Audio recording produces valid RIFF/WAVE files with strictly 44.1kHz / 16-bit PCM headers.
-- TC-TAI-02: Playback control transitions, idempotency (double-start prevention), and safe idle states.
-- TC-TAI-03: Graceful exception handling and state recovery when microphone drivers raise PortAudioError.
+- TC-REC-01: Audio recording produces valid RIFF/WAVE files with strictly 44.1kHz / 16-bit PCM headers.
+- TC-REC-02: Playback control transitions, idempotency (double-start prevention), and safe idle states.
+- TC-REC-03: Graceful exception handling and state recovery when microphone drivers raise PortAudioError.
 """
 
 from pathlib import Path
@@ -36,7 +36,7 @@ class TestAudioRecorder:
         self, recorder: Recorder, tmp_path: Path
     ) -> None:
         """
-        TC-TAI-01: Validates the full recording lifecycle (start -> time elapse -> stop)
+        TC-REC-01: Validates the full recording lifecycle (start -> time elapse -> stop)
         ensuring the output is a correctly formatted 44.1kHz, 16-bit PCM WAV file.
         """
         # Arrange
@@ -84,7 +84,7 @@ class TestAudioRecorder:
         self, recorder: Recorder, tmp_path: Path
     ) -> None:
         """
-        TC-TAI-02: Verifies idempotent start calls, safe stop executions from an idle state, 
+        TC-REC-02: Verifies idempotent start calls, safe stop executions from an idle state, 
         and hardware playback invocation routing.
         """
         # 1. Validate Initial Idle State
@@ -117,7 +117,7 @@ class TestAudioRecorder:
         self, recorder: Recorder
     ) -> None:
         """
-        TC-TAI-03: When hardware access fails (e.g., driver issues, missing mic), 
+        TC-REC-03: When hardware access fails (e.g., driver issues, missing mic), 
         the recorder must propagate the PortAudioError but cleanly reset its internal flags.
         """
         # Arrange: Simulate OS-level audio driver failure

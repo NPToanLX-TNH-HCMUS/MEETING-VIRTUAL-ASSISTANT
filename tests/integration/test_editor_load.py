@@ -1,5 +1,5 @@
 """
-Integration test suite: Content Analyzer to Document Editor (Khanh Hung <-> Khanh Ann).
+Integration test suite: Content Analyzer to Document Editor (Analyzer <-> Editor).
 
 Validates that extracted meeting minutes and audited action items persisted in
 post_meeting storage are cleanly loaded into the Document editor buffer for human review.

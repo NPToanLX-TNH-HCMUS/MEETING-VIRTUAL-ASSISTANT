@@ -1,11 +1,11 @@
 """
-Unit test suite for Document Editor & PDF Exporter (Khanh Ann - Post-meeting).
+Unit test suite for Document Editor & PDF Exporter (Post-meeting Phase).
 
 Covers:
-- TC-ANN-01: Loading Markdown documents with strictly preserved Vietnamese UTF-8 encoding.
-- TC-ANN-02: In-place text modification, save-overwrite, and 'Save As' path branching.
-- TC-ANN-03: Guard clauses for unloaded buffer states and non-existent file paths.
-- TC-ANN-04: Exporting final edited minutes to a valid .pdf binary (Awaiting PDF engine).
+- TC-EDT-01: Loading Markdown documents with strictly preserved Vietnamese UTF-8 encoding.
+- TC-EDT-02: In-place text modification, save-overwrite, and 'Save As' path branching.
+- TC-EDT-03: Guard clauses for unloaded buffer states and non-existent file paths.
+- TC-EDT-04: Exporting final edited minutes to a valid .pdf binary (Awaiting PDF engine).
 """
 
 from pathlib import Path
@@ -31,7 +31,7 @@ class TestEditorExporter:
         self, document_manager: Document, tmp_path: Path
     ) -> None:
         """
-        TC-ANN-01: Loading a Markdown report must transition state from Unloaded to Loaded
+        TC-EDT-01: Loading a Markdown report must transition state from Unloaded to Loaded
         and preserve all Vietnamese diacritics (ă, â, đ, ê, ô, ơ, ư), tonal marks, and tables.
         """
         # Arrange: Verify initial Unloaded state
@@ -66,7 +66,7 @@ class TestEditorExporter:
         self, document_manager: Document, tmp_path: Path
     ) -> None:
         """
-        TC-ANN-02: Editing an unconfirmed task to assign an owner, then saving,
+        TC-EDT-02: Editing an unconfirmed task to assign an owner, then saving,
         must overwrite the original file in-place or branch to a new file on 'Save As'.
         """
         # Arrange: Create and load initial document with an unassigned action item
@@ -105,7 +105,7 @@ class TestEditorExporter:
         self, document_manager: Document, tmp_path: Path
     ) -> None:
         """
-        TC-ANN-03: Verifies that loading a non-existent file raises FileNotFoundError
+        TC-EDT-03: Verifies that loading a non-existent file raises FileNotFoundError
         and saving without an active path or target raises ValueError.
         """
         # 1. Attempting to load a ghost file must fail cleanly and keep has_path False
@@ -120,13 +120,13 @@ class TestEditorExporter:
             document_manager.save("Orphaned text content without target path")
 
     @pytest.mark.skip(
-        reason="Awaiting Khanh Ann's PDF export engine integration (e.g., ReportLab / WeasyPrint)"
+        reason="Awaiting PDF export engine integration (e.g., ReportLab / WeasyPrint)"
     )
     def test_export_to_pdf_generates_valid_binary_header(
         self, document_manager: Document, tmp_path: Path
     ) -> None:
         """
-        TC-ANN-04: Exporting the active document to PDF must generate a non-empty
+        TC-EDT-04: Exporting the active document to PDF must generate a non-empty
         binary file starting with the standard '%PDF-' magic bytes.
         """
         # Arrange

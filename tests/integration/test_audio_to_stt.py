@@ -1,9 +1,9 @@
 """
-Integration test suite: Audio Recording to Speech-to-Text Pipeline (Tài <-> Bình).
+Integration test suite: Audio Recording to Speech-to-Text Pipeline (Audio <-> STT).
 
-Validates the end-to-end meeting recording & transcription lifecycle:
-1. Microphone capture via Recorder (Thành Tài) generating 44.1kHz WAV.
-2. Binary wave verification and API dispatch via ElevenLabsTranscriber (An Bình).
+Validates the meeting recording & transcription lifecycle:
+1. Microphone capture via Recorder generating 44.1kHz WAV.
+2. Binary wave verification and API dispatch via ElevenLabsTranscriber.
 3. Resilient error handling when audio streams or network disconnect.
 """
 
