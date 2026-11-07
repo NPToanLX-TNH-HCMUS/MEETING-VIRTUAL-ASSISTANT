@@ -32,7 +32,6 @@ from ..backend.during_meeting.agenda import receive_agenda
 from ..backend.document.markdown_converter import FileConversionError, MarkDownConverter
 from ..backend.audio.recorder import Recorder
 from ..backend.speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
-from ..backend.main import main
 from ..backend.meeting_manager.meeting_manager import MeetingManager
 from ..backend.meeting_manager.storage_manager import StorageManager
 
@@ -314,7 +313,6 @@ def save_agenda(meeting_id: str, body: AgendaEdit):
     stored["agenda"] = saved
     stored["meeting"]["status"] = "ready"
     receive_agenda(meeting_id, saved)
-    main(meeting_id) 
     return {"items": saved}
 
 
