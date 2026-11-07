@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 from time import sleep
 
 import requests
@@ -169,24 +168,3 @@ def call_llm(
             sleep(RETRY_DELAY_SECONDS)
 
     raise LLMCallError(failure.status, failure.code, " | ".join(failures))
-
-
-def parse_json_list(text: str) -> list[str]:
-    """Parse a JSON list or recover items from a plain-text response."""
-    cleaned = re.sub(r"```(?:json)?", "", text).strip().rstrip("`").strip()
-    try:
-        result = json.loads(cleaned)
-        if isinstance(result, list):
-            return [str(item).strip() for item in result if str(item).strip()]
-    except json.JSONDecodeError:
-        pass
-
-    items = re.findall(r'"([^"]+)"', cleaned)
-    if items:
-        return items
-
-    return [
-        re.sub(r"^\d+[\.\)]\s*", "", line).strip()
-        for line in cleaned.splitlines()
-        if line.strip() and not line.strip().startswith(("[", "]"))
-    ]

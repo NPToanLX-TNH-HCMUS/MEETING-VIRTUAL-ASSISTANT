@@ -84,3 +84,13 @@ class AgendaEdit(BaseModel):
     """FRONT END SENDS (JSON): the FULL list the user wants, in order."""
 
     items: list[AgendaItemEdit]
+
+# LLM Return
+class Topic(BaseModel):
+    title: str
+    source: Literal["planned_point", "document"]
+    minutes: int | None = None  # how long to discuss it; None if the model forgot
+
+
+class Topics(BaseModel):
+    items: list[Topic]
