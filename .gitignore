@@ -320,3 +320,6 @@ tmbootpicker.efi
 # CLAUDE
 .codegraph
 .claude
+
+# Ignore dynamic transcript hypothesis artifacts
+**/hypothesis_transcript.txt
