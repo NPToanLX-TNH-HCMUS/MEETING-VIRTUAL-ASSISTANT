@@ -227,8 +227,16 @@ __marimo__/
 *.mp3
 *.mp4
 
-# Allow evaluation audio test assets in tests/eval_data
+# Allow evaluation audio test assets in tests/eval_data and benchmarks
 !tests/eval_data/**/*.wav
+!tests/benchmarks/**/*.wav
+!tests/benchmarks/**/*.pdf
+!tests/benchmarks/**/*.docx
+
+# Ignore benchmark dynamic run output artifacts
+tests/benchmarks/**/results/run_*/
+transcript.json
+transcript.txt
 
 # test_files
 test_files

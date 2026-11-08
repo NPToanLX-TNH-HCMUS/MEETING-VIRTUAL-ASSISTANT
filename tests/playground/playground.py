@@ -15,6 +15,7 @@ from src.api.llm_common import build_prompt, system_prompt
 from src.backend.speech_to_text.transcriber import ElevenLabsTranscriber
 from src.backend.utils.llm import call_llm
 EVAL_DATA_DIR = REPO_ROOT / "tests" / "eval_data"
+BENCHMARKS_DIR = REPO_ROOT / "tests" / "benchmarks"
 AGENDA_DURATION_MINUTES = 30
 
 AGENDA_SCHEMA = {
@@ -69,7 +70,17 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.task == "agenda":
-        path = args.file or (REPO_ROOT / "agenda_sample.md")
+        bench_agenda = (
+            BENCHMARKS_DIR
+            / "PHASE_1_Document_To_Agenda"
+            / "Ingestion_Agenda_20Cases"
+            / "samples"
+            / "S01"
+            / "input_document.md"
+        )
+        path = args.file or (
+            bench_agenda if (bench_agenda.exists() and bench_agenda.stat().st_size > 0) else (REPO_ROOT / "agenda_sample.md")
+        )
         if not path.exists():
             path = EVAL_DATA_DIR / "snippets" / "snippet_step1.txt"
         print(f"[Playground] Running 'agenda' extraction on: {path}")
@@ -87,7 +98,17 @@ def main() -> None:
             print("👉 To run live LLM extraction, configure OPENROUTER_API_KEY or GROQ_API_KEY in your .env file.")
 
     elif args.task == "minutes":
-        path = args.file or (REPO_ROOT / "transcript.txt")
+        bench_transcript = (
+            BENCHMARKS_DIR
+            / "PHASE_3_Transcript_To_Minutes"
+            / "Minutes_Synthesis_12Cases"
+            / "samples"
+            / "S01"
+            / "transcript.txt"
+        )
+        path = args.file or (
+            bench_transcript if (bench_transcript.exists() and bench_transcript.stat().st_size > 0) else (REPO_ROOT / "transcript.txt")
+        )
         if not path.exists():
             path = EVAL_DATA_DIR / "transcripts" / "sample_transcript.txt"
         print(f"[Playground] Running 'minutes' extraction on: {path}")
@@ -108,7 +129,17 @@ def main() -> None:
             print("👉 To run live LLM extraction, configure OPENROUTER_API_KEY or GROQ_API_KEY in your .env file.")
 
     elif args.task == "audio":
-        audio_path = args.file or (EVAL_DATA_DIR / "input_audio" / "clean_sample_01.wav")
+        bench_audio = (
+            BENCHMARKS_DIR
+            / "PHASE_2_Audio_To_Transcript"
+            / "STT_English_AMI_16Cases"
+            / "samples"
+            / "S01"
+            / "meeting.wav"
+        )
+        audio_path = args.file or (
+            bench_audio if (bench_audio.exists() and bench_audio.stat().st_size > 0) else (EVAL_DATA_DIR / "input_audio" / "clean_sample_01.wav")
+        )
         print(f"[Playground] Running STT + LLM pipeline on audio: {audio_path}")
         
         transcript = None
@@ -119,8 +150,16 @@ def main() -> None:
         except Exception as exc:
             print(f"\n[STT Notice] Live ElevenLabs API call unavailable ({exc}).")
             print("👉 To run live ElevenLabs transcription, configure ELEVENLABS_API_KEY in your .env file.")
-            print("[STT Fallback] Using local evaluation reference transcript from tests/eval_data...")
-            fallback_path = EVAL_DATA_DIR / "transcripts" / "sample_transcript.txt"
+            print("[STT Fallback] Using local benchmark reference transcript...")
+            bench_fallback = (
+                BENCHMARKS_DIR
+                / "PHASE_3_Transcript_To_Minutes"
+                / "Minutes_Synthesis_12Cases"
+                / "samples"
+                / "S01"
+                / "transcript.txt"
+            )
+            fallback_path = bench_fallback if bench_fallback.exists() else (EVAL_DATA_DIR / "transcripts" / "sample_transcript.txt")
             transcript = fallback_path.read_text(encoding="utf-8-sig", errors="replace")
 
         prompt = (
