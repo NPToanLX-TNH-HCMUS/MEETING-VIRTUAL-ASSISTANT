@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from pathlib import Path
 from time import sleep
 
 import requests
@@ -15,7 +16,7 @@ LOGGER = logging.getLogger(__name__)
 
 PRIMARY_MODEL = "openai/gpt-oss-20b"
 FALLBACK_MODEL = "nvidia/nemotron-3.5-super-vl:free"
-REQUEST_TIMEOUT = (3, 20)
+REQUEST_TIMEOUT = (5, 60)
 RETRY_DELAY_SECONDS = 0.5
 
 PROVIDER_SETTINGS = {
@@ -133,6 +134,13 @@ def call_llm(
         validator = Draft202012Validator(_schema)
 
     load_dotenv()
+    env_file = Path(__file__).resolve().parents[3] / ".env"
+    if env_file.is_file():
+        load_dotenv(env_file, override=False)
+
+    # Auto-detect key prefix: if a Groq key (starts with gsk_) was assigned to OPENROUTER_API_KEY
+    if not os.getenv("GROQ_API_KEY") and os.getenv("OPENROUTER_API_KEY", "").startswith("gsk_"):
+        os.environ["GROQ_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
     attempts = (
         (_provider, _model),
         (_provider, _model),

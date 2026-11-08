@@ -246,6 +246,14 @@ def generate_markdown_report(results: List[Dict[str, Any]], summary: Dict[str, A
 
 
 def main() -> None:
+    from dotenv import load_dotenv
+    load_dotenv()
+    env_file = REPO_ROOT / ".env"
+    if env_file.is_file():
+        load_dotenv(env_file, override=False)
+    if not os.getenv("GROQ_API_KEY") and os.getenv("OPENROUTER_API_KEY", "").startswith("gsk_"):
+        os.environ["GROQ_API_KEY"] = os.getenv("OPENROUTER_API_KEY")
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--sample", "-s", type=str, default=None, help="Run specific sample (e.g. S01)")
     parser.add_argument("--mock", action="store_true", help="Run mock evaluation (offline dry-run)")
