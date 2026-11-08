@@ -250,6 +250,7 @@ CLAUDE.md
 
 # Front end (Vite)
 frontend/node_modules/
+node_modules/
 frontend/dist/
 
 .env.example

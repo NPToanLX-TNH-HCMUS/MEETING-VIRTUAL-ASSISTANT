@@ -1125,3 +1125,72 @@ textarea {
   color: var(--c-text-muted);
   font-size: var(--fs-xs);
 }
+
+/* ---------- Trang họp (during.html) ---------- */
+.during-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.during-meta {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.during-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.live-badge {
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: var(--c-error-bg);
+  color: var(--c-error-text);
+  font: 600 var(--fs-xs) var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.during-error {
+  margin: var(--s-3) var(--s-6) 0;
+}
+
+.during-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+  gap: var(--s-5);
+  padding: var(--s-5) var(--s-6);
+  align-items: start;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1023px) {
+  .during-layout {
+    grid-template-columns: 1fr;
+    padding: var(--s-4);
+  }
+}
+
+.card__title--sm {
+  font-size: var(--fs-md);
+}
+
+.during-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-3);
+}
+
+.transcript {
+  white-space: pre-wrap; /* giữ xuống dòng, vẫn tự ngắt dòng dài */
+  margin: 0;
+  font: inherit;
+}

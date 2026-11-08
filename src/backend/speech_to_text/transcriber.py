@@ -109,13 +109,6 @@ class ElevenLabsTranscriber:
 
         transcript = transcript.strip()
 
-        # Save the complete API response for diarization
-        # and timestamp processing.
-        json_path = Path("transcript.json")
-        json_path.write_text(
-            json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
-
         # Format transcript with speaker IDs and timestamps
         words = result.get("words", [])
         formatted_transcript = _format_diarized_transcript(words)

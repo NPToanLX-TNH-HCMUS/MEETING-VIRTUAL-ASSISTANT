@@ -10,5 +10,9 @@ export default defineConfig({
       '/ws': { target: BACKEND.replace('http', 'ws'), ws: true },
     },
   },
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: { input: { main: 'index.html', during: 'during.html' } },
+  },
 });

@@ -16,23 +16,34 @@ Contract: docs/system_design/api-contract.md (sections 5 and 6).
 """
 
 import re
+import tempfile
 from datetime import datetime
+from pathlib import Path
 from typing import Literal
 
 from fastapi import FastAPI, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from .objects import *
-from .llm_common import LLMError
-from .openrouter_agenda import extract_topics
+from .llm_common import extract_topics
+from ..backend.utils.llm import LLMCallError
+from ..backend.during_meeting.agenda import receive_agenda
+from ..backend.document.markdown_converter import FileConversionError, MarkDownConverter
+from ..backend.audio.recorder import Recorder
+from ..backend.speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
+from ..backend.meeting_manager.meeting_manager import MeetingManager
+from ..backend.meeting_manager.storage_manager import StorageManager
 
 app = FastAPI()
+meeting_manager = MeetingManager(StorageManager())
 
 # Kept in memory: every restart (including uvicorn --reload after you save this file) empties it.
 # meetings[meeting_id] = {
 #     "meeting":   Meeting fields (what GET /meetings/{id} returns),
 #     "documents": [ {document fields..., "text": str, "headings": [str, ...]} ],
 #     "agenda":    [ AgendaItem fields ]   (proposed, then confirmed),
+#     "context":   MeetingContext (id + data/<id>/ folders from MeetingManager),
 # }
 meetings: dict[str, dict] = {}
 
@@ -56,8 +67,8 @@ def meeting_not_found(meeting_id: str) -> JSONResponse:
 
 
 def log(step: str, data) -> None:
-    # Shows in the uvicorn terminal, so you can watch what goes between front and back end.
-    print(f"[BACKEND] {step}: {data}")
+    # print(f"[BACKEND] {step}: {data}")
+    pass
 
 
 # ======================================================================================
@@ -83,7 +94,8 @@ def create_meeting(body: NewMeeting):
     """
     log("1. create meeting, received", body.model_dump())
 
-    meeting_id = f"mtg_{len(meetings) + 1:03d}"
+    context = meeting_manager.create_meeting()  # unique id + data/<id>/ folders
+    meeting_id = context.meeting_id
     meeting = {
         "id": meeting_id,
         "topic": body.topic,
@@ -96,7 +108,7 @@ def create_meeting(body: NewMeeting):
         "started_at": None,
         "ended_at": None,
     }
-    meetings[meeting_id] = {"meeting": meeting, "documents": [], "agenda": []}
+    meetings[meeting_id] = {"meeting": meeting, "documents": [], "agenda": [], "context": context}
     return meeting
 
 
@@ -112,7 +124,7 @@ def read_meeting(meeting_id: str):
 # ======================================================================================
 
 MAX_FILE_BYTES = 10 * 1024 * 1024  # 10 MB
-MIME_TYPES = {".md": "markdown", ".txt": "text"}
+MIME_TYPES = {".md": "markdown", ".txt": "text", ".pdf": "pdf", ".docx": "docx", ".doc": "doc"}
 HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 
 
@@ -129,28 +141,40 @@ def split_markdown_headings(text: str) -> list[str]:
             headings.append(match.group(2))
     return headings
 
+converter = MarkDownConverter()
+
+
+def convert_to_markdown(content: bytes, extension: str) -> str:
+    with tempfile.TemporaryDirectory() as tmp:
+        source = Path(tmp) / f"upload{extension}"
+        source.write_bytes(content)
+        return converter.convert(source, Path(tmp) / "upload.md").read_text(encoding="utf-8")
+
 
 @app.post("/api/v1/meetings/{meeting_id}/documents", status_code=201, response_model=Document)
 async def upload_document(meeting_id: str, file: UploadFile):
-    """
-    FRONT END SENDS:  multipart/form-data with one field "file"
-    BACK END RETURNS: Document (no file content in the reply)
-    """
     if meeting_id not in meetings:
         return meeting_not_found(meeting_id)
 
     filename = file.filename or ""
     extension = filename[filename.rfind("."):].lower() if "." in filename else ""
     if extension not in MIME_TYPES:
-        return error(415, "UNSUPPORTED_FILE_TYPE", f"Only .md and .txt are accepted, got {filename!r}")
+        return error(415, "UNSUPPORTED_FILE_TYPE", f"Only .md, .txt, .pdf and .docx are accepted, got {filename!r}")
 
     content = await file.read()
     if len(content) > MAX_FILE_BYTES:
         return error(413, "FILE_TOO_LARGE", f"{filename} is larger than 10 MB")
 
-    # utf-8-sig also removes the BOM some Windows editors add; Vietnamese diacritics are kept.
-    text = content.decode("utf-8-sig", errors="replace")
-    headings = split_markdown_headings(text) if extension == ".md" else []
+    if extension in MarkDownConverter.SUPPORTED_EXTENSIONS:
+        try:
+            text = convert_to_markdown(content, extension)
+        except FileConversionError as exc:
+            return error(415, "UNSUPPORTED_FILE_TYPE", f"Could not read {filename!r}: {exc}")
+        headings = split_markdown_headings(text)
+    else:
+        # utf-8-sig also removes the BOM some Windows editors add; Vietnamese diacritics are kept.
+        text = content.decode("utf-8-sig", errors="replace")
+        headings = split_markdown_headings(text) if extension == ".md" else []
 
     stored = meetings[meeting_id]
     document = {
@@ -162,7 +186,6 @@ async def upload_document(meeting_id: str, file: UploadFile):
         "uploaded_at": now(),
     }
     stored["documents"].append({**document, "text": text, "headings": headings})
-    log("2. upload document, received", {"filename": filename, "size_bytes": len(content), "headings": headings})
     return document
 
 
@@ -182,8 +205,6 @@ def build_candidates(meeting_id: str) -> list[dict]:
     stored = meetings[meeting_id]
     meeting = stored["meeting"]
 
-    # The LLM reads the planned points and the document texts together, and sizes the topics to the
-    # meeting length (see openrouter_agenda.py). The user can still change each time in the UI.
     candidates = extract_topics(meeting["planned_points"], stored["documents"], meeting["duration_minutes"])
 
     for candidate in candidates:
@@ -219,7 +240,7 @@ def generate_agenda(meeting_id: str):
 
     try:
         candidates = build_candidates(meeting_id)
-    except LLMError as e:  # contract: 503 LLM_UNAVAILABLE / 422 LLM_BAD_OUTPUT
+    except LLMCallError as e:  # contract: 503 LLM_UNAVAILABLE / 422 LLM_BAD_OUTPUT
         return error(e.status, e.code, str(e))
     chosen, dropped = select_by_time(candidates, meeting["duration_minutes"])
 
@@ -291,6 +312,7 @@ def save_agenda(meeting_id: str, body: AgendaEdit):
 
     stored["agenda"] = saved
     stored["meeting"]["status"] = "ready"
+    receive_agenda(meeting_id, saved)
     return {"items": saved}
 
 
@@ -303,3 +325,62 @@ def read_agenda(meeting_id: str):
     if meeting_id not in meetings:
         return meeting_not_found(meeting_id)
     return {"items": meetings[meeting_id]["agenda"]}
+
+
+# ======================================================================================
+# 6. STAGE 2 (during meeting): POST /api/v1/meetings/{id}/recording/start | stop
+# ======================================================================================
+
+recorders: dict[str, Recorder] = {}
+
+
+@app.post("/api/v1/meetings/{meeting_id}/recording/start", response_model=Meeting)
+def start_recording(meeting_id: str):
+    if meeting_id not in meetings:
+        return meeting_not_found(meeting_id)
+    meeting = meetings[meeting_id]["meeting"]
+    if meeting["status"] != "ready":
+        return error(409, "INVALID_MEETING_STATE", f"Cannot start recording while the meeting is {meeting['status']}")
+    try:
+        recorder = Recorder()
+        recorder.start()
+    except Exception as exc:  # sounddevice raises PortAudioError when there is no microphone / no permission
+        return error(500, "RECORDER_FAILED", str(exc))
+    recorders[meeting_id] = recorder
+    meeting["status"] = "live"
+    meeting["started_at"] = now()
+    return meeting
+
+
+@app.post("/api/v1/meetings/{meeting_id}/recording/stop", response_model=Meeting)
+def stop_recording(meeting_id: str):
+    if meeting_id not in meetings:
+        return meeting_not_found(meeting_id)
+    stored = meetings[meeting_id]
+    meeting = stored["meeting"]
+    recorder = recorders.pop(meeting_id, None)
+    if meeting["status"] != "live" or recorder is None:
+        return error(409, "INVALID_MEETING_STATE", f"Cannot stop recording while the meeting is {meeting['status']}")
+    path = stored["context"].during_meeting_dir / "audio" / "record.wav"
+    recorder.stop(str(path))
+    meeting["status"] = "processing"
+    meeting["ended_at"] = now()
+    return meeting
+
+
+@app.post("/api/v1/meetings/{meeting_id}/transcribe")
+def transcribe_recording(meeting_id: str):
+    if meeting_id not in meetings:
+        return meeting_not_found(meeting_id)
+    context = meetings[meeting_id]["context"]
+    audio = context.during_meeting_dir / "audio" / "record.wav"
+    if not audio.is_file():
+        return error(409, "INVALID_MEETING_STATE", "There is no recording to transcribe yet")
+    try:
+        text = ElevenLabsTranscriber().transcribe_file(audio, context.during_meeting_dir / "transcript" / "transcript.txt")
+        print(text)
+    except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
+        return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
+    except AudioTranscriptionError as exc:
+        return error(502, "TRANSCRIPTION_FAILED", str(exc))
+    return {"transcript": text}
