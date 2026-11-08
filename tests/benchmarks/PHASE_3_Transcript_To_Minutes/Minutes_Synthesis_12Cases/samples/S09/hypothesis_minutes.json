@@ -1,0 +1,16 @@
+{
+  "summary": "The team reviewed the prototype design, confirmed the use of a sliding mechanism, discussed backlighting and speaker placement, and reviewed financials, noting a production cost of €12.3 and a target retail price of €20. The project manager will compile the final report and marketing will complete the final questionnaires.",
+  "decisions": [],
+  "action_items": [
+    {
+      "task": "Compile the final project report summarizing prototype specifications and financial metrics",
+      "owner": "Project Manager",
+      "due": null
+    },
+    {
+      "task": "Complete the final questionnaires",
+      "owner": "Marketing",
+      "due": null
+    }
+  ]
+}

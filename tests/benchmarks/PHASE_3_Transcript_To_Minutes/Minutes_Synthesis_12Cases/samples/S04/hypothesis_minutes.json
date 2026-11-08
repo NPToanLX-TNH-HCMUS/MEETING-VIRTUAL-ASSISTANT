@@ -1,0 +1,21 @@
+{
+  "summary": "The team discussed the project to develop a new remote control with a selling price of 25 € and production costs capped at 12.50 €. Roles were clarified: the Project Manager will oversee the project, the Industrial Designer will design core functions, the User Interface Designer will design the interface and appearance, and the Marketing Expert will gather market trends. The next meeting is scheduled in thirty minutes and each member is to prepare their respective parts.",
+  "decisions": [],
+  "action_items": [
+    {
+      "task": "Prepare core technical functions for the remote control",
+      "owner": "Industrial Designer",
+      "due": null
+    },
+    {
+      "task": "Prepare user interface design and appearance",
+      "owner": "User Interface",
+      "due": null
+    },
+    {
+      "task": "Gather market trends and share with design team",
+      "owner": "Marketing",
+      "due": null
+    }
+  ]
+}

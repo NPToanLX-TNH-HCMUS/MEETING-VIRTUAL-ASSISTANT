@@ -1,0 +1,17 @@
+{
+  "summary": "The team confirmed the product will be a TV-only remote with a rechargeable battery and docking station, a flip‑top curved body featuring the corporate logo, a lost‑device beeper, and no teletext or voice control. Marketing will research simplified user manuals.",
+  "decisions": [
+    "rechargeable battery with docking station",
+    "flip‑top curved body with corporate logo",
+    "lost‑remote beeper",
+    "no teletext",
+    "no voice control"
+  ],
+  "action_items": [
+    {
+      "task": "research how to make our instruction manual simple and user-friendly",
+      "owner": "Marketing",
+      "due": null
+    }
+  ]
+}

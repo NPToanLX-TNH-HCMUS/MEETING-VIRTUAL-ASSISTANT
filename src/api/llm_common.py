@@ -12,3 +12,4 @@ from src.backend.agenda_extractor.agenda_extractor import (
 )
 
 __all__ = ["system_prompt", "build_prompt", "extract_topics"]
+
