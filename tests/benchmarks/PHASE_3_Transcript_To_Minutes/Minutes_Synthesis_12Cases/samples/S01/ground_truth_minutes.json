@@ -1,0 +1,27 @@
+{
+    "summary": "Project Manager Abigail led the kick-off meeting with Marketing (Chiara), UI Designer (Stephanie), and Industrial Designer (Krista) to design an original, user-friendly remote control. The target selling price is set at 25 Euros with a profit goal of 50 million Euros on 4 million units sold internationally. Key features discussed include an easy-to-find mechanism (call button or vibration), hand-held sizing with minimal buttons, a display screen, water resistance, and a clip.",
+    "decisions": [
+        "Target selling price set at 25 Euros per unit",
+        "Profit goal set at 50 million Euros with a sales target of 4 million units (50% margin)",
+        "Remote control will be hand-held sized with minimal physical buttons",
+        "Remote control must be water-resistant and include a clip feature",
+        "Next meeting scheduled in 30 minutes"
+    ],
+    "action_items": [
+        {
+            "task": "Investigate physical working design and structure (screen and housing)",
+            "owner": "Industrial Designer",
+            "due": "Next meeting (in 30 minutes)"
+        },
+        {
+            "task": "Define technical functions and user interaction mechanisms",
+            "owner": "User Interface Designer",
+            "due": "Next meeting (in 30 minutes)"
+        },
+        {
+            "task": "Research user requirements and market data",
+            "owner": "Marketing",
+            "due": "Next meeting (in 30 minutes)"
+        }
+    ]
+}

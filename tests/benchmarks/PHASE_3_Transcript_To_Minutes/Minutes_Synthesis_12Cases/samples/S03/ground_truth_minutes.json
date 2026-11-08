@@ -1,0 +1,19 @@
+{
+    "summary": "In the conceptual design meeting, the team finalized the hardware specifications and styling for the new remote control. Following market trends, the team selected kinetic charging with watch-type batteries, a plastic casing with interchangeable rubber covers in fruit colors (such as chilli red), and a dual interface featuring an LCD display on the top flip and rubberized buttons on the bottom. Stylus and mirror suggestions were rejected. The team agreed to investigate the financial feasibility of voice recognition for a remote-locator feature, with a 40-minute recess before the next session.",
+    "decisions": [
+        "Adopted kinetic charging powered by a compact watch-type battery cell",
+        "Selected a plastic core casing with an interchangeable, spongy rubber cover in fruit and vegetable colours (e.g., chilli red)",
+        "Adopted a flip-top design with an LCD screen on the upper section and rubberized anti-RSI buttons on the lower section",
+        "Rejected stylus pointer and mirror proposals",
+        "Approved incorporating the company logo into the product design",
+        "Agreed to assess voice recognition cost feasibility for locating the device, with whistle or beeper as fallback",
+        "Scheduled a 40-minute recess before reconvening"
+    ],
+    "action_items": [
+        {
+            "task": "Check financial feasibility and component costs of incorporating the voice recognition module",
+            "owner": "Project Manager",
+            "due": "Next meeting (in 40 minutes)"
+        }
+    ]
+}

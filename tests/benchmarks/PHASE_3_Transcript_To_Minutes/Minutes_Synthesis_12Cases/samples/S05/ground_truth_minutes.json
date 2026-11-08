@@ -1,0 +1,17 @@
+{
+    "summary": "In the functional and technical design meeting, the team revised the target demographic to younger customers under forty. The team agreed on a modern, mobile-phone-inspired aesthetic featuring backlit buttons that illuminate for 20 seconds during use, a see-through multi-colored casing (inspired by iMac/iPod), and a simplified single-level button layout with an indicator LED. A proposal for speech recognition was formally rejected due to multilingual complexity and technical feasibility. The team recessed for lunch, with Marketing continuing trendwatching research.",
+    "decisions": [
+        "Pivoted target demographic from 40+ to consumers younger than 40 years old",
+        "Adopted backlit keypad illumination that activates on button press for 20 seconds to save battery",
+        "Approved a see-through multi-colour casing option inspired by iMac and iPod aesthetics",
+        "Selected a single-level standardized button layout with an activity indicator LED",
+        "Formally rejected speech recognition due to multilingual complexity and lack of necessity"
+    ],
+    "action_items": [
+        {
+            "task": "Conduct trendwatching research on youthful design aesthetics during lunch recess",
+            "owner": "Marketing",
+            "due": "After lunch break"
+        }
+    ]
+}

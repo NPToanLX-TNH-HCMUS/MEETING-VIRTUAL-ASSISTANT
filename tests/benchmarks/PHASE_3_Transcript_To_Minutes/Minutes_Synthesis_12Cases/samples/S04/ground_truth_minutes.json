@@ -1,0 +1,27 @@
+{
+    "summary": "In the project kick-off meeting, Project Manager Ada Longmund outlined the project goals and work division for creating a new international remote control. The team agreed on a target retail price of 25 Euros and a maximum production cost of 12.50 Euros. Team responsibilities were formally defined: the Project Manager oversees the project, Industrial Designer handles technical functions and internal manufacturing, User Interface Designer focuses on layout and user interaction, and Marketing provides market trend research. The next session is scheduled in 30 minutes.",
+    "decisions": [
+        "Product must be designed as an international, user-friendly, and trendy remote control",
+        "Target retail selling price established at 25 Euros",
+        "Production cost strictly capped at a maximum of 12.50 Euros",
+        "Role division agreed: Industrial Design handles internal functions, UI Design handles external interaction and button layout, Marketing handles user trends",
+        "Next meeting scheduled in 30 minutes"
+    ],
+    "action_items": [
+        {
+            "task": "Define internal technical functions and industrial manufacturing specifications",
+            "owner": "Industrial Designer",
+            "due": "Next meeting (in 30 minutes)"
+        },
+        {
+            "task": "Draft external interface layout, button placement, and user interaction requirements",
+            "owner": "User Interface Designer",
+            "due": "Next meeting (in 30 minutes)"
+        },
+        {
+            "task": "Gather market trend research on user preferences and features",
+            "owner": "Marketing",
+            "due": "Next meeting (in 30 minutes)"
+        }
+    ]
+}
