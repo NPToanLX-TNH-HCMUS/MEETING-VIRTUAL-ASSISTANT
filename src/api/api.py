@@ -586,6 +586,7 @@ def read_minutes(meeting_id: str):
             "MINUTES_NOT_READY",
             "Minutes have not been generated yet. Call POST .../minutes/generate first.",
         )
+    print(stored['minutes'])
     return stored["minutes"]
 
 

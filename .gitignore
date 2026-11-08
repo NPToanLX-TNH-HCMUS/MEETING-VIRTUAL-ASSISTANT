@@ -323,3 +323,7 @@ tmbootpicker.efi
 
 # Ignore dynamic transcript hypothesis artifacts
 **/hypothesis_transcript.txt
+
+# Data
+data/*
+!data/.gitkeep

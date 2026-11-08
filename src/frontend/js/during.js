@@ -26,6 +26,8 @@ function render() {
   $('transcript').hidden = !hasTranscript;
   $('transcript-empty').hidden = hasTranscript;
   $('agenda-empty').hidden = $('agenda-list').children.length > 0;
+  $("go-after-box").hidden = !hasTranscript;
+  $('go-after').href = `/after_meeting.html?meeting=${encodeURIComponent(meetingId)}`;
 
   if (!meetingId) showError('Thiếu mã cuộc họp. Hãy quay lại bước agenda.');
   else if (finished) $('status').textContent = 'Đã dừng. Âm thanh đã được lưu, bấm “Chuyển thành văn bản”.';

@@ -55,4 +55,13 @@ export const api = {
 
   // POST /meetings/{id}/transcribe -> { transcript }  (ElevenLabs can take a while)
   transcribe: (id) => request('POST', `/meetings/${id}/transcribe`, { timeoutMs: 180_000 }),
+  // POST /meetings/{id}/minutes/generate -> Minutes (meeting status -> "review")
+  convertToMinutes: (id) => request('POST', `/meetings/${id}/minutes/generate`, { timeoutMs: 100_000}),
+
+  // GET /meetings/{id}/minutes -> Minutes  (409 MINUTES_NOT_READY khi chưa generate)
+  getMinutes: (id) => request('GET', `/meetings/${id}/minutes`),
+
+  // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")
+  confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`),
+
 };
