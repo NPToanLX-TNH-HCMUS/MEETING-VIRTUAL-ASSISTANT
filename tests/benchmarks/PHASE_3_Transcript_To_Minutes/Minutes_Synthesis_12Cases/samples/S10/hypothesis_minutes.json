@@ -1,5 +1,5 @@
 {
-  "summary": "The team finalized material choices, power options, and voice command features, and reallocated tasks for the remote’s physical and UI design.",
+  "summary": "The team finalized material choices, power options, and voice control features, and reallocated tasks for the remote’s physical and UI design.",
   "decisions": [
     "Hybrid wood and rubber materials",
     "Dual solar and battery alimentation",

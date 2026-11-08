@@ -1,1 +1,27 @@
-{}
+{
+  "summary": "The team agreed on a remote with an iPod‑style wheel, no screen, a spongy rubber grip with interchangeable fruit covers, and using the TV’s display for menus. Power will be batteries or kinetic. Next steps involve mockups and product evaluation.",
+  "decisions": [
+    "iPod‑style wheel with regular chip",
+    "no remote screen",
+    "spongy stress‑ball grip with fruit covers",
+    "TV on‑screen menu",
+    "batteries or kinetic power options"
+  ],
+  "action_items": [
+    {
+      "task": "Create look‑and‑feel mockups using modeling clay",
+      "owner": "Industrial Designer",
+      "due": null
+    },
+    {
+      "task": "Create look‑and‑feel mockups using modeling clay",
+      "owner": "User Interface",
+      "due": null
+    },
+    {
+      "task": "Prepare product evaluation framework",
+      "owner": "Marketing",
+      "due": null
+    }
+  ]
+}

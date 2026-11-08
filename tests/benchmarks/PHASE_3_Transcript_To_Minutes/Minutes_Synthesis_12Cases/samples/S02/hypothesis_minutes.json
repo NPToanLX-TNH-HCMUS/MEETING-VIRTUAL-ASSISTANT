@@ -1,1 +1,10 @@
-{}
+{
+  "summary": "The team discussed reducing the prototype’s cost from 22 € to meet the 12.50 € budget. They decided to remove the solar cell, use plastic buttons, and redesign the casing to a simple, straight, one‑coloured box to lower production costs.",
+  "decisions": [
+    "Skip solar cell",
+    "Use plastic buttons instead of rubber",
+    "Redesign casing to simple straight one‑coloured box",
+    "Reduce production cost to 12.40 €"
+  ],
+  "action_items": []
+}

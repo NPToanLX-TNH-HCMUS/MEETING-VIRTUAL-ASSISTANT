@@ -2,11 +2,11 @@
   "summary": "The team discussed design options for a new remote, deciding on kinetic charging with a small watch‑type battery, an LCD display on the flip‑top, rubberized buttons on the bottom, a plastic case with a removable rubber cover in fruit‑themed colors, and the inclusion of the company logo. Voice‑recognition functionality was proposed for locating a lost remote, with a fallback to a whistle or beeper if cost is prohibitive. The project manager agreed to verify the financial feasibility of the voice feature and to review overall costs.",
   "decisions": [
     "Reject stylus and mirror",
-    "Use kinetic charging with watch batteries",
-    "Add LCD display on top",
+    "Adopt kinetic charging with watch batteries",
+    "Use LCD display on top of flip‑top",
     "Use rubberized buttons on bottom",
     "Use plastic case with removable rubber cover in fruit colours and company logo",
-    "Check financial feasibility of voice recognition; fallback to whistle or beeper if too expensive",
+    "Check financial feasibility of voice recognition and fallback to whistle or beeper if too expensive",
     "Check overall cost afterwards"
   ],
   "action_items": [
