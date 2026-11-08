@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đang họp · Meeting Virtual Assistant</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <!-- Chữ trong header do js/during.js điền từ GET /meetings/{id}. -->
+    <header class="app-header">
+      <div>
+        <h1 id="meeting-title" class="during-title">Cuộc họp</h1>
+        <p id="meeting-meta" class="during-meta"></p>
+      </div>
+
+      <div class="during-actions">
+        <!-- Chỉ báo ghi âm: có chữ, không chỉ dựa vào màu. Chỉ hiện khi đang ghi. -->
+        <span id="live-badge" class="live-badge" role="status" hidden></span>
+        <button id="pause" type="button" class="btn" disabled title="Backend chưa hỗ trợ tạm dừng">Tạm dừng</button>
+        <button id="toggle" type="button" class="btn btn--primary">Bắt đầu ghi âm</button>
+        <!-- Chỉ cho bản MVP: sau này transcript sẽ chạy liên tục nên không cần nút này. -->
+        <button id="transcribe" type="button" class="btn" disabled>Chuyển thành văn bản</button>
+      </div>
+    </header>
+
+    <div id="error" class="banner banner--error during-error" role="alert" hidden></div>
+
+    <main class="during-layout">
+      <!-- ============ TRÁI: agenda (chưa có dữ liệu) ============ -->
+      <section class="card" aria-labelledby="agenda-title">
+        <div class="card__head">
+          <h2 id="agenda-title" class="card__title card__title--sm">Agenda</h2>
+        </div>
+        <ul id="agenda-list" class="during-list"></ul>
+        <div id="agenda-empty" class="empty">
+          <p class="empty__title">Chưa có mục agenda</p>
+          <p>Các mục agenda của cuộc họp sẽ hiện ở đây.</p>
+        </div>
+      </section>
+
+      <!-- ============ PHẢI: live transcript (chưa có dữ liệu) ============ -->
+      <section class="card" aria-labelledby="transcript-title">
+        <div class="card__head">
+          <h2 id="transcript-title" class="card__title card__title--sm">Live transcript</h2>
+        </div>
+        <pre id="transcript" class="transcript" hidden></pre>
+        <div id="transcript-empty" class="empty">
+          <p class="empty__title">Chưa có transcript</p>
+          <p id="status" aria-live="polite">Bấm “Bắt đầu ghi âm” để bắt đầu cuộc họp.</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/js/during.js"></script>
+  </body>
+</html>
