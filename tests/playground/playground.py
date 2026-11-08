@@ -11,7 +11,10 @@ if str(REPO_ROOT) not in sys.path:
 if str(REPO_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from src.api.llm_common import build_prompt, system_prompt
+try:
+    from src.backend.agenda_extractor.agenda_extractor import build_prompt, system_prompt
+except ImportError:
+    from src.api.llm_common import build_prompt, system_prompt
 from src.backend.speech_to_text.transcriber import ElevenLabsTranscriber
 from src.backend.utils.llm import call_llm
 EVAL_DATA_DIR = REPO_ROOT / "tests" / "eval_data"
