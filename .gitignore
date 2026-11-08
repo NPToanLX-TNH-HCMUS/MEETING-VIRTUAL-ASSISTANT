@@ -309,3 +309,6 @@ tmbootpicker.efi
 # CLAUDE
 .codegraph
 .claude
+
+# Data
+data/*
