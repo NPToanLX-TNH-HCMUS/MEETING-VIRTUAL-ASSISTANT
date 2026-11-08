@@ -13,6 +13,6 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: { input: { main: 'index.html', during: 'during.html' } },
+    rollupOptions: { input: { main: 'index.html', during: 'during.html', after: 'after_meeting.html' } },
   },
 });

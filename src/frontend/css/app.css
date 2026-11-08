@@ -1194,3 +1194,34 @@ textarea {
   margin: 0;
   font: inherit;
 }
+
+/* ---------- Sau họp (after_meeting.html) ---------- */
+.after-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+
+.after-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.after-layout {
+  display: grid;
+  padding: var(--s-5) var(--s-6);
+  min-height: calc(100vh - var(--header-h));
+}
+
+@media (max-width: 1023px) {
+  .after-layout {
+    padding: var(--s-4);
+  }
+}
+
+.after-error {
+  margin: var(--s-3) var(--s-6) 0;
+}
