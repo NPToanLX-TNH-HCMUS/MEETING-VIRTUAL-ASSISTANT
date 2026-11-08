@@ -68,8 +68,11 @@ class NewMeeting(BaseModel):
     topic: str
     language: str
     duration_minutes: int
-    planned_points: list[str] = []  # one entry per line of the "Các ý bạn dự định trình bày" box
+    planned_points: list[
+        str
+    ] = []  # one entry per line of the "Points you plan to present" box
     previous_meeting_id: str | None = None  # always null for now
+
 
 class AgendaItemEdit(BaseModel):
     """One row as the UI sends it: only what the user can change."""
@@ -85,7 +88,8 @@ class AgendaEdit(BaseModel):
 
     items: list[AgendaItemEdit]
 
-# LLM Return
+
+# LLM Return — Agenda extraction
 class Topic(BaseModel):
     title: str
     source: Literal["planned_point", "document"]
@@ -94,3 +98,41 @@ class Topic(BaseModel):
 
 class Topics(BaseModel):
     items: list[Topic]
+
+
+# LLM Return — Minutes extraction
+class ActionItem(BaseModel):
+    """A task identified from the meeting transcript."""
+
+    task: str  # what needs to be done
+    assignee: str | None  # who is responsible; null when unidentifiable
+    due: str | None  # YYYY-MM-DD deadline; null when not stated
+    quote: str  # verbatim excerpt from the transcript that supports this item
+
+
+class MinutesExtraction(BaseModel):
+    """Raw structured output from the LLM before assembling the final Markdown."""
+
+    summary: str
+    decisions: list[str]
+    action_items: list[ActionItem]
+    unresolved_issues: list[str]
+
+
+class Minutes(BaseModel):
+    """The meeting minutes object returned by the API (§5.8 of api-contract.md)."""
+
+    meeting_id: str
+    status: str  # "draft" | "confirmed"
+    summary: str
+    decisions: list[str]
+    action_items: list[ActionItem]
+    unresolved_issues: list[str]
+    markdown: str  # full Markdown the user can read and edit
+    updated_at: str
+
+
+class MinutesEdit(BaseModel):
+    """FRONT END SENDS when the user edits the minutes Markdown draft."""
+
+    markdown: str
