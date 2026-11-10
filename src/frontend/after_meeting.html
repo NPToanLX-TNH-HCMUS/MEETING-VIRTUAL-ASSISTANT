@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sau họp · Meeting Virtual Assistant</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1 id="meeting-title" class="after-title">Sau họp</h1>
+      </div>
+
+      <div class="after-actions">
+        <button id="generate" type="button" class="btn btn--primary">Tạo minute</button>
+        <button id="confirm" type="button" class="btn btn--primary" disabled>Xác nhận minute</button>
+      </div>
+    </header>
+
+    <div id="error" class="banner banner--error after-error" role="alert" hidden></div>
+
+    <main class="after-layout">
+      <section class="card" aria-labelledby="minutes-title">
+        <div class="card__head">
+          <h2 id="minutes-title" class="card__title card__title--sm">Biên bản cuộc họp</h2>
+          <span id="minutes-status" class="badge" hidden></span>
+        </div>
+        <div id="minutes" class="md after-minutes" hidden></div>
+        <div id="minutes-empty" class="empty">
+          <p class="empty__title">Chưa có minute</p>
+          <p id="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/js/after.js"></script>
+  </body>
+</html>

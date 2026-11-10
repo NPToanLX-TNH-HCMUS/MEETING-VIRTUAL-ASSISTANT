@@ -68,6 +68,8 @@ function render() {
   $('planned').hidden = !agenda;
   if (!agenda) return;
 
+  $('go-during-box').hidden = !(agenda.confirmed && meeting);
+  if (meeting) $('go-during').href = `/during.html?meeting=${encodeURIComponent(meeting.id)}`;
   renderRows();
   renderDropped();
   renderSummary();
@@ -341,7 +343,7 @@ async function confirm() {
 function addFiles(picked) {
   const problems = [];
   for (const file of picked) {
-    if (!/\.(md|txt)$/i.test(file.name)) problems.push(`${file.name}: chỉ nhận .md và .txt`);
+    if (!/\.(md|txt|pdf|docx|doc)$/i.test(file.name)) problems.push(`${file.name}: chỉ nhận .md .txt .pdf .docx`);
     else if (file.size > MAX_FILE_BYTES) problems.push(`${file.name}: lớn hơn 10 MB`);
     else if (files.some((f) => f.name === file.name)) problems.push(`${file.name}: đã được thêm`);
     else files.push(file);

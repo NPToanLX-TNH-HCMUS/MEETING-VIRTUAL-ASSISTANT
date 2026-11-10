@@ -48,4 +48,20 @@ export const api = {
 
   // PUT /meetings/{id}/agenda -> { items } 
   saveAgenda: (id, items) => request('PUT', `/meetings/${id}/agenda`, { json: { items } }),
+
+  // POST /meetings/{id}/recording/start | stop -> Meeting (status "live" | "processing")
+  startRecording: (id) => request('POST', `/meetings/${id}/recording/start`),
+  stopRecording: (id) => request('POST', `/meetings/${id}/recording/stop`),
+
+  // POST /meetings/{id}/transcribe -> { transcript }  (ElevenLabs can take a while)
+  transcribe: (id) => request('POST', `/meetings/${id}/transcribe`, { timeoutMs: 180_000 }),
+  // POST /meetings/{id}/minutes/generate -> Minutes (meeting status -> "review")
+  convertToMinutes: (id) => request('POST', `/meetings/${id}/minutes/generate`, { timeoutMs: 100_000}),
+
+  // GET /meetings/{id}/minutes -> Minutes  (409 MINUTES_NOT_READY khi chưa generate)
+  getMinutes: (id) => request('GET', `/meetings/${id}/minutes`),
+
+  // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")
+  confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`),
+
 };
