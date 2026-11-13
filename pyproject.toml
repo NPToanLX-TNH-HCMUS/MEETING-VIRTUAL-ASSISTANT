@@ -21,6 +21,8 @@ dependencies = [
     "google",
     "requests",
     "jsonschema>=4,<5",
+    "sentence-transformers",
+    "numpy"
 ]
 
 [tool.hatch.build.targets.wheel]
