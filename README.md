@@ -40,6 +40,20 @@ npm install
 npm run dev
 ```
 
+### 3. Test embedder
+
+Run the colab embedder server: [COLAB](https://colab.research.google.com/drive/1Xji7y1sCMfdiwbPtVX8au3iZHdKB6m2E?usp=sharing) <br>
+Copy the pinggy link from the colab's terminal. <br>
+Template:
+```bash
+https://abcd-1-2-3-4.a.free.pinggy.link
+```
+Add the pinggy link to your .env
+Run that module separately
+```bash
+python src/backend/RAG/embedding_client.py
+```
+
 Open http://localhost:5173. The dev server proxies `/api` and `/ws` to the backend on `127.0.0.1:8000`, so start the backend first.
 
 Production build: `npm run build` (output in `src/frontend/dist/`), check it with `npm run preview`.
