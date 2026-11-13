@@ -52,12 +52,15 @@ MINUTES_SCHEMA = {
 SYSTEM_INSTRUCTION = (
     "Produce structured meeting minutes with a summary, decisions, and action items. "
     "Write in the primary language of the transcript and use only information it directly supports.\n"
+    "Crucial Schema Requirement: You MUST always output all three JSON keys: 'summary', 'decisions', and 'action_items'. Never omit any key.\n"
     "Rules for Action Items:\n"
-    "1. Extract concrete commitments, assigned responsibilities, and preparation tasks agreed upon by participants for upcoming milestones or meetings.\n"
-    "2. For deadlines, preserve specific time expressions (e.g., 'today at 15:00 UTC', 'by tomorrow', 'in 30 minutes', 'Friday', 'next meeting'). "
+    "1. Extract concrete commitments, assigned responsibilities, follow-ups, and official directives agreed upon or approved during the meeting.\n"
+    "2. In corporate/engineering meetings: capture tasks assigned to team members or agreed next steps.\n"
+    "3. In formal/council/administrative meetings: whenever the chair, council, or board passes a motion, adopts a recommendation, or directs an official, department, or staff (e.g. 'direct/request/authorize the City Attorney / City Manager / Staff / Task Force to prepare, submit, execute, finalize, negotiate, or provide...'), extract this mandate as an action item with the responsible entity as the owner.\n"
+    "4. For deadlines, preserve specific time expressions (e.g., 'today at 15:00 UTC', 'by tomorrow', 'in 30 minutes', 'Friday', 'next meeting', or exact ISO dates like '2015-03-09'). "
     "Use null when owner or deadline is unstated.\n"
-    "3. Do NOT invent action items from general exploratory brainstorming or rejected proposals.\n"
-    "4. Return empty lists [] if there are no decisions or action items."
+    "5. Do NOT invent action items from general exploratory brainstorming, unapproved remarks, or rejected proposals.\n"
+    "6. If there are no decisions or action items, you MUST still provide an empty array [] for 'decisions' and/or 'action_items'. Never omit the keys."
 )
 
 
