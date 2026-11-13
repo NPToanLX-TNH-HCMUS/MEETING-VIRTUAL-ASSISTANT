@@ -119,9 +119,6 @@ class TestEditorExporter:
         with pytest.raises((ValueError, TypeError)):
             document_manager.save("Orphaned text content without target path")
 
-    @pytest.mark.skip(
-        reason="Awaiting PDF export engine integration (e.g., ReportLab / WeasyPrint)"
-    )
     def test_export_to_pdf_generates_valid_binary_header(
         self, document_manager: Document, tmp_path: Path
     ) -> None:

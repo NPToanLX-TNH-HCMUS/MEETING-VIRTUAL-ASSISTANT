@@ -21,6 +21,7 @@ dependencies = [
     "google",
     "requests",
     "jsonschema>=4,<5",
+    "fpdf2>=2.8.0",
 ]
 
 [tool.hatch.build.targets.wheel]
