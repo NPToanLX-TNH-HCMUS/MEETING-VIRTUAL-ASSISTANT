@@ -463,14 +463,17 @@ def transcribe_recording(meeting_id: str):
         segments = ElevenLabsTranscriber().transcribe_file(
             audio, context.during_meeting_dir / "transcript" / "transcript.txt"
         )
-        # The existing UI expects text; expose speaker turns separately for consumers.
-        text = " ".join(segment["Text"] for segment in segments)
+        # Format speaker turns here so the frontend can display the string directly.
+        text = "\n\n".join(
+            f"[{segment['Timestamp']}] {segment['Speaker']}:\n{segment['Text']}"
+            for segment in segments
+        )
         print(text)
     except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
         return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
     except AudioTranscriptionError as exc:
         return error(502, "TRANSCRIPTION_FAILED", str(exc))
-    return {"transcript": text, "segments": segments}
+    return {"transcript": text}
 
 
 # ======================================================================================
