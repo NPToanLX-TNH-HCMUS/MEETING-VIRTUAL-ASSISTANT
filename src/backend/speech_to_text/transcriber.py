@@ -1,4 +1,3 @@
-import json
 import os
 import wave
 from pathlib import Path
@@ -43,7 +42,7 @@ class ElevenLabsTranscriber:
         self,
         audio_path: str | Path,
         output_path: str | Path | None = "transcript.txt",
-    ) -> str:
+    ) -> list[dict[str, str]]:
         path = Path(audio_path)
 
         if not path.is_file():
@@ -107,72 +106,94 @@ class ElevenLabsTranscriber:
         if not isinstance(transcript, str) or not transcript.strip():
             raise AudioTranscriptionError("No transcript returned by ElevenLabs")
 
-        transcript = transcript.strip()
+        segments = self.transcriber_parser(result)
 
-        # Format transcript with speaker IDs and timestamps
-        words = result.get("words", [])
-        formatted_transcript = _format_diarized_transcript(words)
-
-        # Save the diarized transcript to TXT
+        # Keep a readable copy for the minutes generator, which reads this file.
         if output_path is not None:
             txt_path = Path(output_path)
             if txt_path.parent and str(txt_path.parent) not in ("", "."):
                 txt_path.parent.mkdir(parents=True, exist_ok=True)
-            txt_path.write_text(formatted_transcript or transcript, encoding="utf-8")
-
-        return transcript
-
-
-def _format_diarized_transcript(words: list[dict]) -> str:
-    def format_time(seconds: float) -> str:
-        minutes = int(seconds) // 60
-        remaining = seconds % 60
-        return f"{minutes:02d}:{remaining:05.2f}"
-
-    segments = []
-    current_speaker = None
-    start_time = None
-    end_time = None
-    text_parts = []
-
-    for item in words:
-        token_type = item.get("type")
-
-        # Preserve spaces returned by ElevenLabs.
-        if token_type == "spacing":
-            if text_parts:
-                text_parts.append(item.get("text", " "))
-            continue
-
-        if token_type != "word":
-            continue
-
-        speaker = item.get("speaker_id") or "unknown"
-
-        # A speaker change indicates a new segment.
-        if speaker != current_speaker and text_parts:
-            segments.append(
-                f"[{format_time(start_time)} - "
-                f"{format_time(end_time)}] "
-                f"{current_speaker}:\n"
-                f"{''.join(text_parts).strip()}"
+            formatted_transcript = "\n\n".join(
+                f"[{segment['Timestamp']}] {segment['Speaker']}:\n{segment['Text']}"
+                for segment in segments
             )
-            text_parts = []
+            txt_path.write_text(formatted_transcript, encoding="utf-8")
 
-        if not text_parts:
-            current_speaker = speaker
-            start_time = item.get("start", 0)
+        return segments
 
-        text_parts.append(item.get("text", ""))
-        end_time = item.get("end", start_time)
+    # No API key or instance state is needed, so the parser can be tested alone.
+    @staticmethod
+    def transcriber_parser(result: dict) -> list[dict[str, str]]:
+        """Return one Timestamp/Speaker/Text dict per consecutive speaker turn.
 
-    # Save the last speaker segment.
-    if text_parts:
-        segments.append(
-            f"[{format_time(start_time)} - "
-            f"{format_time(end_time)}] "
-            f"{current_speaker}:\n"
-            f"{''.join(text_parts).strip()}"
-        )
+        Timestamp uses MM:SS.cc - MM:SS.cc relative to the audio file start.
+        Missing speaker labels or times are represented by "unknown".
+        """
+        def format_time(seconds: float | None) -> str:
+            # Zero would falsely place missing timing at the recording start.
+            if seconds is None:
+                return "unknown"
 
-    return "\n\n".join(segments)
+            # Round first so 59.999 becomes 01:00.00 rather than 00:60.00.
+            centiseconds = round(seconds * 100)
+            # Integer arithmetic avoids floating-point errors when splitting time.
+            minutes, remainder = divmod(centiseconds, 6000)
+            whole_seconds, fraction = divmod(remainder, 100)
+            return f"{minutes:02d}:{whole_seconds:02d}.{fraction:02d}"
+
+        # A list keeps A -> B -> A as three turns instead of merging A's speech.
+        turns = []
+
+        # Missing word metadata should still allow the full-text fallback below.
+        for item in result.get("words") or []:
+            token_type = item.get("type")
+
+            if token_type == "spacing":
+                # Preserve supplied spaces so words do not run together.
+                if turns:
+                    turns[-1]["parts"].append(item.get("text", " "))
+                continue
+
+            # Downstream features need spoken words, not sound descriptions.
+            if token_type != "word":
+                continue
+
+            # Do not guess who spoke when the API supplies no speaker label.
+            speaker = item.get("speaker_id") or "unknown"
+
+            # A returning speaker still needs a new turn to preserve dialogue order.
+            if not turns or speaker != turns[-1]["speaker"]:
+                turns.append({
+                    "speaker": speaker,
+                    "start": item.get("start"),
+                    "end": None,
+                    "parts": [],
+                })
+
+            turns[-1]["parts"].append(item.get("text", ""))
+            # The last word determines when the entire turn ends.
+            turns[-1]["end"] = item.get("end")
+
+        # Hide temporary grouping fields so callers depend only on the agreed keys.
+        segments = [
+            {
+                "Timestamp": (
+                    f"{format_time(turn['start'])} - "
+                    f"{format_time(turn['end'])}"
+                ),
+                "Speaker": turn["speaker"],
+                # Spaces already come from the API; only outer whitespace is unwanted.
+                "Text": "".join(turn["parts"]).strip(),
+            }
+            for turn in turns
+        ]
+
+        # Preserve usable text without inventing missing timing or speaker metadata.
+        if not segments and (result.get("text") or "").strip():
+            segments.append({
+                "Timestamp": "unknown",
+                "Speaker": "unknown",
+                "Text": result["text"].strip(),
+            })
+
+        return segments

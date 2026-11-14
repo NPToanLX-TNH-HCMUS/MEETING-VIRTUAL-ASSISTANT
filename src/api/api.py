@@ -460,8 +460,13 @@ def transcribe_recording(meeting_id: str):
             409, "INVALID_MEETING_STATE", "There is no recording to transcribe yet"
         )
     try:
-        text = ElevenLabsTranscriber().transcribe_file(
+        segments = ElevenLabsTranscriber().transcribe_file(
             audio, context.during_meeting_dir / "transcript" / "transcript.txt"
+        )
+        # Format speaker turns here so the frontend can display the string directly.
+        text = "\n\n".join(
+            f"[{segment['Timestamp']}] {segment['Speaker']}:\n{segment['Text']}"
+            for segment in segments
         )
         print(text)
     except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
