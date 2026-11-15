@@ -48,6 +48,7 @@ export const api = {
 
   // PUT /meetings/{id}/agenda -> { items } 
   saveAgenda: (id, items) => request('PUT', `/meetings/${id}/agenda`, { json: { items } }),
+  getAgenda: (id) => request('GET', `/meetings/${id}/agenda`),
 
   // POST /meetings/{id}/recording/start | stop -> Meeting (status "live" | "processing")
   startRecording: (id) => request('POST', `/meetings/${id}/recording/start`),

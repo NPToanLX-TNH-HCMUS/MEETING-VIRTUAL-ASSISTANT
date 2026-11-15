@@ -16,7 +16,9 @@ Contract: docs/system_design/api-contract.md (sections 5 and 6).
 """
 
 import re
+import json
 import tempfile
+import asyncio
 from datetime import datetime
 from pathlib import Path
 
@@ -39,6 +41,9 @@ from ..backend.speech_to_text.transcriber import (
 )
 from ..backend.utils.llm import LLMCallError
 from .objects import *
+from fastapi import WebSocket, WebSocketDisconnect
+from contextlib import suppress
+from ..backend.speech_to_text.realtime_transcriber import stream_transcript
 
 app = FastAPI()
 meeting_manager = MeetingManager(StorageManager())
@@ -409,6 +414,8 @@ recorders: dict[str, Recorder] = {}
 
 @app.post("/api/v1/meetings/{meeting_id}/recording/start", response_model=Meeting)
 def start_recording(meeting_id: str):
+    if transcript_test_lock.locked():
+        return error(409, "MICROPHONE_BUSY", "Microphone đang được dùng cho transcript trực tiếp.")
     if meeting_id not in meetings:
         return meeting_not_found(meeting_id)
     meeting = meetings[meeting_id]["meeting"]
@@ -659,3 +666,184 @@ def confirm_minutes(meeting_id: str):
 
     log("7. confirm minutes", {"meeting_id": meeting_id, "status": "archived"})
     return meeting
+
+# ======================================================================================
+# 8. GET /api/v1/meetings/{id}/recording/level : get audio level
+# ======================================================================================
+
+@app.get("/api/v1/meetings/{id}/recording/level")
+def get_recording_level(id: str):
+    if id not in meetings:
+        return meeting_not_found(id)
+
+    recorder = recorders.get(id)
+
+    if recorder is None:
+        return {
+            "level": 0,
+            "dbfs": -60
+        }
+
+    return recorder.get_audio_level()
+
+
+# ======================================================================================
+# 9. GET /api/v1/meetings/{id}/transcript-test : test transcript socket
+# ======================================================================================
+transcript_test_lock = asyncio.Lock()
+@app.websocket("/ws/meetings/{meeting_id}/transcript-test")
+async def test_transcript_socket(
+    websocket: WebSocket,
+    meeting_id: str,
+):
+    await websocket.accept()
+
+    stored = meetings.get(meeting_id)
+
+    if stored is None:
+        await websocket.send_json({
+            "type": "error",
+            "message": "Không tìm thấy cuộc họp.",
+        })
+        await websocket.close(code=1008)
+        return
+
+    if (
+        stored["meeting"]["status"] != "ready"
+        or recorders
+        or transcript_test_lock.locked()
+    ):
+        await websocket.send_json({
+            "type": "error",
+            "message": (
+                "Hãy xác nhận agenda và dừng các phiên ghi âm "
+                "trước khi test transcript."
+            ),
+        })
+        await websocket.close(code=1008)
+        return
+
+    stop_event = asyncio.Event()
+    pause_event = asyncio.Event()
+
+    async def forward_event(event):
+        if event["type"] == "paused":
+            stored["meeting"]["status"] = "paused"
+        elif event["type"] in {"ready", "resumed"}:
+            stored["meeting"]["status"] = "live"
+        await websocket.send_json(event)
+
+    async def wait_for_disconnect():
+        while True:
+            message = await websocket.receive()
+
+            if message["type"] == "websocket.disconnect":
+                return
+            if message["type"] == "websocket.receive" and message.get("text"):
+                try:
+                    command = json.loads(message["text"])
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(command, dict):
+                    continue
+                if command.get("type") == "stop":
+                    stop_event.set()
+                elif not stop_event.is_set():
+                    if command.get("type") == "pause":
+                        pause_event.set()
+                    elif command.get("type") == "resume":
+                        pause_event.clear()
+
+    async with transcript_test_lock:
+        meeting = stored["meeting"]
+
+        meeting["status"] = "live"
+        meeting["started_at"] = now()
+        meeting["ended_at"] = None
+
+        audio_path = (
+            stored["context"].during_meeting_dir
+            / "audio"
+            / "record.wav"
+        )
+
+        stream_task = asyncio.create_task(
+            stream_transcript(
+                send_event=forward_event,
+                language=stored["meeting"]["language"],
+                stop_event=stop_event,
+                pause_event=pause_event,
+                audio_path=audio_path,
+            )
+        )
+
+        disconnect_task = asyncio.create_task(
+            wait_for_disconnect()
+        )
+
+        try:
+            await asyncio.wait(
+                {stream_task, disconnect_task},
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+
+            # Nếu người dùng đóng trang, dừng tác vụ nhận diện.
+            if disconnect_task.done():
+                return
+
+            # Lấy kết quả; nếu tác vụ lỗi, lỗi sẽ được đưa
+            # xuống nhánh except bên dưới.
+            transcript = (await stream_task).strip()
+
+            if not transcript:
+                raise ValueError(
+                    "Chưa có câu nào được chốt. "
+                    "Hãy thử lại và ngừng nói vài giây trước khi phiên kết thúc."
+                )
+
+            transcript_path = (
+                stored["context"].during_meeting_dir
+                / "transcript"
+                / "transcript.txt"
+            )
+
+            transcript_path.parent.mkdir(parents=True, exist_ok=True)
+            transcript_path.write_text(transcript, encoding="utf-8")
+
+            meeting["ended_at"] = now()
+            meeting["status"] = "processing"
+
+            await websocket.send_json({
+                "type": "done",
+                "has_text": True,
+                "saved": True,
+                "transcript": transcript,
+            })
+
+        except WebSocketDisconnect:
+            pass
+
+        except Exception as exc:
+            with suppress(Exception):
+                await websocket.send_json({
+                    "type": "error",
+                    "message": str(exc),
+                })
+
+        finally:
+            for task in (stream_task, disconnect_task):
+                task.cancel()
+
+            await asyncio.gather(
+                stream_task,
+                disconnect_task,
+                return_exceptions=True,
+            )
+
+            if meeting["status"] in {"live", "paused"}:
+                meeting["status"] = "ready"
+                meeting["started_at"] = None
+                meeting["ended_at"] = None
+
+            with suppress(Exception):
+                await websocket.close()
