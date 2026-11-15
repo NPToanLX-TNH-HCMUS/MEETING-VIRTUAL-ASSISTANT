@@ -18,10 +18,11 @@
       <div class="during-actions">
         <!-- Chỉ báo ghi âm: có chữ, không chỉ dựa vào màu. Chỉ hiện khi đang ghi. -->
         <span id="live-badge" class="live-badge" role="status" hidden></span>
-        <button id="pause" type="button" class="btn" disabled title="Backend chưa hỗ trợ tạm dừng">Tạm dừng</button>
-        <button id="toggle" type="button" class="btn btn--primary">Bắt đầu ghi âm</button>
-        <!-- Chỉ cho bản MVP: sau này transcript sẽ chạy liên tục nên không cần nút này. -->
-        <button id="transcribe" type="button" class="btn" disabled>Chuyển thành văn bản</button>
+        <button id="test-transcript" type="button" class="btn btn--primary">
+          Bắt đầu ghi âm
+        </button>
+        <button id="pause" type="button" class="btn" disabled aria-pressed="false">Tạm dừng</button>
+        <button id="stop-transcript" type="button" class="btn btn--danger" disabled>Dừng ghi âm</button>
       </div>
     </header>
 
@@ -45,7 +46,31 @@
         <div class="card__head">
           <h2 id="transcript-title" class="card__title card__title--sm">Live transcript</h2>
         </div>
-        <pre id="transcript" class="transcript" hidden></pre>
+        <div>
+          <label for="audio-level">Mức âm thanh microphone</label>
+
+          <progress
+            id="audio-level"
+            value="0"
+            max="100"
+            style="width: 100%; height: 20px;"
+          ></progress>
+
+          <p id="audio-level-text" role="status">Chưa ghi âm</p>
+        </div>
+        <div>
+          <p id="test-transcript-status">Chưa kết nối</p>
+
+          <div
+            id="test-transcript-final"
+            style="white-space: pre-wrap;"
+          ></div>
+
+          <div
+            id="test-transcript-partial"
+            style="color: #666;"
+          ></div>
+        </div>
         <div id="transcript-empty" class="empty">
           <p class="empty__title">Chưa có transcript</p>
           <p id="status" aria-live="polite">Bấm “Bắt đầu ghi âm” để bắt đầu cuộc họp.</p>
