@@ -15,7 +15,7 @@ from typing import overload
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from backend.text_chunking.base import BaseChunker
+from .base import BaseChunker
 
 _SEPARATORS = [
     "\n#{1,6} ",

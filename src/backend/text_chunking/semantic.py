@@ -13,24 +13,49 @@ from __future__ import annotations
 import os
 from typing import overload
 
+import requests
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from langchain_experimental.text_splitter import SemanticChunker as LCSemanticChunker
-from langchain_ollama import OllamaEmbeddings
 
-from backend.text_chunking.base import BaseChunker
-from backend.text_chunking.recursive import (
+from .base import BaseChunker
+from .recursive import (
     RecursiveChunker,
 )
 
 load_dotenv()
 OLLAMA_EMBEDDINGS_URL = os.getenv("EMBED_URL")
 
-ollama_embeddings = OllamaEmbeddings(
-    model="qwen3-embedding:0.6b",
-    base_url=str(OLLAMA_EMBEDDINGS_URL),
-)
+
+class __HFRemoteEmbeddings(Embeddings):
+    """Calls the FastAPI server on Colab (Qwen/Qwen3-Embedding-0.6B via sentence-transformers)."""
+
+    def __init__(self, base_url: str, batch_size: int = 64, timeout: int = 120):
+        self.base_url = base_url.rstrip("/")
+        self.batch_size = batch_size
+        self.timeout = timeout
+
+    def _post(self, texts: list[str], is_query: bool) -> list[list[float]]:
+        r = requests.post(
+            f"{self.base_url}/embed",
+            json={"texts": texts, "is_query": is_query},
+            timeout=self.timeout,
+        )
+        r.raise_for_status()
+        return r.json()["embeddings"]
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        out: list[list[float]] = []
+        for i in range(0, len(texts), self.batch_size):
+            out.extend(self._post(texts[i : i + self.batch_size], is_query=False))
+        return out
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._post([text], is_query=True)[0]
+
+
+ollama_embeddings = __HFRemoteEmbeddings(base_url=str(OLLAMA_EMBEDDINGS_URL))
 
 
 class SemanticChunker(BaseChunker):
