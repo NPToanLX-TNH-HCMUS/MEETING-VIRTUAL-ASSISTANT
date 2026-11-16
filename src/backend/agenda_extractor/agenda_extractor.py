@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from ..utils.json_handler import parse_topics
 from ..utils.llm import call_llm
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 
 INSTRUCTIONS = """\

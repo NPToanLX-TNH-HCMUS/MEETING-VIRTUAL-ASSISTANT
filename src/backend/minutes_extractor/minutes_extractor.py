@@ -14,7 +14,7 @@ from pydantic import ValidationError
 from ...api.objects import MinutesExtraction
 from ..utils.llm import LLMCallError, call_llm
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 
 MINUTES_SCHEMA = {
