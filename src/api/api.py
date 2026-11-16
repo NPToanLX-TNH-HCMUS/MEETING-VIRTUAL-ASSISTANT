@@ -87,7 +87,7 @@ def log(step: str, data) -> None:
 
 @app.get("/api/v1/health")
 def health():
-    return {"status": "ok", "mock_mode": True}
+    return {"status": "ok", "mock_mode": False}
 
 
 # ======================================================================================
@@ -468,7 +468,6 @@ def transcribe_recording(meeting_id: str):
             f"[{segment['Timestamp']}] {segment['Speaker']}:\n{segment['Text']}"
             for segment in segments
         )
-        print(text)
     except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
         return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
     except AudioTranscriptionError as exc:
@@ -591,7 +590,6 @@ def read_minutes(meeting_id: str):
             "MINUTES_NOT_READY",
             "Minutes have not been generated yet. Call POST .../minutes/generate first.",
         )
-    print(stored['minutes'])
     return stored["minutes"]
 
 
