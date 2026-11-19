@@ -3,14 +3,14 @@ import { connectTranscriptTest } from "./socket.js";
 
 const $ = (id) => document.getElementById(id);
 const meetingId = new URLSearchParams(location.search).get('meeting');
-const LANGUAGE = { vi: 'Tiếng Việt', en: 'English' };
+const LANGUAGE = { vi: 'Vietnamese', en: 'English' };
 
 let finished = false;
 let hasTranscript = false;
 let quietSince = null;
 let realtimeTranscriptSaved = false;
 let transcriptTestSocket = null;
-let testCommittedText = "";
+let segments = [];
 let realtimeReady = false;
 let realtimePaused = false;
 let realtimeStopping = false;
@@ -20,13 +20,15 @@ let agendaItems = [];
 function renderRealtimeControls() {
   const connected = transcriptTestSocket?.readyState === WebSocket.OPEN;
   $("live-badge").hidden = !realtimeReady || realtimeStopping;
-  $("live-badge").textContent = realtimePaused ? "ĐÃ TẠM DỪNG" : "ĐANG GHI ÂM";
+  $("live-badge").textContent = realtimePaused ? "LIVE · PAUSED" : "LIVE · RECORDING";
+  $("live-badge").classList.toggle("live-badge--paused", realtimePaused);
   $("pause").disabled = !connected || !realtimeReady || realtimeStopping || pausePending;
   $("pause").textContent = pausePending
-    ? "Đang xử lý…"
-    : realtimePaused ? "Tiếp tục" : "Tạm dừng";
+    ? "Working…"
+    : realtimePaused ? "Resume" : "Pause";
   $("pause").setAttribute("aria-pressed", String(realtimePaused));
   $("stop-transcript").disabled = !connected || !realtimeReady || realtimeStopping;
+  $("test-transcript").hidden = !!transcriptTestSocket;
   $("test-transcript").disabled = !meetingId || !!transcriptTestSocket || finished || realtimeTranscriptSaved;
 }
 
@@ -36,8 +38,25 @@ function render() {
   $("go-after-box").hidden = !hasTranscript;
   $('go-after').href = `/after_meeting.html?meeting=${encodeURIComponent(meetingId)}`;
 
-  if (!meetingId) showError('Thiếu mã cuộc họp. Hãy quay lại bước agenda.');
+  if (!meetingId) showError('Missing meeting ID. Go back to the agenda step.');
   renderRealtimeControls();
+}
+
+function renderSegments() {
+  $("test-transcript-final").replaceChildren(
+    ...segments.map((text) => {
+      const row = document.createElement("div");
+      row.className = "segment";
+      const time = document.createElement("span");
+      time.className = "segment__time";
+      time.textContent = "—"; // backend chưa gửi thời điểm của từng câu
+      const p = document.createElement("p");
+      p.className = "segment__text";
+      p.textContent = text;
+      row.append(time, p);
+      return row;
+    }),
+  );
 }
 
 function showError(message) {
@@ -45,49 +64,58 @@ function showError(message) {
   $('error').hidden = false;
 }
 
+const stateLabels = {
+  not_discussed: "Not discussed",
+  in_progress: "In progress",
+  discussed: "Discussed",
+  concluded: "Concluded",
+};
+const scoreFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 function renderAgenda() {
-  const list = $("agenda-list");
-
-  // Xóa nội dung cũ trước khi vẽ lại.
-  list.replaceChildren();
-
-  const stateLabels = {
-    not_discussed: "Chưa thảo luận",
-    in_progress: "Đang thảo luận",
-    discussed: "Đã thảo luận",
-    concluded: "Đã chốt",
-  };
-
   // Tạo bản sao rồi sắp xếp theo thứ tự agenda.
-  const sortedItems = [...agendaItems].sort(
-    (a, b) => a.order - b.order
+  const sortedItems = [...agendaItems].sort((a, b) => a.order - b.order);
+
+  $("agenda-list").replaceChildren(
+    ...sortedItems.map((item, i) => {
+      const row = document.createElement("li");
+      row.className = "agenda-card" + (item.state === "in_progress" ? " agenda-card--active" : "");
+
+      const top = document.createElement("div");
+      top.className = "agenda-card__top";
+      const title = document.createElement("span");
+      title.textContent = `${i + 1}. ${item.title}`;
+      // Trạng thái luôn có chữ, không chỉ dựa vào màu.
+      const state = document.createElement("span");
+      state.className = `state-badge state-badge--${item.state}`;
+      state.textContent = stateLabels[item.state] ?? "Unknown";
+      top.append(title, state);
+
+      const meta = document.createElement("p");
+      meta.className = "agenda-card__meta";
+      meta.textContent = [
+        item.estimated_minutes != null && `Estimated ${item.estimated_minutes} min`,
+        item.priority_score != null && `Priority ${scoreFormat.format(item.priority_score)}`,
+      ].filter(Boolean).join(" · ");
+
+      row.append(top, meta);
+      return row;
+    }),
   );
 
-  for (const item of sortedItems) {
-    const row = document.createElement("li");
+  // Đoạn nào rộng theo số phút dự kiến, màu theo trạng thái; chưa có số phút thì không vẽ (không đoán).
+  $("clock-track").replaceChildren(
+    ...sortedItems.filter((it) => it.estimated_minutes > 0).map((item) => {
+      const seg = document.createElement("span");
+      seg.className = `clock__seg clock__seg--${item.state}`;
+      seg.style.flexGrow = item.estimated_minutes;
+      seg.title = `${item.title} · ${item.estimated_minutes} min`;
+      return seg;
+    }),
+  );
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-
-    checkbox.checked =
-      item.state === "discussed" ||
-      item.state === "concluded";
-
-    // Hiện tại checkbox chỉ phản ánh trạng thái từ backend.
-    checkbox.disabled = true;
-    checkbox.setAttribute("aria-label", item.title);
-
-    const title = document.createElement("span");
-    title.textContent = ` ${item.title}`;
-
-    const status = document.createElement("small");
-    status.textContent =
-      ` — ${stateLabels[item.state] ?? "Chưa xác định"}`;
-
-    row.append(checkbox, title, status);
-    list.appendChild(row);
-  }
-
+  const concluded = agendaItems.filter((it) => it.state === "concluded").length;
+  $("agenda-count").textContent = agendaItems.length ? `${concluded}/${agendaItems.length} concluded` : "";
   $("agenda-empty").hidden = agendaItems.length > 0;
 }
 
@@ -99,7 +127,7 @@ async function loadAgenda() {
 
     renderAgenda();
   } catch (e) {
-    showError(`Không tải được agenda: ${e.message}`);
+    showError(`Could not load the agenda: ${e.message}`);
   }
 }
 
@@ -108,8 +136,8 @@ async function loadMeeting() {
   try {
     const m = await api.getMeeting(meetingId);
     $('meeting-title').textContent = m.topic;
-    const day = new Date(m.created_at).toLocaleDateString('vi-VN', { dateStyle: 'full' });
-    $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} phút`, m.id].join(' · ');
+    const day = new Date(m.created_at).toLocaleDateString('en-US', { dateStyle: 'full' });
+    $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} min`, m.id].join(' · ');
   } catch (e) {
     showError(`${e.code ?? 'ERROR'}: ${e.message}`);
   }
@@ -132,7 +160,7 @@ $("stop-transcript").addEventListener("click", () => {
   if (transcriptTestSocket?.readyState !== WebSocket.OPEN || !realtimeReady || realtimeStopping) return;
   realtimeStopping = true;
   transcriptTestSocket.send(JSON.stringify({type: "stop"}));
-  $("test-transcript-status").textContent = "Đang dừng và xử lý phần cuối…";
+  $("test-transcript-status").textContent = "Stopping and processing the last part…";
   renderRealtimeControls();
 });
 
@@ -145,12 +173,12 @@ $("test-transcript").addEventListener("click", () => {
 
   $("error").hidden = true;
   resetRealtimeLevel("...");
-  testCommittedText = "";
-  $("test-transcript-final").textContent = "";
+  segments = [];
+  renderSegments();
   $("test-transcript-partial").textContent = "";
 
   $("test-transcript").disabled = true;
-  $("test-transcript-status").textContent = "Đang kết nối…";
+  $("test-transcript-status").textContent = "Connecting…";
 
   let completed = false;
   let failed = false;
@@ -158,7 +186,7 @@ $("test-transcript").addEventListener("click", () => {
   transcriptTestSocket = connectTranscriptTest(meetingId, {
     onOpen() {
       $("test-transcript-status").textContent =
-        "Đã kết nối backend — đang mở phiên ElevenLabs…";
+        "Connected to the backend — opening the ElevenLabs session…";
       renderRealtimeControls();
     },
 
@@ -175,10 +203,8 @@ $("test-transcript").addEventListener("click", () => {
       }
 
       if (message.type === "committed") {
-        testCommittedText +=
-          (testCommittedText ? "\n" : "") + message.text;
-
-        $("test-transcript-final").textContent = testCommittedText;
+        segments.push(message.text);
+        renderSegments();
         $("test-transcript-partial").textContent = "";
       }
 
@@ -192,42 +218,43 @@ $("test-transcript").addEventListener("click", () => {
           finished = true;
 
           // Hiển thị đúng bản backend đã lưu.
-          $("test-transcript-final").textContent = message.transcript;
+          segments = message.transcript.split("\n").filter(Boolean);
+          renderSegments();
           $("test-transcript-partial").textContent = "";
 
           $("test-transcript-status").textContent =
-            "Đã lưu transcript. Bạn có thể sang bước tạo biên bản.";
+            "Transcript saved. You can move on to the minutes.";
 
           render();
         } else {
           $("test-transcript-status").textContent =
-            "Phiên đã kết thúc nhưng transcript chưa được lưu.";
+            "The session ended but the transcript was not saved.";
         }
       }
 
       if (message.type === "error") {
         failed = true;
         realtimeReady = false;
-        resetRealtimeLevel("Có lỗi kết nối");
+        resetRealtimeLevel("Connection error");
         $("test-transcript-status").textContent = message.message;
       }
 
       if (message.type === "ready") {
         realtimeReady = true;
-        resetRealtimeLevel("Đang chờ tiếng nói…");
+        resetRealtimeLevel("Waiting for speech…");
         $("test-transcript-status").textContent = message.message;
       }
       if (message.type === "paused" || message.type === "resumed") {
         realtimePaused = message.type === "paused";
         pausePending = false;
         resetRealtimeLevel(
-          realtimePaused ? "Đã tạm dừng microphone" : "Đang chờ tiếng nói…"
+          realtimePaused ? "Microphone paused" : "Waiting for speech…"
         );
         if (!realtimeStopping) $("test-transcript-status").textContent = message.message;
       }
       if (message.type === "stopping") {
         realtimeStopping = true;
-        resetRealtimeLevel("Đã dừng microphone");
+        resetRealtimeLevel("Microphone stopped");
         $("test-transcript-status").textContent = message.message;
       }
       renderRealtimeControls();
@@ -236,7 +263,7 @@ $("test-transcript").addEventListener("click", () => {
     onError(message) {
       failed = true;
       realtimeReady = false;
-      resetRealtimeLevel("Có lỗi kết nối");
+      resetRealtimeLevel("Connection error");
       $("test-transcript-status").textContent = message;
       renderRealtimeControls();
     },
@@ -248,11 +275,11 @@ $("test-transcript").addEventListener("click", () => {
       realtimeStopping = false;
       pausePending = false;
       render();
-      resetRealtimeLevel("Microphone đã dừng");
+      resetRealtimeLevel("Microphone stopped");
 
       if (!completed && !failed) {
         $("test-transcript-status").textContent =
-          "Kết nối đóng trước khi lưu transcript hoàn tất.";
+          "The connection closed before the transcript was saved.";
       }
     },
   });
@@ -267,13 +294,13 @@ function showRealtimeLevel(message) {
 
     $("audio-level-text").textContent =
       Date.now() - quietSince >= 3000
-        ? "Tín hiệu rất nhỏ. Hãy thử nói và kiểm tra microphone."
-        : "Đang chờ tiếng nói…";
+        ? "Very weak signal. Try speaking and check the microphone."
+        : "Waiting for speech…";
   } else {
     quietSince = null;
 
     $("audio-level-text").textContent =
-      `Mức tín hiệu: ${message.dbfs} dBFS`;
+      `Signal level: ${message.dbfs} dBFS`;
   }
 }
 
