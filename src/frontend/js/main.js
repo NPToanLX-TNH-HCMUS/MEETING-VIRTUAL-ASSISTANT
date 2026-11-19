@@ -12,21 +12,17 @@ let agenda = null; // { items, dropped, duration, confirmed, edited } or null
 let loading = false;
 let confirming = false;
 let errorMessage = '';
+let language = 'vi';
+let points = []; // các ý dự định trình bày, mỗi ý một chip
+let addingPoint = false;
 
-// Display, chỗ này là phần dịch của web, mốt muốn làm song ngữ thì tự dịch xong import 2 cái ver dịch vào
-const SOURCE_LABEL = {
-  carry_over: 'Từ buổi trước',
-  planned_point: 'Ý dự định trình bày',
-  document: 'Tài liệu',
-  manual: 'Thêm thủ công',
-};
-const REASON_LABEL = { exceeds_remaining_time: 'không vừa thời gian còn lại' };
+const REASON_LABEL = { exceeds_remaining_time: "doesn't fit in the remaining time" };
 const UPLOAD_ERROR_LABEL = {
-  FILE_TOO_LARGE: 'Tệp quá lớn',
-  UNSUPPORTED_FILE_TYPE: 'Định dạng không hỗ trợ',
+  FILE_TOO_LARGE: 'File too large',
+  UNSUPPORTED_FILE_TYPE: 'Unsupported format',
 };
 
-const numberFormat = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 });
+const numberFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 });
 function formatSize(bytes) {
   if (bytes < 1024) return '< 1 KB';
   if (bytes < 1024 * 1024) return `${numberFormat.format(Math.ceil(bytes / 1024))} KB`;
@@ -34,13 +30,13 @@ function formatSize(bytes) {
 }
 
 function fileStatus(file) {
-  if (uploaded.has(file)) return { kind: 'done', label: 'Đã gửi ✓' };
-  if (uploading.has(file)) return { kind: 'uploading', label: 'Đang gửi…' };
+  if (uploaded.has(file)) return { kind: 'done', label: 'Sent ✓' };
+  if (uploading.has(file)) return { kind: 'uploading', label: 'Sending…' };
   if (failed.has(file)) {
     const code = failed.get(file);
-    return { kind: 'error', label: `Lỗi · ${UPLOAD_ERROR_LABEL[code] ?? 'không gửi được'}` };
+    return { kind: 'error', label: `Error · ${UPLOAD_ERROR_LABEL[code] ?? 'upload failed'}` };
   }
-  return { kind: 'pending', label: 'Chờ gửi' };
+  return { kind: 'pending', label: 'Waiting' };
 }
 
 const REMOVE_ICON =
@@ -55,21 +51,36 @@ function render() {
   $('error').textContent = errorMessage;
 
   // Đã tạo cuộc họp trên backend thì không sửa được thông tin nữa (backend chưa có API sửa).
-  for (const id of ['topic', 'language', 'duration', 'points']) $(id).disabled = !!meeting;
+  for (const id of ['topic', 'duration']) $(id).disabled = !!meeting;
+  for (const btn of $('language').children) {
+    btn.disabled = !!meeting;
+    btn.setAttribute('aria-pressed', String(btn.dataset.value === language));
+  }
   $('details-locked').hidden = !meeting;
+  $('meeting-meta').textContent = meeting ? [meeting.topic, meeting.id, meeting.status].join(' · ') : 'New meeting';
+
+  // Bước 1 xong khi đã có agenda, bước 2 xong khi đã xác nhận; bước hiện tại tô đậm.
+  const stage = agenda?.confirmed ? 2 : agenda ? 1 : 0;
+  [...$('stepper').children].forEach((li, i) => {
+    li.classList.toggle('step--done', i < stage);
+    li.classList.toggle('step--current', i === stage);
+  });
 
   renderFileList();
+  renderPoints();
 
   $('generate').disabled = loading || !!agenda;
-  $('generate').textContent = loading && !agenda ? 'Đang tạo…' : 'Tạo agenda';
+  $('generate').textContent = loading && !agenda ? 'Generating…' : 'Generate agenda';
   $('agenda-empty').hidden = !!agenda || loading;
   $('agenda-loading').hidden = !!agenda || !loading;
   $('agenda-content').hidden = !agenda;
   $('planned').hidden = !agenda;
   if (!agenda) return;
 
-  $('go-during-box').hidden = !(agenda.confirmed && meeting);
-  if (meeting) $('go-during').href = `/during.html?meeting=${encodeURIComponent(meeting.id)}`;
+  const canStart = agenda.confirmed && meeting;
+  $('go-during').setAttribute('aria-disabled', String(!canStart));
+  if (canStart) $('go-during').href = `/during.html?meeting=${encodeURIComponent(meeting.id)}`;
+  else $('go-during').removeAttribute('href');
   renderRows();
   renderDropped();
   renderSummary();
@@ -77,7 +88,7 @@ function render() {
 
 function renderFileList() {
   $('dropzone').classList.toggle('dropzone--disabled', loading);
-  $('file-count').textContent = files.length ? ` · ${files.length} tệp` : '';
+  $('file-count').textContent = files.length ? ` · ${files.length} file${files.length > 1 ? 's' : ''}` : '';
 
   $('file-list').replaceChildren(
     ...files.map((file) => {
@@ -85,10 +96,8 @@ function renderFileList() {
       li.className = 'file-card';
 
       const ext = file.name.split('.').pop().toLowerCase();
-      const type = document.createElement('span');
-      type.className = `file-card__type file-card__type--${ext}`;
-      type.setAttribute('aria-hidden', 'true');
-      type.textContent = ext;
+      const { kind, label } = fileStatus(file);
+      if (kind === 'error') li.classList.add('file-card--error');
 
       // Cắt tên dài bằng CSS (ellipsis), không cắt chuỗi trong JS để giữ nguyên dấu tiếng Việt.
       const body = document.createElement('div');
@@ -99,15 +108,10 @@ function renderFileList() {
       name.title = file.name;
       const meta = document.createElement('span');
       meta.className = 'file-card__meta';
-      meta.textContent = formatSize(file.size);
+      meta.textContent = [ext.toUpperCase(), formatSize(file.size), label].join(' · ');
       body.append(name, meta);
 
-      const { kind, label } = fileStatus(file);
-      const status = document.createElement('span');
-      status.className = `file-status file-status--${kind}`;
-      status.textContent = label;
-
-      li.append(type, body, status);
+      li.append(body);
 
       // Backend chưa có API xoá tài liệu, nên file đã gửi lên thì không bỏ được.
       if (!uploaded.has(file)) {
@@ -116,7 +120,7 @@ function renderFileList() {
         remove.className = 'icon-btn';
         remove.innerHTML = REMOVE_ICON;
         remove.disabled = uploading.has(file);
-        remove.setAttribute('aria-label', `Bỏ ${file.name}`);
+        remove.setAttribute('aria-label', `Remove ${file.name}`);
         remove.addEventListener('click', () => {
           files = files.filter((f) => f !== file);
           failed.delete(file);
@@ -155,7 +159,7 @@ function renderRows() {
       markEdited();
     });
 
-    q('source').textContent = SOURCE_LABEL[item.source] ?? item.source ?? '—';
+    q('num').textContent = `${i + 1}.`;
     // AI đề xuất thì phải ghi rõ bằng chữ cho tới khi người dùng xác nhận.
     q('badge').hidden = !item.needs_confirmation || agenda.confirmed;
 
@@ -173,8 +177,26 @@ function renderDropped() {
     ...agenda.dropped.map((d) => {
       const banner = document.createElement('div');
       banner.className = 'banner banner--warn';
-      const text = [d.title, d.estimated_minutes && `${d.estimated_minutes} phút`, REASON_LABEL[d.reason] ?? d.reason];
-      banner.textContent = `Bị loại: ${text.filter(Boolean).join(' · ')}`;
+      const text = [d.title, d.estimated_minutes && `${d.estimated_minutes} min`, REASON_LABEL[d.reason] ?? d.reason];
+      const body = document.createElement('span');
+      body.className = 'banner__body';
+      const lead = document.createElement('strong');
+      lead.textContent = 'Left out: ';
+      body.append(lead, text.filter(Boolean).join(' · '));
+
+      // Người dùng quyết định thêm lại: thành một hàng thủ công, backend chỉ nhận khi bấm xác nhận.
+      const add = document.createElement('button');
+      add.type = 'button';
+      add.className = 'btn btn--sm';
+      add.textContent = 'Add anyway';
+      add.addEventListener('click', () => {
+        agenda.items.push({ title: d.title, estimated_minutes: d.estimated_minutes ?? null, source: 'manual' });
+        agenda.dropped = agenda.dropped.filter((x) => x !== d);
+        agenda.edited = true;
+        agenda.confirmed = false;
+        render();
+      });
+      banner.append(body, add);
       return banner;
     }),
   );
@@ -184,22 +206,25 @@ function renderDropped() {
 function renderSummary() {
   const planned = agenda.items.reduce((sum, it) => sum + (Number.isFinite(it.estimated_minutes) ? it.estimated_minutes : 0), 0);
   const over = Number.isFinite(agenda.duration) && planned > agenda.duration;
-  $('planned').textContent = `${planned} / ${agenda.duration ?? '—'} phút đã xếp${over ? ` · vượt ${planned - agenda.duration} phút` : ''}`;
+  $('planned-used').textContent = planned;
+  $('planned-rest').textContent = ` of ${agenda.duration ?? '—'} min planned${over ? ` · ${planned - agenda.duration} min over` : ''}`;
   $('planned').classList.toggle('planned--over', over);
+  $('planned-bar').classList.toggle('progress--over', over);
+  $('planned-fill').style.width = `${agenda.duration > 0 ? Math.min(100, (planned / agenda.duration) * 100) : 0}%`;
 
   $('agenda-note').textContent = agenda.confirmed
-    ? 'Agenda đã được xác nhận và lưu.'
-    : 'Chưa có gì được lưu cho đến khi bạn xác nhận. Sửa tiêu đề, thời lượng hoặc đổi thứ tự bằng nút ↑ ↓.';
+    ? 'The agenda is confirmed and saved.'
+    : 'Nothing is saved until you confirm. Edit a title or time, or reorder with the ↑ ↓ buttons.';
 
   const valid = agenda.items.length > 0 && agenda.items.every(isItemValid);
   $('agenda-invalid').hidden = valid || agenda.items.length === 0;
 
   $('confirm').disabled = confirming || loading || !valid || agenda.confirmed;
-  $('confirm').textContent = confirming ? 'Đang lưu…' : 'Xác nhận agenda';
+  $('confirm').textContent = confirming ? 'Saving…' : 'Confirm agenda';
 
   // Backend chỉ cho tạo agenda khi cuộc họp còn "draft".
   $('regenerate').disabled = loading || confirming || meeting?.status !== 'draft';
-  $('regenerate').textContent = loading ? 'Đang tạo…' : 'Tạo lại';
+  $('regenerate').textContent = loading ? 'Generating…' : 'Regenerate';
 }
 
 // ============ 3. HÀNH ĐỘNG ============
@@ -212,16 +237,16 @@ function showError(e) {
       meeting = null;
       agenda = null;
       uploaded.clear();
-      errorMessage = 'Backend không còn cuộc họp này (có thể server vừa khởi động lại). Nhấn “Tạo agenda” để thử lại.';
+      errorMessage = 'The backend no longer has this meeting (the server may have restarted). Press “Generate agenda” to try again.';
     } else if (e.code === 'BACKEND_UNREACHABLE') {
-      errorMessage = 'Không kết nối được backend (127.0.0.1:8000). Server đã chạy chưa?';
+      errorMessage = 'Cannot reach the backend (127.0.0.1:8000). Is the server running?';
     } else if (e.code === 'REQUEST_TIMEOUT') {
-      errorMessage = 'Backend phản hồi quá lâu.';
+      errorMessage = 'The backend took too long to respond.';
     } else {
-      errorMessage = e.message || `Đã có lỗi (${e.code}).`;
+      errorMessage = e.message || `Something went wrong (${e.code}).`;
     }
   } else {
-    errorMessage = `Đã có lỗi: ${e.message}`;
+    errorMessage = `Something went wrong: ${e.message}`;
   }
 }
 
@@ -230,13 +255,13 @@ function readDetails() {
   const topic = $('topic').value.trim();
   const raw = $('duration').value.trim();
   const duration = /^\d+$/.test(raw) ? Number(raw) : NaN;
-  if (!topic) return fail('Nhập chủ đề để tạo agenda.');
-  if (!isMinutesValid(duration)) return fail('Thời lượng phải là số nguyên từ 1 đến 480 phút.');
+  if (!topic) return fail('Enter a topic to generate an agenda.');
+  if (!isMinutesValid(duration)) return fail('Duration must be a whole number from 1 to 480 minutes.');
   return {
     topic,
-    language: $('language').value,
+    language,
     duration_minutes: duration,
-    planned_points: $('points').value.split('\n').map((s) => s.trim()).filter(Boolean),
+    planned_points: points,
     previous_meeting_id: null, // backend chưa liệt kê được buổi họp trước
   };
 }
@@ -292,7 +317,7 @@ async function generate() {
 }
 
 function regenerate() {
-  if (agenda.edited && !window.confirm('Các chỉnh sửa của bạn sẽ mất. Tạo lại agenda?')) return;
+  if (agenda.edited && !window.confirm('Your edits will be lost. Regenerate the agenda?')) return;
   agenda = null;
   generate();
 }
@@ -343,14 +368,78 @@ async function confirm() {
 function addFiles(picked) {
   const problems = [];
   for (const file of picked) {
-    if (!/\.(md|txt|pdf|docx|doc)$/i.test(file.name)) problems.push(`${file.name}: chỉ nhận .md .txt .pdf .docx`);
-    else if (file.size > MAX_FILE_BYTES) problems.push(`${file.name}: lớn hơn 10 MB`);
-    else if (files.some((f) => f.name === file.name)) problems.push(`${file.name}: đã được thêm`);
+    if (!/\.(md|txt|pdf|docx|doc)$/i.test(file.name)) problems.push(`${file.name}: only .md .txt .pdf .docx are accepted`);
+    else if (file.size > MAX_FILE_BYTES) problems.push(`${file.name}: larger than 10 MB`);
+    else if (files.some((f) => f.name === file.name)) problems.push(`${file.name}: already added`);
     else files.push(file);
   }
   errorMessage = problems.join('. ');
   render();
 }
+
+function renderPoints() {
+  const chips = points.map((text, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.append(text);
+    if (!meeting) {
+      const x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'chip__remove';
+      x.textContent = '×';
+      x.setAttribute('aria-label', `Remove point ${text}`);
+      x.addEventListener('click', () => {
+        points.splice(i, 1);
+        render();
+      });
+      chip.append(x);
+    }
+    return chip;
+  });
+
+  if (!meeting && addingPoint) {
+    const input = document.createElement('input');
+    input.className = 'chip__input';
+    input.setAttribute('aria-label', 'New point');
+    // Enter khi đang gõ dấu (IME) chỉ là chốt chữ, không phải thêm chip.
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.isComposing) commit(input);
+      if (e.key === 'Escape') {
+        addingPoint = false;
+        render();
+      }
+    });
+    input.addEventListener('blur', () => commit(input));
+    chips.push(input);
+    queueMicrotask(() => input.focus());
+  } else if (!meeting) {
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'chip chip--add';
+    add.textContent = '+ Add a point';
+    add.addEventListener('click', () => {
+      addingPoint = true;
+      render();
+    });
+    chips.push(add);
+  }
+  $('points').replaceChildren(...chips);
+}
+
+function commit(input) {
+  if (!addingPoint) return; // blur bắn thêm một lần sau Enter
+  addingPoint = false;
+  const text = input.value.trim();
+  if (text && !points.includes(text)) points.push(text);
+  render();
+}
+
+$('language').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn || meeting) return;
+  language = btn.dataset.value;
+  render();
+});
 
 $('generate').addEventListener('click', generate);
 $('regenerate').addEventListener('click', regenerate);

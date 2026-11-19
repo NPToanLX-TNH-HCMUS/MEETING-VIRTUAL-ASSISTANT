@@ -18,16 +18,16 @@ function render() {
   $('minutes-empty').hidden = !!minutes;
   if (minutes) {
     $('minutes').innerHTML = DOMPurify.sanitize(marked.parse(minutes.markdown));
-    $('minutes-status').textContent = minutes.status === 'confirmed' ? 'Đã xác nhận' : 'Bản nháp — cần xem lại';
+    $('minutes-status').textContent = minutes.status === 'confirmed' ? 'Confirmed' : 'Review · draft minutes';
     $('minutes-status').className = `badge ${minutes.status === 'confirmed' ? 'badge--new' : 'badge--edited'}`;
   }
   $('minutes-status').hidden = !minutes;
 
-  if (!meetingId) showError('Thiếu mã cuộc họp. Hãy quay lại trang đang họp.');
+  if (!meetingId) showError('Missing meeting ID. Go back to the live meeting page.');
   else if (!minutes) {
     $('status').textContent = canGenerate
-      ? 'Bấm “Tạo minute” để tạo biên bản từ transcript.'
-      : `Không thể tạo minute khi cuộc họp đang ở trạng thái “${status ?? '…'}”.`;
+      ? 'Press “Generate minutes” to build the minutes from the transcript.'
+      : `Minutes can't be generated while the meeting is “${status ?? '…'}”.`;
   }
 }
 
@@ -43,17 +43,17 @@ async function run(action) {
   try {
     await action();
   } catch (e) {
-    showError(`Lỗi ${e.code ?? ''}: ${e.message}`);
+    showError(`Error ${e.code ?? ''}: ${e.message}`);
   } finally {
     busy = false;
-    $('generate').textContent = 'Tạo minute';
+    $('generate').textContent = 'Generate minutes';
     render();
   }
 }
 
 $('generate').addEventListener('click', () =>
   run(async () => {
-    $('generate').textContent = 'Đang tạo…';
+    $('generate').textContent = 'Generating…';
     minutes = await api.convertToMinutes(meetingId);
     status = 'review';
   }),
@@ -71,9 +71,9 @@ async function load() {
   await run(async () => {
     const m = await api.getMeeting(meetingId);
     status = m.status;
-    $('meeting-title').textContent = m.topic;
+    $('meeting-meta').textContent = `${m.topic} · ${m.id}`;
     if (status === 'processing') {
-      $('generate').textContent = 'Đang tạo…';
+      $('generate').textContent = 'Generating…';
       minutes = await api.convertToMinutes(meetingId);
       status = 'review';
     } else if (status === 'review' || status === 'archived') {
