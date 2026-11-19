@@ -27,9 +27,6 @@ dependencies = [
 ]
 # Equivalent to `REQUIREMENTS` in `setup.cfg` or `install_requires` in `setup.py`
 
+
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
-
-
-[project.scripts]
-mia = "src.app:main"
