@@ -41,6 +41,7 @@ app.state.ctx = AppContext()
 
 app.include_router(pre_meeting.router, prefix=API_PREFIX)
 app.include_router(during_meeting.router, prefix=API_PREFIX)
+app.include_router(during_meeting.ws_router)
 app.include_router(post_meeting.router, prefix=API_PREFIX)
 
 

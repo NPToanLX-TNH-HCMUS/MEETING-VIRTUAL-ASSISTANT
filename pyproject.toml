@@ -24,6 +24,8 @@ dependencies = [
     "langchain-community==0.3.24",
     "langchain-ollama",
     "langchain-experimental==0.3.4",   # semantic chunking
+    "websockets",
+    "numpy",
 ]
 # Equivalent to `REQUIREMENTS` in `setup.cfg` or `install_requires` in `setup.py`
 

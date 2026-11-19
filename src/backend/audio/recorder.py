@@ -1,4 +1,5 @@
 import time
+import numpy as np
 
 import sounddevice as sd
 from scipy.io.wavfile import read, write
@@ -42,6 +43,34 @@ class Recorder:
         write(path, SAMPLE_RATE, self._buffer[:frames])
         self._buffer = None
         return frames / SAMPLE_RATE
+
+    def get_audio_level(self) -> dict:
+        buffer = self._buffer
+        if buffer is None:
+            return {
+                "level": 0,
+                "dbfs": -60
+            }
+
+        end = int(min(self.elapsed * SAMPLE_RATE, len(buffer)))
+        start = max(0, end - int(0.2 * SAMPLE_RATE))
+        if start >= end:
+            return {
+                "level": 0,
+                "dbfs": -60
+            }
+
+        samples = buffer[start:end].astype(np.float32) / 32768.0
+
+        rms = float(np.sqrt(np.mean(samples ** 2)))
+        dbfs = 20 * np.log10(max(rms, 1e-10))
+
+        level = float(np.clip((dbfs + 60) / 60 * 100, 0, 100))
+
+        return {
+            "level": round(level, 1),
+            "dbfs": round(max(dbfs, -60), 1)
+        }
 
     def play(self, path=DEFAULT_PATH):
         sample_rate, audio = read(path)
