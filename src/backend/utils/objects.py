@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 Source = Literal["planned_point", "document", "carry_over", "manual"]
 
@@ -66,8 +66,8 @@ class NewMeeting(BaseModel):
     """FRONT END SENDS (JSON), built by readDetails() in frontend/js/main.js."""
 
     topic: str
-    language: str
-    duration_minutes: int
+    language: Literal["vi", "en"]
+    duration_minutes: int = Field(ge=1, le=480)  # same range as contract section 5.1
     planned_points: list[
         str
     ] = []  # one entry per line of the "Points you plan to present" box
@@ -79,7 +79,7 @@ class AgendaItemEdit(BaseModel):
 
     id: str | None = None  # None = a row the user added by hand
     title: str
-    estimated_minutes: int
+    estimated_minutes: int = Field(ge=1, le=480)
     order: int
 
 

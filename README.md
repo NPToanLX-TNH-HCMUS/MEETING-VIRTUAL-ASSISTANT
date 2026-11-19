@@ -27,7 +27,7 @@ cp .env.example .env             # Windows: copy .env.example .env
 Start the server from the repo root:
 
 ```bash
-uvicorn src.api.api:app --reload --port 8000
+uvicorn src.backend.main:app --reload --port 8000
 ```
 
 API docs: http://127.0.0.1:8000/docs
