@@ -1,0 +1,21 @@
+{
+  "max_total_minutes": 10,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Weekly sync",
+      "required": false,
+      "from": [
+        "topic"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    }
+  ],
+  "off_agenda": [],
+  "carry_over": [],
+  "must_not_include": [],
+  "notes": "At most one item, taken from the topic (A5). Nothing is said, so nothing is tracked."
+}

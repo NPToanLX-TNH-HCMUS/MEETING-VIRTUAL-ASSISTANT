@@ -1,0 +1,48 @@
+{
+  "id": "S13",
+  "title": "Silence, no documents, no planned points",
+  "group": "failure",
+  "use_cases": [
+    "UC1",
+    "UC8",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "A5",
+    "B4"
+  ],
+  "planted": [
+    "A5",
+    "B4"
+  ],
+  "meeting_date": "2026-11-16T10:00:00+07:00",
+  "meeting": {
+    "topic": "Weekly sync",
+    "language": "en",
+    "duration_minutes": 10,
+    "planned_points": []
+  },
+  "documents": [],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 60.0
+  },
+  "source": {
+    "name": "Generated with ffmpeg (anullsrc)",
+    "license": "-",
+    "sha256": "4c59ed976769ba50aba4a23ef2823cf795f0b555d48f4c80d41576ce9f3378b7",
+    "retrieved_at": "2026-11-19",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "empty by construction",
+    "selection_reason": "Nothing in, nothing invented"
+  },
+  "aliases": {},
+  "key_entities": [],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

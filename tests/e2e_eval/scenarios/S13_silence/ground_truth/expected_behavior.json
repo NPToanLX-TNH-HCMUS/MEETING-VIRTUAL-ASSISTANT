@@ -1,0 +1,68 @@
+{
+  "scenario_id": "S13",
+  "checks": [
+    {
+      "id": "S13-01",
+      "case": "A5",
+      "type": "count_range",
+      "target": "agenda_titles",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "id": "S13-02",
+      "case": "A5",
+      "type": "all_similar",
+      "target": "agenda_titles",
+      "reference": "topic"
+    },
+    {
+      "id": "S13-03",
+      "case": "B4",
+      "type": "count_equals",
+      "target": "decisions",
+      "n": 0
+    },
+    {
+      "id": "S13-04",
+      "case": "B4",
+      "type": "count_equals",
+      "target": "action_items",
+      "n": 0
+    },
+    {
+      "id": "S13-05",
+      "case": "B4",
+      "type": "count_equals",
+      "target": "unresolved_issues",
+      "n": 0
+    },
+    {
+      "id": "S13-06",
+      "case": "B4",
+      "type": "no_event_between",
+      "event": "agenda.item_state",
+      "from_s": null,
+      "to_s": null
+    },
+    {
+      "id": "S13-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S13-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S13-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}
