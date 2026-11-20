@@ -1,6 +1,6 @@
 """Rebuild the scenario audio clips from the raw sources listed in sources.csv.
 
-Audio files are not committed. Every clip is described by one row of
+Audio files are not stored in the repository. Every clip is described by one row of
 tests/e2e_eval/sources.csv (source file, time ranges, licence, SHA-256), and this
 script rebuilds it with ffmpeg so that every team member gets the same file.
 

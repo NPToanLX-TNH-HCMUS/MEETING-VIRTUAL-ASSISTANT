@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| Version | 0.5 (draft) |
-| Date | 2026-11-19 |
+| Version | 0.6 (draft) |
+| Date | 2026-11-20 |
 | Scope | Meetings held in **English** |
 
 This document specifies the 12 use cases (UC1–UC12) of the Meeting Virtual Assistant. It defines the problem boundary of the system and is the basis of the end-to-end test set: every use case has measurable acceptance criteria and at least one test scenario.
@@ -438,6 +438,7 @@ Greedy selection in `select_by_time()` (agenda endpoint module); default duratio
 | No recording file | 409 `INVALID_MEETING_STATE` |
 | Missing `ELEVENLABS_API_KEY`, empty or invalid WAV | 422 `TRANSCRIPTION_INPUT_INVALID` |
 | ElevenLabs error or timeout | 502 `TRANSCRIPTION_FAILED` |
+| Recording without speech (ElevenLabs returns no words) | 502 `TRANSCRIPTION_FAILED`; minutes cannot be generated, the meeting stays `processing` |
 | Start while the live transcript (UC11) is running | 409 `MICROPHONE_BUSY` |
 
 **Limitations:** 300-second cap; pause / resume and the live transcript exist only on the live path (UC11); no speaker identification; no upload of a pre-recorded file; depends on network and ElevenLabs quota.
@@ -969,3 +970,4 @@ Described in the idea list or the API contract but not planned for the current v
 | 0.3 | 2026-11-19 | Pipeline stages (§2.1); live transcript with pause / resume and live agenda tracking promoted to main use cases UC11 and UC12; status `paused`; metrics AT1–AT5, TR6, TR7, SY6; special cases F1–F10; candidates renumbered UC13 (ask the assistant) and UC14 (task store). |
 | 0.4 | 2026-11-20 | Current implementation updated to the main branch: endpoints split into stage routers, live transcript path merged (UC11 implemented), `MICROPHONE_BUSY`; BR11.3 states which transcript the minutes use. |
 | 0.5 | 2026-11-20 | UC8: C4 (nobody takes a task) is tested in S07, where it is planted, instead of S04. |
+| 0.6 | 2026-11-20 | UC5: a recording without speech gets 502 `TRANSCRIPTION_FAILED` (observed on S13). |

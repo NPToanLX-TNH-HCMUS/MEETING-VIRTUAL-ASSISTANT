@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.6 (draft) |
-| Date | 2026-11-19 |
+| Version | 0.7 (draft) |
+| Date | 2026-11-20 |
 | Scope | English meetings; the end-to-end test set (S01–S13) |
 | Related | `USE_CASES.md` (use cases UC1–UC12, metrics, scenarios) |
 
@@ -82,7 +82,7 @@ Every check in `expected_behavior.json` uses one of the fixed types below. The h
 
 **Text comparison:** phrases are compared after lower-casing, removing diacritics and collapsing spaces. Phrases for `not_contains` must be specific to the planted content, so that they cannot appear by chance in the real document or audio.
 
-**Matching:** `match` refers to an item id in `ground_truth/minutes.json` (for example `AI3`, `D1`, `U2`). The harness uses the same matcher as the metrics: multilingual embeddings, one-to-one assignment and the calibrated threshold τ, with manual decisions in `adjudication.json`. If the ground-truth item is not matched to any system item, the check fails. `count_similar` and `all_similar` use the same similarity and τ, but without the one-to-one assignment, so that duplicates can be counted. Agenda items are matched in the same way: `match` in `agenda_state` and `state_change_within` refers to an item id in `ground_truth/agenda.json` (for example `I2`). In the run with the ground-truth agenda, no matching is needed.
+**Matching:** `match` refers to an item id in `ground_truth/minutes.json` (for example `AI3`, `D1`, `U2`). The harness uses the same matcher as the metrics: one-to-one assignment, highest similarity first, above a threshold τ. The default similarity is lexical (shared stemmed content words, τ = 0.35); multilingual embeddings can be used instead. Manual decisions are kept in `ground_truth/adjudication.json`. If the ground-truth item is not matched to any system item, the check fails. `count_similar` and `all_similar` use the same similarity and τ, but without the one-to-one assignment, so that duplicates can be counted. Agenda items are matched in the same way: `match` in `agenda_state` and `state_change_within` refers to an item id in `ground_truth/agenda.json` (for example `I2`). In the run with the ground-truth agenda, no matching is needed.
 
 ---
 
@@ -219,22 +219,22 @@ Every scenario also has G1, G2 and G3. Every scenario with speech also runs the 
 
 ## 5. Expected number of checks
 
-The table gives the target size of each `expected_behavior.json`, so that SY2 is not dominated by one scenario.
+The table gives the size of each `expected_behavior.json`, so that SY2 is not dominated by one scenario.
 
 | Scenario | Special-case checks | General checks | Total (approx.) |
 |---|---|---|---|
 | S01 | 1 | 3 | 4 |
-| S02 | 3–4 | 3 | 7 |
-| S03 | 2 | 3 | 5 |
+| S02 | 5 | 3 | 8 |
+| S03 | 4 | 3 | 7 |
 | S04 | 3 | 3 | 6 |
 | S05 | 1 | 3 | 4 |
-| S06 | 13–15 | 3 | 17 |
-| S07 | 12–14 | 3 | 16 |
+| S06 | 16 | 3 | 19 |
+| S07 | 10 | 3 | 13 |
 | S08 | 1 | 3 | 4 |
 | S09 | 2 | 3 | 5 |
 | S10 | 2 | 3 | 5 |
 | S11 | 7 | 3 | 10 |
-| S12 | 19–21 | 3 | 23 |
+| S12 | 21 | 3 | 24 |
 | S13 | 6 | 3 | 9 |
 
 ---
@@ -260,6 +260,8 @@ The table gives the target size of each `expected_behavior.json`, so that SY2 is
 - `note`: optional; where in the audio or document the case happens, so a reviewer can check it.
 
 ### 6.2 Example — S06 (team meeting #1)
+
+The examples of §6.2–§6.4 were written before the recordings were made; ids, dates and file names differ from the final files. The files in `scenarios/*/ground_truth/` are the reference.
 
 Meeting date in `scenario.json`: Monday 2026-11-16 (frozen by the harness). Dates follow the conversion table of UC7.
 
@@ -484,7 +486,8 @@ These checks are expected to fail until the behaviour is implemented. They stay 
 | A5 | The agenda is produced by the LLM, so "at most one item from the topic" is not guaranteed |
 | C3 | Date conversion is done by the LLM, so results may differ between runs |
 | F1–F7 | Live agenda tracking (UC12) is not implemented; these checks fail until it is |
-| F1–F10 | The live path (UC11) reads the microphone directly; the harness can feed `meeting.wav` only once the code accepts another audio source |
+| F1–F10 | The live path (UC11) reads the microphone directly; the harness can feed `meeting.wav` only once the code accepts another audio source. Until then the harness reports these checks as not implemented |
+| B4, G1, G2 (S13) | A recording without speech gets 502 `TRANSCRIPTION_FAILED` ("No transcript returned by ElevenLabs"), so no minutes are generated and the meeting stays `processing` |
 | F10 | After a live STT failure the meeting returns to `ready`, so the minutes cannot be generated and G1 fails in S12 |
 | B3, S06–S08, S12 | The team meetings are synthetic: TTS speech is cleaner and more regular than real speech, so their WER is likely optimistic, and the accents are Asian English voices, not Vietnamese speakers |
 
@@ -500,3 +503,4 @@ These checks are expected to fail until the behaviour is implemented. They stay 
 | 0.4 | 2026-11-20 | C4 moved from S04 to S07 (planted), because the AMI meeting of S04 has no unowned task. |
 | 0.5 | 2026-11-20 | C9 uses the real names Tai and Toan. |
 | 0.6 | 2026-11-20 | Team meetings are scripted and synthesized; B3 uses Asian English TTS voices; known gap on synthetic speech; S12 times moved into silent gaps (60–80.2 s, 192 s, 202 s); S08 has one noise check. |
+| 0.7 | 2026-11-20 | Number of checks per scenario updated to the final files; matching described as implemented (lexical by default, embeddings optional); note that the §6 examples predate the final files; known gap for silent recordings (S13). |

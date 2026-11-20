@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.7 (draft) |
-| Date | 2026-11-19 |
+| Version | 0.8 (draft) |
+| Date | 2026-11-20 |
 | Scope | 13 end-to-end scenarios, English meetings |
 | Related | `USE_CASES.md` (UC1–UC12), `SPECIAL_CASES.md` (A1–F10, G1–G3), `coverage.csv` (status tracking) |
 
@@ -256,7 +256,7 @@ Besides the 13 scenarios, the AMI series is run once as a chain: the minutes the
 | AMI babble | S08 | CC BY 4.0 | Six unused parts of ES2002 b–d summed into café-like background noise |
 | ffmpeg | S13 | — | Generated silence |
 
-Audio files are not committed. `sources.csv` records the origin, the time range and the SHA-256 of every clip, and `prepare_audio.py` rebuilds them.
+Audio files are not stored in the repository. `sources.csv` records the origin, the time range and the SHA-256 of every clip, and `prepare_audio.py` rebuilds them.
 
 ---
 
@@ -274,7 +274,7 @@ One row per scenario.
 | `audio`, `gt_transcript`, `gt_agenda`, `gt_minutes`, `expected_behavior` | Status of each part |
 | `reviewed_by`, `notes` | Second person who checked the ground truth; free notes |
 
-**Status values:** `todo` → `in_progress` → `done` → `reviewed`; `shared` when the part comes from another scenario. When all 13 rows are `reviewed`, the dataset is locked.
+**Status values:** `todo` → `in_progress` → `done` → `reviewed`; `shared` when the part comes from another scenario. A row becomes `reviewed` only when `python tests/e2e_eval/harness/validate.py <scenario>` reports no error. When all 13 rows are `reviewed`, the dataset is locked.
 
 ---
 
@@ -289,3 +289,4 @@ One row per scenario.
 | 0.5 | 2026-11-20 | S08 noise built from unused AMI parts instead of a downloaded recording. |
 | 0.6 | 2026-11-20 | S09–S11 cards updated with the selected Denver clips and the rebuilt agendas. |
 | 0.7 | 2026-11-20 | S06 and S07 are synthetic meetings built from scripts with TTS voices, instead of team recordings. S12 pause and stop times moved into silent gaps of the S07 audio (60–80.2 s, 192 s, 202 s). |
+| 0.8 | 2026-11-20 | S01: the user interface designer introduces himself as Greg. Dataset checks: `harness/validate.py`; runs and scores: `harness/run.py`, `harness/score.py`. |

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.4 (draft) |
+| Version | 0.5 (draft) |
 | Date | 2026-11-20 |
 | Scope | Ground truth of the end-to-end scenarios (English meetings) |
 | Related | `USE_CASES.md`, `SPECIAL_CASES.md`, `SCENARIOS.md`, `sources.csv`, `coverage.csv` |
@@ -43,7 +43,7 @@ One utterance per line: `[mm:ss.s] ROLE: text`. Times are seconds from the start
 
 **MeetingBank clips.** `scripts/mb_transcript.py` drafts the file from the MeetingBank transcript, which was made by a speech-to-text service (Speechmatics), not by people. It has more errors, mostly in names (`scenario.json` → `source.known_draft_errors` lists the ones already spotted), so the whole clip must be corrected by listening. Speaker labels stay `SPEAKER_n`.
 
-**Scoring normalisation** (done by the evaluator, not in the file): lower case; punctuation removed; contractions expanded; "um", "uh", "er", "hmm", "mm-hmm" removed; `[inaudible]` removed; numbers in digits and in words treated as equal.
+**Scoring normalisation** (done by the evaluator, not in the file): lower case; punctuation removed; contractions expanded; "um", "uh", "er", "hmm", "mm-hmm" removed; `[inaudible]` removed; numbers in digits and in words treated as equal; British and American spellings ("colour" / "color") and a few words written as one or two words ("kick-off" / "kickoff") treated as equal.
 
 ---
 
@@ -97,7 +97,7 @@ Made by listening to the clip only. What is not in the clip is not in the minute
 | Section | Rule |
 |---|---|
 | `summary_points` | 3–6 key points a reader must find in the summary; used for summary coverage |
-| `decisions` | Something the group settled, or a requirement announced as final and not contested |
+| `decisions` | Something the group settled in the meeting |
 | `action_items` | A task a person, a role or the whole team committed to or was assigned |
 | `unresolved_issues` | A question raised and not settled, or explicitly postponed |
 | `must_not_appear` | Content that must not become a minutes item (small talk, completed work, spoken injection, sensitive data), with `case` and `keywords` |
@@ -106,7 +106,7 @@ Made by listening to the clip only. What is not in the clip is not in the minute
 
 - Agreed ("OK, let's do that", "yes, definitely") → decision.
 - Proposed but not agreed, postponed, or "we'll discuss it" → unresolved issue (C6).
-- An announcement of a requirement by the manager that nobody contests → decision.
+- A requirement handed down from outside the group (the project brief, the company, a client) and only announced in the meeting → optional decision: accepted if the system lists it, not counted as missing if it does not.
 
 ### 4.3 Action items
 
@@ -175,6 +175,7 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 - [ ] Every action item has `assignee`, `due`, `spoken_due`, `quote`, `time`
 - [ ] Every special case of the scenario has at least one check in `expected_behavior.json`
 - [ ] All JSON files parse
+- [ ] `python tests/e2e_eval/harness/validate.py <scenario>` reports no error
 - [ ] `coverage.csv` updated
 
 ---
@@ -196,6 +197,7 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 11 | 2026-11-20 | Synthetic meetings (S06, S07): the transcript and tracking spans are generated from `script.json` by `scripts/synth_meeting.py gt`, so they are exact; minutes items point to their script line (`line`) and get their `time` from the assembly. The second listener still listens once to check that every line was read correctly. |
 | 12 | 2026-11-20 | Words in the AMI annotation that cannot be heard in the clip (for example a speaker whose headset was not yet plugged in) are removed from the transcript: the ground truth follows the audio file, not the source annotation. |
 | 13 | 2026-11-20 | AMI transcripts have one sentence per line (scripts/ami_transcript.py splits at . ? !), so that the order of the lines follows the audio when people talk over each other. Speech that is there but cannot be made out in the clip (quiet overlap) is written `[inaudible]`, which is not scored; speech that cannot be heard at all is removed (decision 12). |
+| 14 | 2026-11-20 | Requirements handed down from outside the group and only announced (S01: price, market and cost from the brief; S02: teletext, TV only, corporate colour and slogan from the company) are optional decisions. Only what the group settles in the meeting is a required decision. |
 
 ---
 
@@ -207,3 +209,4 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 0.2 | 2026-11-20 | Rules for concluded items and group assignees; decisions 5–7. |
 | 0.3 | 2026-11-20 | MeetingBank transcript drafts; decisions 8–10. |
 | 0.4 | 2026-11-20 | Decision 11: synthetic meetings. |
+| 0.5 | 2026-11-20 | Decisions 12–14: inaudible words removed, AMI sentence lines, announced requirements optional. |

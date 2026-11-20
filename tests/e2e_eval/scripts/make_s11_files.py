@@ -6,7 +6,7 @@ broken.pdf   random bytes with a .pdf name           -> expected 415 UNSUPPORTED
 slides.pptx  a real PowerPoint file (type not allowed) -> expected 415 UNSUPPORTED_FILE_TYPE
 large.txt    11 MB of text                            -> expected 413 FILE_TOO_LARGE
 
-The files are generated (not committed) so that the repository stays small; the
+The files are generated (not stored in the repository) so that the repository stays small; the
 random bytes use a fixed seed, so every run gives the same files.
 """
 
