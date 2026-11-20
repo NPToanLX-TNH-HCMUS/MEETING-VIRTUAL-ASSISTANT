@@ -1,0 +1,65 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "No proclamations; the council moved to amendments to the mayor's proposed 2017 budget"
+    },
+    {
+      "id": "P2",
+      "text": "Councilman Kashmann explained why he did not bring an amendment: the budget has $2.5 million for sidewalks on public property but nothing for homeowners' sidewalk repairs"
+    },
+    {
+      "id": "P3",
+      "text": "The mayor committed to set up a committee to develop a program for income-challenged homeowners; public input meetings on the 2017 bond package run from November 15 to December 8"
+    },
+    {
+      "id": "P4",
+      "text": "November 7 is the last day for budget amendments, and the council votes on the budget on November 14"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "No amendments were offered to the mayor's 2017 proposed budget",
+      "time": 214.2,
+      "optional": true
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Bring together a committee of city staff and council representatives to develop a program that eases sidewalk repair costs for income-challenged homeowners",
+      "assignee": "Mayor",
+      "due": null,
+      "spoken_due": null,
+      "quote": "the mayor committed to bring together a committee of city staff",
+      "time": 89.8,
+      "cases": [
+        "C5"
+      ]
+    },
+    {
+      "id": "AI2",
+      "task": "Vote to adopt or reject the mayor's 2017 proposed budget",
+      "assignee": "Council",
+      "due": "2016-11-14",
+      "spoken_due": "on Monday, November 14th",
+      "quote": "Council will vote to either adopt or reject the mayor's 2017 proposed budgets",
+      "time": 220.7,
+      "cases": []
+    },
+    {
+      "id": "AI3",
+      "task": "Offer any last amendments to the 2017 budget",
+      "assignee": "Council",
+      "due": "2016-11-07",
+      "spoken_due": "Monday, November 7th, will be your last time",
+      "quote": "will be your last time to offer any amendments to the budget",
+      "time": 214.2,
+      "cases": [],
+      "optional": true
+    }
+  ],
+  "unresolved_issues": [],
+  "must_not_appear": []
+}

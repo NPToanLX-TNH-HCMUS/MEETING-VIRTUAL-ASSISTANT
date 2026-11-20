@@ -1,0 +1,153 @@
+{
+  "id": "S11",
+  "title": "Denver City Council budget discussion; bad uploads and calls in the wrong order",
+  "group": "adversarial",
+  "use_cases": [
+    "UC1",
+    "UC4",
+    "UC6",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "A7",
+    "E1",
+    "E2"
+  ],
+  "planted": [
+    "A7",
+    "E1",
+    "E2"
+  ],
+  "meeting_date": "2016-10-31T17:30:00-06:00",
+  "meeting": {
+    "topic": "Denver City Council regular meeting",
+    "language": "en",
+    "duration_minutes": 30,
+    "planned_points": []
+  },
+  "documents": [
+    "inputs/docs/good.md",
+    "inputs/docs/broken.pdf",
+    "inputs/docs/slides.pptx",
+    "inputs/docs/large.txt"
+  ],
+  "generated_docs": "broken.pdf, slides.pptx and large.txt are created by scripts/make_s11_files.py",
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 233.1
+  },
+  "source": {
+    "name": "MeetingBank",
+    "original_id": "DenverCityCouncil_10312016",
+    "stream": "MP3 from huuuyeah/MeetingBank_Audio (Denver)",
+    "license": "CC BY-NC-SA 4.0",
+    "url": "https://zenodo.org/records/7989108 and https://huggingface.co/datasets/huuuyeah/MeetingBank_Audio",
+    "segments": [
+      "552.00-785.10"
+    ],
+    "sha256": "95240c9ccfcde28a56e807c6b7ac868ddc1aa3730a265d6f3c69cc9755b75f89",
+    "retrieved_at": "2026-11-20",
+    "meeting_date_is_assumed": false,
+    "transcript_origin": "MeetingBank Speechmatics transcript (scripts/mb_transcript.py), corrected by listening on 2026-11-20",
+    "known_draft_errors": [
+      "'Council mechanics', 'Cranitch each', 'Can each' are probably Councilwoman Kniech",
+      "'Our table' is probably Councilwoman Ortega",
+      "'Black eye' = 'Black, aye'; 'I' = 'aye' in roll calls",
+      "'Gaby Krieger' is Gary Krieger (mayor's office), confirmed by listening",
+      "'12 Eyes' = 'twelve ayes'"
+    ],
+    "selection_reason": "Budget discussion with tasks that have and lack deadlines; the scenario's special cases are in the uploads and the call order",
+    "constructed_docs": [
+      "Agenda rebuilt from MeetingBank metadata (item ids, types, summaries) and the order of a Denver City Council regular meeting; the official PDF could not be downloaded"
+    ]
+  },
+  "aliases": {
+    "Council": [
+      "City Council",
+      "council",
+      "council members"
+    ],
+    "Mayor": [
+      "mayor",
+      "Mayor Hancock",
+      "the mayor"
+    ],
+    "Mayor's office": [
+      "mayor's office"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "two and a half million",
+      "alts": [
+        "2.5 million",
+        "$2.5 million"
+      ]
+    },
+    {
+      "text": "sidewalks",
+      "alts": []
+    },
+    {
+      "text": "Mayor Hancock",
+      "alts": []
+    },
+    {
+      "text": "November 15th",
+      "alts": [
+        "November 15",
+        "Nov. 15"
+      ]
+    },
+    {
+      "text": "December 8th",
+      "alts": [
+        "December 8",
+        "December eight"
+      ]
+    },
+    {
+      "text": "Denver South High School",
+      "alts": []
+    },
+    {
+      "text": "bond package",
+      "alts": []
+    },
+    {
+      "text": "Mobility Task Force",
+      "alts": []
+    },
+    {
+      "text": "November 14th",
+      "alts": [
+        "November 14",
+        "Nov. 14"
+      ]
+    },
+    {
+      "text": "Kashmann",
+      "alts": []
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": [
+    {
+      "id": "E2",
+      "after_step": "generate_agenda",
+      "request": "POST /api/v1/meetings/{id}/recording/start",
+      "note": "before the agenda is confirmed"
+    },
+    {
+      "id": "E1",
+      "after_step": "stop_recording",
+      "request": "POST /api/v1/meetings/{id}/minutes/generate",
+      "note": "before transcribe"
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "id": "S09",
+  "title": "Denver City Council: debate and roll-call vote on a $4 million appropriation",
+  "group": "hard",
+  "use_cases": [
+    "UC1",
+    "UC3",
+    "UC6",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "A2",
+    "A3",
+    "B2"
+  ],
+  "planted": [
+    "A2",
+    "A3"
+  ],
+  "meeting_date": "2017-03-06T17:30:00-07:00",
+  "meeting": {
+    "topic": "Denver City Council regular meeting",
+    "language": "en",
+    "duration_minutes": 15,
+    "planned_points": [
+      "Four million dollar contingency transfer for economic development",
+      "Council retreat schedule"
+    ]
+  },
+  "documents": [
+    "inputs/docs/agenda.md"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 286.31
+  },
+  "source": {
+    "name": "MeetingBank",
+    "original_id": "DenverCityCouncil_03062017",
+    "stream": "MP3 from huuuyeah/MeetingBank_Audio (Denver)",
+    "license": "CC BY-NC-SA 4.0",
+    "url": "https://zenodo.org/records/7989108 and https://huggingface.co/datasets/huuuyeah/MeetingBank_Audio",
+    "segments": [
+      "2632.44-2918.75"
+    ],
+    "sha256": "3bcd2545fdc7373e796f83ff640483a5cc73f13331e32b5ada954d2acb6c4dd2",
+    "retrieved_at": "2026-11-20",
+    "meeting_date_is_assumed": false,
+    "transcript_origin": "MeetingBank Speechmatics transcript (scripts/mb_transcript.py), corrected by listening on 2026-11-20",
+    "known_draft_errors": [
+      "'Cannick' and 'Can each' are probably Councilwoman Kniech",
+      "'Blackwell' is probably Councilwoman Black",
+      "'Raquel' = 'roll call'",
+      "'Eat ice' is probably 'eight ayes' or 'eleven ayes': check the count",
+      "'I' = 'aye' in the roll call"
+    ],
+    "selection_reason": "Many speakers; debate on Council Bill 17-0156 ends with a roll-call vote (passed, two nays); agenda has more items than 15 minutes allow",
+    "constructed_docs": [
+      "Agenda rebuilt from MeetingBank metadata (item ids, types, summaries) and the order of a Denver City Council regular meeting; the official PDF could not be downloaded"
+    ]
+  },
+  "aliases": {
+    "Council": [
+      "City Council",
+      "council",
+      "council members"
+    ],
+    "Mayor": [
+      "mayor",
+      "Mayor Hancock",
+      "the mayor"
+    ],
+    "Mayor's office": [
+      "mayor's office"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "Flynn",
+      "alts": []
+    },
+    {
+      "text": "Espinosa",
+      "alts": []
+    },
+    {
+      "text": "Council Bill 156",
+      "alts": [
+        "17-0156",
+        "CB 156",
+        "council bill 17 dash 156"
+      ]
+    },
+    {
+      "text": "16th Street Mall",
+      "alts": [
+        "Sixteenth Street Mall"
+      ]
+    },
+    {
+      "text": "contingency fund",
+      "alts": []
+    },
+    {
+      "text": "full time jobs",
+      "alts": [
+        "full-time jobs"
+      ]
+    },
+    {
+      "text": "task force",
+      "alts": []
+    },
+    {
+      "text": "architect",
+      "alts": []
+    },
+    {
+      "text": "two nays",
+      "alts": [
+        "2 nays"
+      ]
+    },
+    {
+      "text": "block vote",
+      "alts": [
+        "bloc vote"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

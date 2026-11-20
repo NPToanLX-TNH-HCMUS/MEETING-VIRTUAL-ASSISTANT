@@ -1,0 +1,37 @@
+{
+  "scenario_id": "S09",
+  "checks": [
+    {
+      "id": "S09-01",
+      "case": "A2",
+      "type": "count_similar",
+      "target": "agenda_titles",
+      "reference": "Four million dollar supplemental appropriation for a business incentive (Council Bill 17-0156)",
+      "n": 1
+    },
+    {
+      "id": "S09-02",
+      "case": "A3",
+      "type": "agenda_budget"
+    },
+    {
+      "id": "S09-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S09-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S09-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

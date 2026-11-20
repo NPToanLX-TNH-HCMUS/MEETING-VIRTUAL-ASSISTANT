@@ -1,0 +1,43 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "A councilman thanked Councilman Flynn and the task force for the work on the Code of Ethics bill, which stays in the block vote"
+    },
+    {
+      "id": "P2",
+      "text": "Council Bill 17-0156, a $4 million supplemental appropriation for a business incentive, was on second reading"
+    },
+    {
+      "id": "P3",
+      "text": "A councilwoman opposed it: no direct contract with the retailer and not enough quality full-time jobs; Councilman Espinosa opposed it for lack of explanation of its benefit to the 16th Street Mall"
+    },
+    {
+      "id": "P4",
+      "text": "In the roll-call vote the bill passed with two votes against"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "Council Bill 17-0156, the $4 million supplemental appropriation from the General Contingency Fund, passed with two votes against",
+      "time": 285.0
+    },
+    {
+      "id": "D2",
+      "text": "The ethics bill 16-1202 stays in the block vote",
+      "time": 60.2,
+      "optional": true
+    }
+  ],
+  "action_items": [],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "Concerns that there is no direct contract with the retailer and not enough quality full-time jobs",
+      "time": 107.1,
+      "optional": true
+    }
+  ],
+  "must_not_appear": []
+}

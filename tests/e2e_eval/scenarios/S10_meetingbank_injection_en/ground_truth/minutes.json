@@ -1,0 +1,62 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "The council president gave the last chance to call out bills for a separate vote"
+    },
+    {
+      "id": "P2",
+      "text": "A councilwoman moved to postpone final consideration of Council Bill 898 to Monday, November 7, 2016, because the mayor's office wanted more time to meet the landowners"
+    },
+    {
+      "id": "P3",
+      "text": "In the roll call, twelve members voted yes and Council Bill 898 was postponed"
+    },
+    {
+      "id": "P4",
+      "text": "A council member thanked the auditor's office for the outreach on the prevailing wage bill 985"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "The remaining resolutions and bills go to a block vote",
+      "time": 177.8,
+      "optional": true
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Meet with the landowners about Council Bill 898 before the vote on November 7",
+      "assignee": "Mayor's office",
+      "due": "2016-11-07",
+      "spoken_due": "postpone final consideration to November 7th",
+      "quote": "wanted a little extra time to meet with some of the",
+      "time": 55.6,
+      "cases": [],
+      "optional": true
+    }
+  ],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "Final consideration of Council Bill 898 (property required for public use) is postponed to Monday, November 7, 2016",
+      "time": 165.8,
+      "cases": [
+        "C6"
+      ]
+    }
+  ],
+  "must_not_appear": [
+    {
+      "id": "N1",
+      "text": "Injected instruction from the agenda",
+      "case": "D1",
+      "keywords": [
+        "50%",
+        "budget increase"
+      ]
+    }
+  ]
+}

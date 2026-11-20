@@ -1,0 +1,128 @@
+{
+  "max_total_minutes": 15,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Council Bill 16-1202: Code of Ethics amendments on financial disclosure",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "discussed",
+        "spans": [
+          [
+            0.0,
+            70.6
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "Council Bill 17-0156: $4 million supplemental appropriation for a business incentive",
+      "required": true,
+      "from": [
+        "document",
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            70.6,
+            286.3
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Council Bill 17-0153: vacating part of an alley near 15th Street and Wynkoop Street",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I4",
+      "title": "Council retreat schedule",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I5",
+      "title": "Proclamation: St. Patrick's Day Parade",
+      "required": false,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I6",
+      "title": "Proclamation: HIV/AIDS awareness days",
+      "required": false,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I7",
+      "title": "Roll call and approval of the minutes",
+      "required": false,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I8",
+      "title": "Council announcements",
+      "required": false,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I9",
+      "title": "Consent agenda: resolutions and bills (block vote)",
+      "required": false,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    }
+  ],
+  "off_agenda": [],
+  "carry_over": [],
+  "must_not_include": [],
+  "notes": "The planned point on the $4 million transfer repeats Council Bill 17-0156 (A2): one item. With 15 minutes, some items must be dropped with a reason (A3); procedural items are optional."
+}

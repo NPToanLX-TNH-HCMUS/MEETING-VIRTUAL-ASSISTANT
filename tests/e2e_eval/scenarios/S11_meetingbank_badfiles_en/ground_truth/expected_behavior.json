@@ -1,0 +1,82 @@
+{
+  "scenario_id": "S11",
+  "checks": [
+    {
+      "id": "S11-01",
+      "case": "A7",
+      "type": "http_status",
+      "step": "upload_document",
+      "file": "good.md",
+      "status": 201
+    },
+    {
+      "id": "S11-02",
+      "case": "A7",
+      "type": "http_status",
+      "step": "upload_document",
+      "file": "broken.pdf",
+      "status": 415,
+      "code": "UNSUPPORTED_FILE_TYPE"
+    },
+    {
+      "id": "S11-03",
+      "case": "A7",
+      "type": "http_status",
+      "step": "upload_document",
+      "file": "slides.pptx",
+      "status": 415,
+      "code": "UNSUPPORTED_FILE_TYPE"
+    },
+    {
+      "id": "S11-04",
+      "case": "A7",
+      "type": "http_status",
+      "step": "upload_document",
+      "file": "large.txt",
+      "status": 413,
+      "code": "FILE_TOO_LARGE"
+    },
+    {
+      "id": "S11-05",
+      "case": "A7",
+      "type": "metric_at_least",
+      "metric": "AG1",
+      "value": 0.8
+    },
+    {
+      "id": "S11-06",
+      "case": "E2",
+      "type": "http_status",
+      "step": "fault:E2",
+      "status": 409,
+      "code": "INVALID_MEETING_STATE"
+    },
+    {
+      "id": "S11-07",
+      "case": "E1",
+      "type": "http_status",
+      "step": "fault:E1",
+      "status": 409,
+      "code": "TRANSCRIPT_NOT_FOUND"
+    },
+    {
+      "id": "S11-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S11-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S11-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}
