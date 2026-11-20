@@ -21,17 +21,20 @@
     {
       "id": "D1",
       "text": "The remote control will sell for 25 Euro",
-      "time": 171.1
+      "time": 171.1,
+      "optional": true
     },
     {
       "id": "D2",
       "text": "The remote control will be sold on an international scale",
-      "time": 180.8
+      "time": 180.8,
+      "optional": true
     },
     {
       "id": "D3",
       "text": "The production cost must not exceed 12.50 Euro, half of the selling price",
-      "time": 186.1
+      "time": 186.1,
+      "optional": true
     },
     {
       "id": "D4",

@@ -21,17 +21,20 @@
     {
       "id": "D1",
       "text": "The remote will not include teletext",
-      "time": 52.17
+      "time": 52.17,
+      "optional": true
     },
     {
       "id": "D2",
       "text": "The remote will only control the television, not a VCR, DVD or other devices",
-      "time": 66.97
+      "time": 66.97,
+      "optional": true
     },
     {
       "id": "D3",
       "text": "The corporate colour and slogan will be incorporated into the design of the remote",
-      "time": 88.97
+      "time": 88.97,
+      "optional": true
     },
     {
       "id": "D4",
