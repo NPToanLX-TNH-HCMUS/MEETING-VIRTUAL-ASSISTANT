@@ -1,0 +1,150 @@
+{
+  "id": "S03",
+  "title": "AMI conceptual design: jog dial and slogan decisions, proposals left open, assignments",
+  "group": "normal",
+  "use_cases": [
+    "UC2",
+    "UC6",
+    "UC10",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "A4",
+    "C6"
+  ],
+  "planted": [
+    "A4"
+  ],
+  "meeting_date": "2026-11-16T10:00:00+07:00",
+  "meeting": {
+    "topic": "Remote control project: conceptual design",
+    "language": "en",
+    "duration_minutes": 30,
+    "planned_points": [
+      "Conceptual design decisions",
+      "Next steps and task assignments"
+    ]
+  },
+  "documents": [
+    "inputs/docs/previous_minutes.md"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 271.5
+  },
+  "source": {
+    "name": "AMI Meeting Corpus",
+    "original_id": "ES2002c",
+    "stream": "Headset mix",
+    "license": "CC BY 4.0",
+    "url": "https://groups.inf.ed.ac.uk/ami/download/",
+    "segments": [
+      "2083.16-2354.66"
+    ],
+    "sha256": "a93bef2ccb2e4a8540403e4eb21782858ce644e4e02e46a06815d7c47627e05c",
+    "retrieved_at": "2026-11-19",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "AMI manual transcript (scripts/ami_transcript.py), to be checked by listening",
+    "selection_reason": "Jog dial and slogan decided; jog dial form and flush buttons left open; prototype and minutes assigned",
+    "constructed_docs": [
+      "inputs/docs/previous_minutes.md (from the S02 ground truth)"
+    ]
+  },
+  "aliases": {
+    "Project Manager": [
+      "PM",
+      "project manager"
+    ],
+    "Industrial Designer": [
+      "ID",
+      "industrial designer",
+      "David"
+    ],
+    "User Interface Designer": [
+      "UI",
+      "User Interface",
+      "interface designer",
+      "interface specialist"
+    ],
+    "Marketing Expert": [
+      "ME",
+      "marketing",
+      "marketing executive",
+      "marketing expert"
+    ],
+    "Designers": [
+      "designers",
+      "the designers",
+      "Industrial Designer and User Interface Designer",
+      "ID and UI"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "jog dial",
+      "alts": [
+        "jogdial",
+        "jog-dial"
+      ]
+    },
+    {
+      "text": "slogan",
+      "alts": []
+    },
+    {
+      "text": "Play-doh",
+      "alts": [
+        "Play-Doh",
+        "playdough",
+        "play dough"
+      ]
+    },
+    {
+      "text": "plastic",
+      "alts": []
+    },
+    {
+      "text": "rubber",
+      "alts": []
+    },
+    {
+      "text": "Telewest",
+      "alts": [
+        "Tele West"
+      ]
+    },
+    {
+      "text": "fifty channels",
+      "alts": [
+        "50 channels"
+      ]
+    },
+    {
+      "text": "mouse",
+      "alts": []
+    },
+    {
+      "text": "left handed",
+      "alts": [
+        "left-handed"
+      ]
+    },
+    {
+      "text": "casing",
+      "alts": []
+    },
+    {
+      "text": "thirty minutes",
+      "alts": [
+        "30 minutes"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

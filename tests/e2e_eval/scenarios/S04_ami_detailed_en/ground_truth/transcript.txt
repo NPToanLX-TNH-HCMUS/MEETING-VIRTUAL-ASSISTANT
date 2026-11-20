@@ -1,0 +1,135 @@
+[00:01.2] PM: How about these?
+[00:01.8] PM: Are we wanting them in no they're just is everything gonna be plastic?
+[00:02.9] ID: No.
+[00:05.1] ID: Yep.
+[00:06.0] ID: Yep.
+[00:06.2] PM: Okay.
+[00:07.1] PM: So we're w w quite far over.
+[00:10.7] PM: Now we're gonna something's gonna have to go.
+[00:12.9] PM: Um we're at sixteen point eight and
+[00:15.8] ME: Uh how mm-hmm how are we going to achieve this high-end product if
+[00:21.6] PM: Well we h something has to go to the tune of two point t three Euro, so let me see, what are we I mean oh yes sorry, four point three.
+[00:22.6] ME: We only have very sparse
+[00:30.6] ME: Two point three?
+[00:31.3] ME: Four point three no?
+[00:34.4] PM: My maths is all out.
+[00:35.5] UI: Well we could take out ones by making it single curved, just fill in those bits.
+[00:40.3] PM: Yeah.
+[00:40.9] ME: And then where is the
+[00:41.3] ID: How much would that save us?
+[00:42.2] PM: How much would that save us?
+[00:42.9] ID: That will only save you one.
+[00:43.4] UI: That is one.
+[00:44.1] PM: One.
+[00:44.4] ID: The other thing could be that um you could take away the LCD panel and the advanced chip together, um because when you do something on the TV, the TV responds and reacts as well, so the user could be looking at the TV and pushing his thing so we may not need to so when we scroll we need just some way to get the TV to respond, which I think is a technically doable thing so
+[00:53.6] ME: Mm-hmm.
+[00:58.7] UI: That's fair enough, yeah.
+[01:00.8] ME: Mm-hmm.
+[01:02.9] ME: Mm-hmm.
+[01:04.6] PM: Okay so
+[01:04.7] ME: Mm-hmm.
+[01:06.8] ME: Mm-hmm.
+[01:07.2] PM: So w what's our reviewed suggestion?
+[01:09.5] PM: Um take away the LC display?
+[01:12.1] ID: Yep.
+[01:14.3] ID: And the advanced chip goes away as well.
+[01:14.4] ME: Mm-hmm.
+[01:16.3] PM: To be replaced with a regular chip.
+[01:18.2] ID: Regular chip.
+[01:20.1] ID: Yep.
+[01:23.4] ME: Mm-hmm.
+[01:23.5] PM: Okay.
+[01:23.7] ID: So what that means is that um
+[01:25.3] PM: And so we've got point three to get rid of.
+[01:28.1] PM: Um and we ha where are the four the four push buttons are where exactly now?
+[01:33.4] ID: The twelve buttons that you see there.
+[01:35.5] PM: Twelve buttons.
+[01:36.9] UI: That's um one piece of rubber but it's gonna have twelve button things underneath so
+[01:39.2] PM: Yeah.
+[01:39.8] ID: Functionally you're gonna have to intercept So four is a good estimate for
+[01:43.4] PM: Do you think?
+[01:44.6] ID: Yeah, so you can't actually cut It's like three times the number of buttons, four, eight, twelve.
+[01:49.3] PM: Like is is that one big button or is it twelve buttons, how can it be something in between?
+[01:54.7] ID: It It needs to be more than one big button because if you open up your phone, underneath there's actually one button underneath, it's just that the panel itself is a single panel.
+[02:00.4] ME: Mm-hmm.
+[02:01.1] PM: Mm.
+[02:05.3] ME: Mm-hmm.
+[02:05.5] PM: Okay well we have point three to get rid of somewhere.
+[02:09.7] ID: We just report that it has to be over budget, or the colours, you could take away s colours for th for the buttons.
+[02:09.8] PM: Mm.
+[02:13.9] PM: No can do.
+[02:16.4] ME: Yeah we could just go with um
+[02:17.3] UI: Yeah w
+[02:18.1] ID: Normal coloured buttons.
+[02:21.1] PM: Well do you want colour differentiation here?
+[02:23.8] ID: No that's not the button we're talking about.
+[02:23.8] UI: Um
+[02:24.8] PM: Oh yeah sorry yeah then.
+[02:25.2] ID: That's the buttons only refer to the pad so
+[02:28.2] PM: Right so
+[02:29.7] ID: Should we take that off uh?
+[02:31.7] PM: Ah.
+[02:34.0] ID: Hey it's back to the original.
+[02:34.0] PM: That's it.
+[02:35.2] ME: Hmm.
+[02:36.1] ID: Um so then these just become normal coloured buttons, so that might be some some way of cutting the cost.
+[02:39.0] ME: Mm-hmm.
+[02:42.1] ME: Mm.
+[02:43.2] PM: Okay, ach that's a shame.
+[02:45.8] PM: Um right, so take away that completely?
+[02:50.5] PM: Ah.
+[02:51.9] PM: And now we're under budget.
+[02:53.5] PM: So we do have point five Euro to play with if we wanted.
+[02:57.0] PM: Um
+[02:57.7] UI: So I reckon
+[02:57.9] ME: How about with embossing the logo, isn't that going to cost us some money?
+[03:01.6] PM: Doesn't say so.
+[03:02.7] ME: Yeah.
+[03:03.3] ME: That's a freebie.
+[03:03.3] UI: Reckon that probably counts as a special form for the buttons.
+[03:06.0] ID: Yeah.
+[03:06.3] PM: Yeah that's a good idea.
+[03:09.0] PM: Just one?
+[03:12.2] PM: Does that mean that one button has a special form or
+[03:15.6] UI: I think there's just one button so handy.
+[03:17.1] PM: Yeah okay.
+[03:19.3] PM: Well well there we go.
+[03:20.5] PM: So I'm just gonna have to redraw this now.
+[03:22.8] PM: So we're not gonna have the LCD anymore, and we'll just gonna have an on t on the TV it'll show you what you're doing, which I think is fair enough, and so this is gonna be one big thing here.
+[03:34.6] PM: Um.
+[03:37.2] ME: Was the goal in your in your prototype design that it be as low profile as possible?
+[03:43.9] ID: What do you mean by profile?
+[03:44.2] UI: Yeah.
+[03:45.2] ME: Sort of flat as possible.
+[03:47.2] ID: No.
+[03:47.8] UI: You see I envision it as being um quite deep sort of deep enough to be comfy to hold in your hands rather than being wide and flat.
+[03:50.4] ME: Yeah.
+[03:52.1] ME: Yeah that's what I was thinking, to Sure, okay.
+[03:54.0] ID: We didn't have enough Play-Doh to make it three D.
+[03:55.8] ME: Yeah alright yeah fair enough.
+[03:57.7] ME: Okay, just thought I'd ask.
+[03:59.5] ID: So there's one more dimension to the thing which we need to to add, and you might want to add in the report, length, width, and height.
+[04:01.3] ME: Mm-hmm.
+[04:05.6] PM: Right okay.
+[04:06.8] ID: Yeah.
+[04:07.0] PM: So just to well to be thorough then, width-wise we're looking at about what three centimetres or something?
+[04:14.0] ID: Yeah.
+[04:14.6] PM: Okay and then so height-wise
+[04:16.4] ME: Hmm.
+[04:22.9] PM: How how tall do you envisage it being?
+[04:25.4] PM: About that big?
+[04:25.6] UI: Yeah it works, yeah.
+[04:26.0] ID: Two.
+[04:26.6] PM: About two centimetres, okay.
+[04:28.7] ME: Two's not very high at all though.
+[04:30.9] ME: Maybe a bit higher?
+[04:31.0] ID: This is about this is about two.
+[04:34.5] ID: Slightly more than two, so
+[04:35.2] UI: See, about that thick.
+[04:35.5] ME: Yeah.
+[04:37.0] PM: Okay.
+[04:37.2] ME: Maybe closer to three even or two and a half.
+[04:37.5] PM: Ach, that is Yeah.
+[04:38.5] ID: Okay.
+[04:39.6] PM: Okay we'll s we'll say two point five.
+[04:42.1] PM: Okay um so we have it within cost anyway.

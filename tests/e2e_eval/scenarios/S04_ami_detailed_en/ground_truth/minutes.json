@@ -1,0 +1,87 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "The design was over budget, so the team looked for features to cut"
+    },
+    {
+      "id": "P2",
+      "text": "The LCD display and the advanced chip were removed and replaced by a regular chip, with feedback shown on the television"
+    },
+    {
+      "id": "P3",
+      "text": "The buttons will be normal coloured, which brought the remote under budget with about 0.5 Euro to spare"
+    },
+    {
+      "id": "P4",
+      "text": "The logo will be embossed, and the remote's dimensions were discussed: about 2.5 centimetres high"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "The LCD display is removed; the television shows what the user is doing",
+      "time": 203.1
+    },
+    {
+      "id": "D2",
+      "text": "The advanced chip is replaced by a regular chip",
+      "time": 78.2
+    },
+    {
+      "id": "D3",
+      "text": "The buttons will be normal coloured",
+      "time": 157.7
+    },
+    {
+      "id": "D4",
+      "text": "The logo will be embossed (counted as a special form for the buttons)",
+      "time": 186.7
+    },
+    {
+      "id": "D5",
+      "text": "The remote will be about 2.5 centimetres high",
+      "time": 280.5
+    },
+    {
+      "id": "D6",
+      "text": "The remote will be about three centimetres wide",
+      "time": 246.0,
+      "optional": true
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Add the length, width and height of the remote to the report",
+      "assignee": "Project Manager",
+      "due": null,
+      "spoken_due": null,
+      "quote": "you might want to add in the report, length, width, and height",
+      "time": 243.5,
+      "cases": [
+        "C5"
+      ]
+    },
+    {
+      "id": "AI2",
+      "task": "Redraw the design of the remote",
+      "assignee": "Project Manager",
+      "due": null,
+      "spoken_due": null,
+      "quote": "I'm just gonna have to redraw this now",
+      "time": 201.9,
+      "cases": [],
+      "optional": true
+    }
+  ],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "Making the case single curved to save cost (proposed, not taken up)",
+      "time": 36.9,
+      "optional": true
+    }
+  ],
+  "must_not_appear": []
+}

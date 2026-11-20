@@ -1,0 +1,78 @@
+{
+  "scenario_id": "S02",
+  "checks": [
+    {
+      "id": "S02-01",
+      "case": "A1",
+      "type": "not_contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "project folder",
+        "send the project instructions",
+        "instructions by email"
+      ],
+      "note": "two tasks marked [x] in previous_minutes.md"
+    },
+    {
+      "id": "S02-02",
+      "case": "A1",
+      "type": "not_contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "25 euro",
+        "twenty five euro",
+        "selling price"
+      ],
+      "note": "decision already made at the kick-off"
+    },
+    {
+      "id": "S02-03",
+      "case": "A4",
+      "type": "metric_at_least",
+      "metric": "AG4",
+      "value": 0.8
+    },
+    {
+      "id": "S02-04",
+      "case": "A4",
+      "type": "contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "working design",
+        "technical functions",
+        "user requirements"
+      ]
+    },
+    {
+      "id": "S02-05",
+      "case": "C7",
+      "type": "not_contains",
+      "target": "action_items",
+      "any_of": [
+        "know each other",
+        "familiar with the equipment",
+        "familiar with all the equipment"
+      ],
+      "note": "recap of completed work at 0:17-1:00"
+    },
+    {
+      "id": "S02-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S02-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S02-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "max_total_minutes": 30,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Prototype of the remote (designers)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            217.2,
+            284.2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "Form and placement of the jog dial",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Whether the buttons are flush with the case",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I4",
+      "title": "Production cost and budget",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            0.0,
+            217.2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I5",
+      "title": "Project evaluation",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    }
+  ],
+  "off_agenda": [],
+  "carry_over": [
+    "I1",
+    "I2",
+    "I3"
+  ],
+  "must_not_include": [
+    {
+      "id": "X1",
+      "text": "Slogan on the remote",
+      "reason": "Decision already made",
+      "case": "A1",
+      "keywords": [
+        "slogan"
+      ]
+    },
+    {
+      "id": "X2",
+      "text": "Put the minutes online",
+      "reason": "Marked [x] in previous minutes",
+      "case": "A1",
+      "keywords": [
+        "minutes online",
+        "put the minutes"
+      ]
+    }
+  ],
+  "notes": "The clip starts inside the budget discussion. From 3:37 the team talks about the prototype's dimensions; the height is agreed at 4:40."
+}

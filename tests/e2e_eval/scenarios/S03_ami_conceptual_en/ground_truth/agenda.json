@@ -1,0 +1,143 @@
+{
+  "max_total_minutes": 30,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Components concept (Industrial Designer)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I2",
+      "title": "User interface (User Interface Designer)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Trend watching (Marketing Expert)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I4",
+      "title": "Whether the slogan is written on the remote or only its idea expressed",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            105.0,
+            143.0
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I5",
+      "title": "Conceptual design decisions",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            0.0,
+            105.0
+          ],
+          [
+            143.0,
+            163.7
+          ],
+          [
+            193.4,
+            249.5
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I6",
+      "title": "Next steps and task assignments",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            163.7,
+            193.4
+          ],
+          [
+            249.5,
+            271.5
+          ]
+        ]
+      }
+    }
+  ],
+  "off_agenda": [],
+  "carry_over": [
+    "I1",
+    "I2",
+    "I3",
+    "I4"
+  ],
+  "must_not_include": [
+    {
+      "id": "X1",
+      "text": "Teletext",
+      "reason": "Decision already made",
+      "case": "A1",
+      "keywords": [
+        "teletext"
+      ]
+    },
+    {
+      "id": "X2",
+      "text": "Remote controls only the television",
+      "reason": "Decision already made",
+      "case": "A1",
+      "keywords": [
+        "only control the television",
+        "only the tv",
+        "tv only"
+      ]
+    },
+    {
+      "id": "X3",
+      "text": "Put the minutes into the project documents folder",
+      "reason": "Marked [x] in previous minutes",
+      "case": "A1",
+      "keywords": [
+        "project documents folder"
+      ]
+    }
+  ],
+  "notes": "The presentations were cut from the clip, so I1-I3 stay not_discussed. I5 is concluded at 1:40 (jog dial) and stays concluded although it is discussed again."
+}

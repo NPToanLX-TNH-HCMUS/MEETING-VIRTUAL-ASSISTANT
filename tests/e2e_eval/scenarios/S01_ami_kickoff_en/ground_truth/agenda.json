@@ -1,0 +1,82 @@
+{
+  "max_total_minutes": 30,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Team introductions and roles",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "discussed",
+        "spans": [
+          [
+            17.0,
+            56.0
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "Project brief and design process",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "discussed",
+        "spans": [
+          [
+            56.0,
+            103.0
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Project finance and selling price",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            160.9,
+            226.2
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I4",
+      "title": "Next steps and task assignments",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            229.3,
+            277.4
+          ]
+        ]
+      }
+    }
+  ],
+  "off_agenda": [
+    [
+      103.0,
+      160.9
+    ]
+  ],
+  "carry_over": [],
+  "must_not_include": [],
+  "notes": "Agenda from planned points only (no documents). Tracking: opening words 0-17 s unlabelled; whiteboard exercise and dog story off-agenda."
+}

@@ -1,0 +1,92 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "The team discussed a jog dial to control volume and channels and decided to include one"
+    },
+    {
+      "id": "P2",
+      "text": "The team decided to put the company slogan on the remote, for example on the casing"
+    },
+    {
+      "id": "P3",
+      "text": "The form and placement of the jog dial and whether the buttons should be flush with the case were left open"
+    },
+    {
+      "id": "P4",
+      "text": "The designers will build a Play-doh prototype for the next meeting, and the project manager will put the minutes online"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "The remote will have a jog dial",
+      "time": 100.4
+    },
+    {
+      "id": "D2",
+      "text": "The company slogan will be put on the remote, for example on the casing",
+      "time": 141.2
+    },
+    {
+      "id": "D3",
+      "text": "The materials will be plastic and rubber",
+      "time": 214.0,
+      "optional": true
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Build a prototype of the remote with Play-doh",
+      "assignee": "Designers",
+      "due": "2026-11-16",
+      "spoken_due": "the next meeting's gonna be in thirty minutes",
+      "quote": "the designers are gonna be working with Play-doh on that",
+      "time": 179.5,
+      "cases": []
+    },
+    {
+      "id": "AI2",
+      "task": "Put the minutes of this meeting online",
+      "assignee": "Project Manager",
+      "due": null,
+      "spoken_due": "as soon as possible",
+      "quote": "I'll get the the minutes up as soon as possible",
+      "time": 187.5,
+      "cases": [
+        "C5"
+      ]
+    },
+    {
+      "id": "AI3",
+      "task": "Decide the form of the jog dial and how to include the logo",
+      "assignee": "Designers",
+      "due": null,
+      "spoken_due": null,
+      "quote": "That's kind of a design thing that you guys can can discuss",
+      "time": 211.7,
+      "cases": [],
+      "optional": true
+    }
+  ],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "The form and placement of the jog dial: flat and spun, a slide, or down the middle, and how it suits left- and right-handed users",
+      "time": 196.2,
+      "cases": [
+        "C6"
+      ]
+    },
+    {
+      "id": "U2",
+      "text": "Whether to avoid protruding rubber buttons and make the buttons flush with the case",
+      "time": 223.8,
+      "cases": [
+        "C6"
+      ]
+    }
+  ],
+  "must_not_appear": []
+}

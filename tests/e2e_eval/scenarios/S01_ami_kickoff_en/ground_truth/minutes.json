@@ -1,0 +1,106 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "The project manager opened the kick-off meeting and the team members introduced themselves and their roles"
+    },
+    {
+      "id": "P2",
+      "text": "The team will design a new remote control that is original, trendy and user friendly, in three design stages"
+    },
+    {
+      "id": "P3",
+      "text": "The remote will sell for 25 Euro internationally, with a production cost of at most 12.50 Euro and a profit target of 50 million Euro"
+    },
+    {
+      "id": "P4",
+      "text": "The project manager assigned work for the next meeting to the industrial designer, the user interface designer and the marketing expert"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "The remote control will sell for 25 Euro",
+      "time": 171.1
+    },
+    {
+      "id": "D2",
+      "text": "The remote control will be sold on an international scale",
+      "time": 180.8
+    },
+    {
+      "id": "D3",
+      "text": "The production cost must not exceed 12.50 Euro, half of the selling price",
+      "time": 186.1
+    },
+    {
+      "id": "D4",
+      "text": "The profit target is 50 million Euro",
+      "time": 175.6,
+      "optional": true
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Work on the working design of the remote",
+      "assignee": "Industrial Designer",
+      "due": "2026-11-02",
+      "spoken_due": "in between now and the next meeting, which is in thirty minutes",
+      "quote": "as the industrial designer, you're gonna be working on you know the actual working design of it",
+      "time": 242.5,
+      "cases": []
+    },
+    {
+      "id": "AI2",
+      "task": "Work on the technical functions of the remote",
+      "assignee": "User Interface Designer",
+      "due": "2026-11-02",
+      "spoken_due": "in between now and the next meeting, which is in thirty minutes",
+      "quote": "for user interface, technical functions",
+      "time": 251.9,
+      "cases": []
+    },
+    {
+      "id": "AI3",
+      "task": "Define the requirements the remote has to fulfil",
+      "assignee": "Marketing Expert",
+      "due": "2026-11-02",
+      "spoken_due": "in between now and the next meeting, which is in thirty minutes",
+      "quote": "marketing executive, you'll be just thinking about what it actually what, you know, what requirements it has to has to fulfil",
+      "time": 265.3,
+      "cases": []
+    }
+  ],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "Whether the 25 Euro selling price is the wholesale or the retail price",
+      "time": 206.5,
+      "optional": true
+    }
+  ],
+  "must_not_appear": [
+    {
+      "id": "N1",
+      "text": "Story about the project manager's dog chasing its tail",
+      "case": "C10",
+      "keywords": [
+        "dog",
+        "tail",
+        "dinner"
+      ]
+    },
+    {
+      "id": "N2",
+      "text": "Whiteboard exercise: drawing a favourite animal",
+      "case": "C10",
+      "keywords": [
+        "favourite animal",
+        "favorite animal",
+        "draw",
+        "whiteboard"
+      ]
+    }
+  ]
+}

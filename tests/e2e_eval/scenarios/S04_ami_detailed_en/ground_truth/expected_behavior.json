@@ -1,0 +1,49 @@
+{
+  "scenario_id": "S04",
+  "checks": [
+    {
+      "id": "S04-01",
+      "case": "A4",
+      "type": "metric_at_least",
+      "metric": "AG4",
+      "value": 0.8
+    },
+    {
+      "id": "S04-02",
+      "case": "A4",
+      "type": "contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "prototype"
+      ]
+    },
+    {
+      "id": "S04-03",
+      "case": "C5",
+      "type": "action_item_field",
+      "match": "AI1",
+      "field": "due",
+      "equals": null,
+      "note": "no deadline stated at 4:03"
+    },
+    {
+      "id": "S04-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S04-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S04-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "The project manager recapped the kick-off meeting and put its minutes in the project folder"
+    },
+    {
+      "id": "P2",
+      "text": "Three new requirements: no teletext, the remote only controls the television, and the corporate colour and slogan must be in the design"
+    },
+    {
+      "id": "P3",
+      "text": "The project manager assigned work for after lunch: components concept, user interface and trend watching"
+    },
+    {
+      "id": "P4",
+      "text": "The team agreed to group the remote's functions into the three categories proposed by the industrial designer"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "The remote will not include teletext",
+      "time": 52.17
+    },
+    {
+      "id": "D2",
+      "text": "The remote will only control the television, not a VCR, DVD or other devices",
+      "time": 66.97
+    },
+    {
+      "id": "D3",
+      "text": "The corporate colour and slogan will be incorporated into the design of the remote",
+      "time": 88.97
+    },
+    {
+      "id": "D4",
+      "text": "The team will use the three function categories (buckets) proposed by the industrial designer",
+      "time": 227.57
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Work on the components concept",
+      "assignee": "Industrial Designer",
+      "due": "2026-11-09",
+      "spoken_due": "in the thirty minutes after lunch",
+      "quote": "for uh our Industrial Designer, you're gonna be thinking about the components concept",
+      "time": 190.37,
+      "cases": []
+    },
+    {
+      "id": "AI2",
+      "task": "Work on the user interface",
+      "assignee": "User Interface Designer",
+      "due": "2026-11-09",
+      "spoken_due": "in the thirty minutes after lunch",
+      "quote": "User Interface Designer gonna be thinking about our user interface",
+      "time": 194.27,
+      "cases": []
+    },
+    {
+      "id": "AI3",
+      "task": "Do trend watching",
+      "assignee": "Marketing Expert",
+      "due": "2026-11-09",
+      "spoken_due": "in the thirty minutes after lunch",
+      "quote": "marketing you're gonna be thinking about trend watching",
+      "time": 196.87,
+      "cases": []
+    },
+    {
+      "id": "AI4",
+      "task": "Put the minutes of this meeting into the project documents folder",
+      "assignee": "Project Manager",
+      "due": null,
+      "spoken_due": null,
+      "quote": "I'll be putting the minutes of this uh this meeting into the project documents folder",
+      "time": 171.77,
+      "cases": [
+        "C5"
+      ]
+    }
+  ],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "Whether the company slogan must be written on the remote or only its idea expressed",
+      "time": 118.47
+    },
+    {
+      "id": "U2",
+      "text": "What the corporate colour is (possibly yellow)",
+      "time": 94.17,
+      "optional": true
+    }
+  ],
+  "must_not_appear": [
+    {
+      "id": "N1",
+      "text": "Work completed at the kick-off: getting to know each other, getting familiar with the equipment",
+      "case": "C7",
+      "keywords": [
+        "know each other",
+        "familiar with the equipment",
+        "familiar with all the equipment"
+      ]
+    }
+  ]
+}

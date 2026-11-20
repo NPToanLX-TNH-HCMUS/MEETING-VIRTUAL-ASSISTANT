@@ -1,0 +1,147 @@
+{
+  "id": "S02",
+  "title": "AMI functional design: recap, new requirements, assignments, agreement on function categories",
+  "group": "normal",
+  "use_cases": [
+    "UC1",
+    "UC2",
+    "UC6",
+    "UC10",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "A1",
+    "A4",
+    "C7"
+  ],
+  "planted": [
+    "A1",
+    "A4"
+  ],
+  "meeting_date": "2026-11-09T10:00:00+07:00",
+  "meeting": {
+    "topic": "Remote control project: functional design",
+    "language": "en",
+    "duration_minutes": 30,
+    "planned_points": [
+      "New project requirements",
+      "Functional design decisions",
+      "Next steps and task assignments"
+    ]
+  },
+  "documents": [
+    "inputs/docs/previous_minutes.md"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 235.57
+  },
+  "source": {
+    "name": "AMI Meeting Corpus",
+    "original_id": "ES2002b",
+    "stream": "Headset mix",
+    "license": "CC BY 4.0",
+    "url": "https://groups.inf.ed.ac.uk/ami/download/",
+    "segments": [
+      "21.84-64.17",
+      "100.80-214.52",
+      "1964.92-2044.44"
+    ],
+    "sha256": "6e0096fa242a452f0e38e74f4b8ffbb814d8a4376b6a92fc77467e1bce4332de",
+    "retrieved_at": "2026-11-19",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "AMI manual transcript (scripts/ami_transcript.py), to be checked by listening",
+    "selection_reason": "Recap of the kick-off (C7), three new requirements announced as decisions, assignments and an agreement; two parts joined",
+    "constructed_docs": [
+      "inputs/docs/previous_minutes.md (from the AMI abstractive summary of ES2002a; two tasks marked [x])"
+    ]
+  },
+  "aliases": {
+    "Project Manager": [
+      "PM",
+      "project manager"
+    ],
+    "Industrial Designer": [
+      "ID",
+      "industrial designer",
+      "David"
+    ],
+    "User Interface Designer": [
+      "UI",
+      "User Interface",
+      "interface designer",
+      "interface specialist"
+    ],
+    "Marketing Expert": [
+      "ME",
+      "marketing",
+      "marketing executive",
+      "marketing expert"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "teletext",
+      "alts": [
+        "tele text"
+      ]
+    },
+    {
+      "text": "television",
+      "alts": [
+        "TV"
+      ]
+    },
+    {
+      "text": "VCR",
+      "alts": []
+    },
+    {
+      "text": "DVD",
+      "alts": []
+    },
+    {
+      "text": "corporate colour",
+      "alts": [
+        "corporate color"
+      ]
+    },
+    {
+      "text": "slogan",
+      "alts": []
+    },
+    {
+      "text": "yellow",
+      "alts": []
+    },
+    {
+      "text": "functional design",
+      "alts": []
+    },
+    {
+      "text": "components concept",
+      "alts": []
+    },
+    {
+      "text": "trend watching",
+      "alts": [
+        "trendwatching"
+      ]
+    },
+    {
+      "text": "David",
+      "alts": []
+    },
+    {
+      "text": "buckets",
+      "alts": []
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

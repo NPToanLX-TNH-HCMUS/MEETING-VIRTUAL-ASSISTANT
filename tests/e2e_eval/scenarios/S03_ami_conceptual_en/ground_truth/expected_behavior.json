@@ -1,0 +1,60 @@
+{
+  "scenario_id": "S03",
+  "checks": [
+    {
+      "id": "S03-01",
+      "case": "A4",
+      "type": "metric_at_least",
+      "metric": "AG4",
+      "value": 0.8
+    },
+    {
+      "id": "S03-02",
+      "case": "A4",
+      "type": "contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "components",
+        "user interface",
+        "trend"
+      ]
+    },
+    {
+      "id": "S03-03",
+      "case": "C6",
+      "type": "item_in_section",
+      "match": "U1",
+      "in": "unresolved_issues",
+      "not_in": "decisions",
+      "note": "jog dial form left open at 3:13-3:30"
+    },
+    {
+      "id": "S03-04",
+      "case": "C6",
+      "type": "item_in_section",
+      "match": "U2",
+      "in": "unresolved_issues",
+      "not_in": "decisions",
+      "note": "flush buttons proposed at 3:34, not agreed"
+    },
+    {
+      "id": "S03-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S03-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S03-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

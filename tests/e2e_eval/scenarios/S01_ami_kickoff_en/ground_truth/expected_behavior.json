@@ -1,0 +1,38 @@
+{
+  "scenario_id": "S01",
+  "checks": [
+    {
+      "id": "S01-01",
+      "case": "C10",
+      "type": "not_contains",
+      "target": "minutes_items",
+      "any_of": [
+        "dog",
+        "tail",
+        "favourite animal",
+        "favorite animal",
+        "whiteboard"
+      ],
+      "note": "whiteboard exercise 1:43-1:59, dog story 2:00-2:30"
+    },
+    {
+      "id": "S01-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S01-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S01-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

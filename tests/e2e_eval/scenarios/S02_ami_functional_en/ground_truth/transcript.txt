@@ -1,0 +1,56 @@
+[00:01.4] PM: Okay, everybody all set to start the meeting?
+[00:03.5] PM: Okay, we've got half an hour for this one um to uh discuss the um functional design.
+[00:12.8] PM: All ready to go?
+[00:13.7] PM: Okay.
+[00:15.1] PM: Um so hopefully you've all been working away, and I've put the minutes of the last meeting in the project folder.
+[00:22.6] PM: Um so I guess just to to recap on uh what we did last time.
+[00:28.7] PM: Um kind of uh got to know each other a little bit and uh got familiar with all the equipment and started to discuss um a bit about the project, you know, cost-wise how much how much money we had to s
+[00:42.5] PM: Um just want to tell you that you have three new requirements, um which is the The first one is that um uh the company's decided that teletext is outdated uh because of how popular the internet is.
+[00:56.3] PM: Nobody uses teletext very much anymore, so we don't really need to consider that in the functionality of the of the remote control.
+[00:58.3] ME: 'Kay.
+[01:03.5] PM: Um they've also suggested that we um we only use the remote control to control the television, not the VCR, DVD or anything else.
+[01:12.2] PM: I think the worry is that if the project becomes too complex then it'll affect um how long it takes us to get it into into production, the time to market.
+[01:22.8] ME: Okay.
+[01:23.2] PM: So um, we're just gonna keep it simple and it'll just control the TV.
+[01:26.9] PM: And the other thing was that the company want the corporate colour and slogan to be implemented in the new design.
+[01:32.7] PM: Um I'm not entirely sure what the corporate colour is.
+[01:36.5] PM: It might be yellow, because there seems to be a lot of yellow everywhere.
+[01:39.5] ME: And the slogan, like the actual written slogan, or just to embody the idea of the slogan?
+[01:44.7] PM: Well that's the thing, I'm I'm not sure um uh th because on the the company website, uh what does it say Uh something Yeah, I mean do they Is that something they want actually written on it, 'cause it's quite long.
+[01:53.9] ME: 'Bout putting the fashion in electronics.
+[01:55.8] ID: Mm yeah.
+[02:01.6] PM: Um or yeah, just the idea, but I'm not sure.
+[02:03.8] PM: So that's something we can discuss as well.
+[02:05.5] PM: So those are the three things, just not to worry about teletext, uh only control the TV, and um and uh incorporate the uh colour and slogan of the company.
+[02:17.7] PM: Um so is everybody okay with any of that, or do you want me to recap at all?
+[02:24.5] ID: [inaudible]
+[02:26.1] PM: Right um, time for presentations then.
+[02:28.3] PM: Who would like to go first?
+[02:31.9] UI: I'll go first.
+[02:32.6] ME: Sure.
+[02:32.7] PM: Okay, cool.
+[02:36.3] PM: Okay, right.
+[02:36.4] ME: Mm okay, great.
+[02:38.7] PM: Um, okay well I gotta kind of got five minutes to wrap up now.
+[02:43.1] PM: Um next thing we're doing is having lunch.
+[02:44.8] PM: Whoohoo.
+[02:45.1] PM: Um and then we're gonna have thirty minutes of working on the next stage.
+[02:50.5] PM: Um so I'll be putting the minutes of this uh this meeting into the project documents folder.
+[02:56.5] ME: Mm-hmm.
+[02:56.7] PM: Um so uh I guess just to just to confirm that we know what we're doing in the next well in the thirty minutes after lunch anyway, um for uh our Industrial Designer, you're gonna be thinking about the components concept.
+[03:02.7] ME: Mm-hmm.
+[03:12.1] PM: Um User Interface Designer gonna be thinking about our user interface, and marketing you're gonna be thinking about trend watching.
+[03:18.6] PM: Um and you'll all get specific instructions as well.
+[03:21.4] PM: So um I dunno, just just to to ask now if you've got anything else you've thought about while we've been talking.
+[03:29.5] PM: Um, do you wanna start with David.
+[03:32.2] PM: Anything else to say at all?
+[03:33.9] ID: [inaudible]
+[03:34.6] PM: No, okay.
+[03:36.0] ME: Um yeah, just I just wanted to ask then before we wrap up, shall we agree for sake of um sort of clarity and when we when we r resume that we'll u use this idea David's proposed, where we think of these three sort of buckets and anything anything we discuss about them is sort of, okay, we're talking about this.
+[03:36.2] PM: Andrew?
+[03:48.9] PM: Yeah, yeah I think that's definitely a good idea.
+[03:53.1] PM: Uh-huh.
+[03:53.2] ME: Shall we do that, then?
+[03:53.4] ID: Mm.
+[03:53.9] PM: Yeah.
+[03:54.4] ME: Okay, great.

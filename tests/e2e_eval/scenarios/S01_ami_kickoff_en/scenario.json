@@ -1,0 +1,145 @@
+{
+  "id": "S01",
+  "title": "AMI kick-off: introductions, small talk, finance decisions, first assignments",
+  "group": "normal",
+  "use_cases": [
+    "UC1",
+    "UC5",
+    "UC6",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "C10"
+  ],
+  "planted": [],
+  "meeting_date": "2026-11-02T10:00:00+07:00",
+  "meeting": {
+    "topic": "Remote control project: kick-off",
+    "language": "en",
+    "duration_minutes": 30,
+    "planned_points": [
+      "Team introductions and roles",
+      "Project brief and design process",
+      "Project finance and selling price",
+      "Next steps and task assignments"
+    ]
+  },
+  "documents": [],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 277.44
+  },
+  "source": {
+    "name": "AMI Meeting Corpus",
+    "original_id": "ES2002a",
+    "stream": "Headset mix",
+    "license": "CC BY 4.0",
+    "url": "https://groups.inf.ed.ac.uk/ami/download/",
+    "segments": [
+      "52.28-171.52",
+      "423.89-530.89",
+      "974.10-1025.30"
+    ],
+    "sha256": "ea4ad586f79a2d680c3d2472f40c9c43b5e8483bea94854537ff614df059d8b2",
+    "retrieved_at": "2026-11-19",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "AMI manual transcript (scripts/ami_transcript.py), to be checked by listening",
+    "selection_reason": "Kick-off with introductions, small talk during a whiteboard exercise, three finance decisions and three assignments; three parts joined"
+  },
+  "aliases": {
+    "Project Manager": [
+      "PM",
+      "project manager",
+      "Laura"
+    ],
+    "Industrial Designer": [
+      "ID",
+      "industrial designer",
+      "David"
+    ],
+    "User Interface Designer": [
+      "UI",
+      "User Interface",
+      "interface designer",
+      "interface specialist",
+      "Craig"
+    ],
+    "Marketing Expert": [
+      "ME",
+      "marketing",
+      "marketing executive",
+      "marketing expert",
+      "Andrew"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "Laura",
+      "alts": []
+    },
+    {
+      "text": "David",
+      "alts": []
+    },
+    {
+      "text": "Andrew",
+      "alts": []
+    },
+    {
+      "text": "Craig",
+      "alts": []
+    },
+    {
+      "text": "remote control",
+      "alts": []
+    },
+    {
+      "text": "twenty five Euro",
+      "alts": [
+        "25 euro",
+        "25 euros",
+        "€25"
+      ]
+    },
+    {
+      "text": "fifty million Euro",
+      "alts": [
+        "50 million euro",
+        "50 million euros",
+        "50,000,000"
+      ]
+    },
+    {
+      "text": "twelve fifty",
+      "alts": [
+        "12.50",
+        "12,50"
+      ]
+    },
+    {
+      "text": "international",
+      "alts": []
+    },
+    {
+      "text": "industrial designer",
+      "alts": []
+    },
+    {
+      "text": "user interface",
+      "alts": []
+    },
+    {
+      "text": "whiteboard",
+      "alts": [
+        "white board"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

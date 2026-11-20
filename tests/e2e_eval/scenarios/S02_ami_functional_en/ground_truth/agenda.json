@@ -1,0 +1,171 @@
+{
+  "max_total_minutes": 30,
+  "items": [
+    {
+      "id": "I1",
+      "title": "New project requirements",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            42.47,
+            66.97
+          ],
+          [
+            87.87,
+            146.97
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "Working design of the remote (Industrial Designer)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Technical functions of the remote (User Interface Designer)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I4",
+      "title": "User requirements for the remote (Marketing Expert)",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    },
+    {
+      "id": "I5",
+      "title": "Whether the remote controls only televisions",
+      "required": true,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            66.97,
+            87.87
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I6",
+      "title": "Functional design decisions",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            215.97,
+            235.57
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I7",
+      "title": "Next steps and task assignments",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            161.37,
+            215.97
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I8",
+      "title": "Review of the kick-off meeting",
+      "required": false,
+      "from": [
+        "document"
+      ],
+      "tracking": {
+        "final_state": "discussed",
+        "spans": [
+          [
+            18.0,
+            42.47
+          ]
+        ]
+      }
+    }
+  ],
+  "off_agenda": [],
+  "carry_over": [
+    "I2",
+    "I3",
+    "I4",
+    "I5"
+  ],
+  "must_not_include": [
+    {
+      "id": "X1",
+      "text": "Put the minutes of the kick-off meeting in the project folder",
+      "reason": "Marked [x] in previous minutes",
+      "case": "A1",
+      "keywords": [
+        "project folder"
+      ]
+    },
+    {
+      "id": "X2",
+      "text": "Send the project instructions by email",
+      "reason": "Marked [x] in previous minutes",
+      "case": "A1",
+      "keywords": [
+        "send the project instructions",
+        "instructions by email",
+        "email the instructions"
+      ]
+    },
+    {
+      "id": "X3",
+      "text": "Selling price of 25 Euro",
+      "reason": "Decision already made",
+      "case": "A1",
+      "keywords": [
+        "25 euro",
+        "twenty five euro",
+        "selling price"
+      ]
+    }
+  ],
+  "notes": "Team presentations were cut from the clip, so the carry-over tasks I2-I4 stay not_discussed. I5 is settled inside the new requirements, so I1 has two spans."
+}

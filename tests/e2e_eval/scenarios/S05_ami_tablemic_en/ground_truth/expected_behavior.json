@@ -1,0 +1,32 @@
+{
+  "scenario_id": "S05",
+  "checks": [
+    {
+      "id": "S05-01",
+      "case": "B1",
+      "type": "metric_at_least",
+      "metric": "TR3",
+      "value": 0.9,
+      "note": "WER increase versus S03 (TR5) is reported"
+    },
+    {
+      "id": "S05-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S05-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S05-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

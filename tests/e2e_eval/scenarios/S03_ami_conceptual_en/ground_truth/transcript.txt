@@ -1,0 +1,111 @@
+[00:00.0] ME: Um and then the other thing that we we're s we've committed ourselves to achieving is simplicity, and so I'm thinking maybe should we try and think about having something like um some kind of an innovative concept about how the um the volume and the channels are controlled, 'cause that's the main thing people will f wanna do.
+[00:17.3] PM: Mm.
+[00:18.2] ME: Could we use like a jog dial, like a nice just sort of round, somewhere on it where you just roll it?
+[00:22.4] ID: The question is when you're rolling it, how do you wanna roll it?
+[00:23.5] ME: Or
+[00:25.0] ID: Do you want 'em to roll it like that?
+[00:26.3] ID: Do you want 'em to roll it like that?
+[00:27.9] ID: 'Cause in a mouse your hand's in a position to roll it, whereas the other thing about having it jog dial this way, it tends to get moved accidentally.
+[00:30.6] UI: Mm.
+[00:30.8] ME: Yeah.
+[00:30.9] PM: Yeah.
+[00:37.2] ME: Mm-hmm.
+[00:38.1] PM: Yeah if you are holding it in your hand you could you could do that, couldn't you?
+[00:38.1] ME: [inaudible]
+[00:41.3] PM: If you're holding it in your hand you could
+[00:43.2] ID: That's a very unnatural motion to yeah.
+[00:47.0] ID: Can you imagine you have to scroll a lot.
+[00:49.1] ID: Um it might work for volume, and maybe some of the brightness controls and stuff like that, but not for channels right.
+[00:51.1] ME: Yeah.
+[00:53.5] PM: Mm.
+[00:55.5] ID: If you have a Telewest box you've got like, you don't have to buy all the channels, you've about fifty channels, can you imagine trying to.
+[00:58.1] ME: Mm-hmm.
+[01:00.4] PM: Yeah okay okay um
+[01:00.7] ME: Yeah.
+[01:02.5] ME: Yeah, sure.
+[01:03.0] ID: Um and I don't think having that you know too quick too slow kin it's confusing to the I dunno.
+[01:06.9] ME: Mm.
+[01:07.3] UI: Well, but then for um for skipping a large amount of channels you do have to uh to skip the channel button, the number part.
+[01:12.3] PM: Yeah.
+[01:12.6] ID: But users tend to tend to want to use that and once they lose out on the user experience they're like Because that's becomes the most accessible thing in front of
+[01:12.9] ME: Yeah.
+[01:17.4] PM: Okay.
+[01:17.5] UI: Uh but
+[01:19.8] PM: Okay.
+[01:20.2] ME: But that's not a bad thing is it?
+[01:21.5] PM: Just
+[01:21.8] ME: Because when you think about it, the alternative is to go push the button.
+[01:24.8] UI: Yeah.
+[01:25.5] ID: Yeah.
+[01:25.7] ME: Jog dials are much easier than that.
+[01:27.8] PM: Okay um right well wouldn't it we do need to make a decision on whether we want to incorporate a jog dial in nice and quickly.
+[01:28.5] ME: You just roll.
+[01:35.0] PM: Um I'm all for them actually, I think they're quite you know th very quick to m to use.
+[01:37.4] ME: Yeah.
+[01:39.2] ME: Yeah.
+[01:39.7] PM: So does anybody oppose the idea of of incorporating one into the design at all?
+[01:44.2] PM: No.
+[01:44.8] PM: And the other thing was um can we think of any way of getting the slogan into this thing?
+[01:50.1] ME: Yeah like I mean if we if if we keep coming back to this board here, I wouldn't be surprised if we could take this idea, imagine that, I dunno, that it's within the shape of the hand, it's quite small I dunno.
+[01:54.9] PM: Uh-huh.
+[02:02.4] PM: Uh-huh ooh okay, we really gotta wrap up so yeah.
+[02:05.2] ME: Yeah.
+[02:06.4] ME: It's small, and that we've got like the the l slogan somewhere like on the casing at the side, and that yeah well I mean isn't that what we just h said said we s just have to decide now?
+[02:11.0] PM: Okay well if we can do that, great.
+[02:14.2] PM: Yeah okay.
+[02:19.7] PM: Yeah let's let's try and get the slogan on there um, and
+[02:22.8] ME: Yeah.
+[02:23.7] ME: And then like a jo And then like a jog dial somewhere that fits in with the shape of it like I dunno like here, in with the
+[02:23.8] ID: So you wanna expand the shape of the
+[02:32.2] ID: That that might have one problem in terms of um in terms of whether you're left handed or you're right handed you might be locking yourself in.
+[02:34.9] ME: It would get bumped, it's doesn't really fit with your hand.
+[02:37.9] ME: Yeah.
+[02:38.3] PM: Mm.
+[02:39.8] ME: Or maybe just fit it in like down the middle here.
+[02:39.9] UI: Mm.
+[02:40.5] ID: Could I just could I just jump in and suggest something quickly?
+[02:41.5] PM: Okay.
+[02:43.7] PM: Right I'm gonna have to I'm really gonna have to hurry you on here 'cause we're we're actually over time.
+[02:43.7] ME: A jog di
+[02:46.3] ME: Yeah.
+[02:47.6] ME: It's kind of yeah
+[02:47.8] PM: Um is there anything anybody's unsure about?
+[02:50.9] PM: Just for in closing just the next meeting's gonna be in thirty minutes, and so you can see in the screen here what each of you are gonna hopefully be doing, uh I know that the designers are gonna be working with Play-doh on that.
+[02:57.6] ME: Yeah.
+[03:01.3] PM: So um that'll be that'll be good.
+[03:03.4] ME: Huh.
+[03:04.6] PM: Um and I'll get the the minutes up as soon as possible.
+[03:09.1] PM: Anything at all you think we haven't discussed that we need to?
+[03:12.3] PM: Is everybody kind of happy about what they're gonna be doing?
+[03:12.7] ME: Um
+[03:13.4] ID: Um I think one thing would be the jog dial 'cause that's gonna have quite a big impact on the thing um
+[03:20.4] ME: Yeah I think the jog dial, you know it just after you drew that, what if it was flat and you just spun it, that'd be great.
+[03:23.7] ID: Yeah that's what I was thinking the a slide, because then you you don't have to put the hand.
+[03:26.3] ME: Yeah.
+[03:28.0] ME: Yep.
+[03:28.2] ID: I think incorporating a logo is quite straight forward.
+[03:30.0] ID: There's lots of space for it um Yeah but it's also a a marketing and a function
+[03:30.0] PM: Okay.
+[03:31.5] PM: That's kind of a design thing that you guys can can discuss, yeah.
+[03:34.2] ME: Sure, yeah, yeah and materials we sorta said we'd do plastic and rubber, didn't we, and I think maybe we should try and stay away from just the big protruding rubber buttons, 'cause that'd just be so standard.
+[03:36.3] PM: Okay.
+[03:39.8] ID: Yeah.
+[03:40.0] PM: Yeah.
+[03:46.7] PM: To make something flush with the case?
+[03:48.0] ME: Something a bit more flush, yeah, or maybe have rubber incorporated into the case as well, so that it has and also t plastic I've seen can get really textured, so you can get plastics that actually feel soft in your hand.
+[03:49.4] PM: Okay right.
+[03:52.8] PM: Okay.
+[03:54.3] PM: Sp kinda grippy?
+[03:59.4] ID: Feel like fruit.
+[03:59.7] PM: Okay.
+[04:00.6] ID: Fruits kids.
+[04:01.3] ME: They feel kind of like um, you get pens now and then that you'd think that they were rubber but they're not, they're actually just plastic that's textured, kind of a little bit like
+[04:04.1] ID: No like Yeah yeah.
+[04:08.9] ID: Yeah yeah kinda like that yeah.
+[04:09.5] PM: Okay I'm gonna have to I'm gonna have to call this to a close 'cause we're way over time.
+[04:13.7] PM: So um that's really good, like we've s had much to talk about that um pretty much run out of time to do so.
+[04:19.5] ME: Okay.
+[04:20.6] PM: So off you go and design stuff wooh.
+[04:22.2] ME: Okay.
+[04:27.1] ID: Play-doh time.
+[04:28.2] PM: Yeah quite jealous actually.
