@@ -36,7 +36,7 @@ class Evaluation:
         """Map a name, role or alias to the person's key in scenario.json "aliases".
 
         An exact alias wins; otherwise the longest alias found inside the name
-        ("Toan (tester)" -> Toan). Unknown names are returned normalised.
+        ("Tom (tester)" -> Tom). Unknown names are returned normalised.
         """
         if name is None:
             return None
@@ -255,6 +255,14 @@ class Evaluation:
         if self.out.stages is not None:
             self.metrics["SY1"] = {"value": float(self.out.stages.get("end") == "archived")}
         if self.out.api_log:
+            limited = [e["step"] for e in self.out.api_log if e["step"].startswith("rate_limited:")]
+            if limited:
+                self.notes.append(f"LLM rate limit, called again after a wait: {', '.join(limited)}")
+            down = [e["step"] for e in self.out.api_log if e.get("code") == "LLM_UNAVAILABLE"
+                    and not e["step"].startswith(("fault:", "rate_limited:"))]
+            if down:
+                self.notes.append(f"LLM unavailable at {', '.join(down)}: results of this scenario are "
+                                  "incomplete, run it again")
             per_step: dict = {}
             for e in self.out.api_log:
                 if e.get("elapsed_s") is not None:

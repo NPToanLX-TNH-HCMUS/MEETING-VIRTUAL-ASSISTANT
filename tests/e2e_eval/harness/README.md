@@ -22,7 +22,9 @@ From the repository root, with the project environment and a `.env` holding `ELE
 python tests/e2e_eval/harness/run.py --scenarios S13            # cheapest first run (silence)
 python tests/e2e_eval/harness/run.py --scenarios S01 S02 --name baseline
 python tests/e2e_eval/harness/run.py --all --name baseline
+python tests/e2e_eval/harness/run.py --scenarios S04 S07 --name baseline   # run some again; the report covers all
 python tests/e2e_eval/harness/score.py --run tests/e2e_eval/runs/baseline   # score again, no API calls
+python tests/e2e_eval/harness/run.py --scenarios S10 --app-root ../mva-fix --name fix_s10   # test a fix branch checked out elsewhere
 ```
 
 S11 needs its generated documents first: `python tests/e2e_eval/scripts/make_s11_files.py`.
@@ -42,6 +44,7 @@ python tests/e2e_eval/harness/selftest.py      # the scorer still scores correct
 - Observed, not changed: every LLM request and its answer are logged to `llm_calls.jsonl`.
 - Simulated faults (S11, S12): calls in the wrong order, and missing API keys for one call.
 - Real: every API route, speech-to-text, LLM calls and file storage. These use the services' quota.
+- Rate limits: when every LLM attempt of a step fails with HTTP 429, the harness waits (60, 90, 120 s) and calls the step again; the rate-limited calls are logged as `rate_limited:<step>` and ignored by the checks.
 - Not run: the live path (WebSocket transcript, pause / resume, live agenda tracking). Its checks are reported as `not_implemented`.
 
 ## Scoring outputs produced by hand

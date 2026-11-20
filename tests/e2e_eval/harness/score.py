@@ -104,8 +104,13 @@ def write_report(run: Path, results: list[dict]) -> None:
             w.writerow([r["scenario"], *[fmt(headline(m, r["metrics"].get(m))) for m in COLUMNS], *counts.values()])
 
     by_id = {r["scenario"]: r for r in results}
+    info = {}
+    if (run / "run_info.json").is_file():
+        info = json.loads((run / "run_info.json").read_text(encoding="utf-8"))
+    code = (f"Code under test: `{info.get('branch')}` at `{info.get('commit')}`"
+            f"{' with local changes in src/' if info.get('dirty') else ''}. ") if info else ""
     lines = [f"# E2E evaluation report — {run.name}", "",
-             f"Matcher: {results[0]['matcher']['kind']}, τ = {results[0]['matcher']['tau']}. "
+             f"{code}Matcher: {results[0]['matcher']['kind']}, τ = {results[0]['matcher']['tau']}. "
              "Values that miss the target in USE_CASES.md are marked ✗.", "",
              "## 1. Overview", "",
              "| Metric | Overall | Target | Met |", "|---|---|---|---|"]

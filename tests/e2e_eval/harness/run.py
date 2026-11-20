@@ -3,6 +3,7 @@
     python tests/e2e_eval/harness/run.py --scenarios S13
     python tests/e2e_eval/harness/run.py --scenarios S01 S02 --name baseline
     python tests/e2e_eval/harness/run.py --all
+    python tests/e2e_eval/harness/run.py --scenarios S10 --app-root ../mva-fix   # test another checkout
 
 Run from the repo root, with the project's virtual environment and .env (ELEVENLABS_API_KEY,
 GROQ_API_KEY, OPENROUTER_API_KEY). Every call goes through the FastAPI app in this process
@@ -38,6 +39,8 @@ sys.path.insert(0, str(REPO))
 
 from data import E2E_DIR, Scenario, scenario_ids  # noqa: E402
 from metrics import Matcher  # noqa: E402
+
+RATE_LIMIT_WAITS_S = (60, 90, 120)  # free LLM tiers limit tokens per minute
 
 LLM_STAGE = {"generate_agenda": "agenda", "fault:E4": "agenda", "retry:E4": "agenda",
              "generate_minutes": "minutes"}
@@ -185,6 +188,25 @@ class ScenarioRun:
         print(f"  {step:<22} {status} {code or ''} ({elapsed:.1f} s)")
         return status, body
 
+    def call_llm_step(self, step: str, method: str, path: str, **kwargs):
+        """Like call(), but when every LLM attempt failed with HTTP 429 the call is repeated after a wait.
+
+        A rate limit says nothing about the system under test, so the rate-limited call is kept in
+        the log under "rate_limited:<step>" and the checks only see the final call.
+        """
+        for wait in (*RATE_LIMIT_WAITS_S, None):
+            first = len(self.llm_calls)
+            status, body = self.call(step, method, path, **kwargs)
+            attempts = self.llm_calls[first:]
+            limited = (status == 503 and attempts and not any(a.get("ok") for a in attempts)
+                       and any("429" in (a.get("error") or "") for a in attempts))
+            if not limited or wait is None:
+                return status, body
+            self.log[-1]["step"] = f"rate_limited:{step}"
+            print(f"  rate limit (HTTP 429): {step} again in {wait} s")
+            time.sleep(wait)
+        return status, body
+
     def status(self) -> str | None:
         r = self.client.get(f"/api/v1/meetings/{self.meeting_id}")
         return r.json().get("status") if r.status_code == 200 else None
@@ -228,9 +250,9 @@ class ScenarioRun:
         if self.fault("E4", "generate_agenda"):
             with env_override(GROQ_API_KEY="", OPENROUTER_API_KEY=""):
                 self.call("fault:E4", "POST", "/agenda/generate")
-            status, proposal = self.call("retry:E4", "POST", "/agenda/generate")
+            status, proposal = self.call_llm_step("retry:E4", "POST", "/agenda/generate")
         else:
-            status, proposal = self.call("generate_agenda", "POST", "/agenda/generate")
+            status, proposal = self.call_llm_step("generate_agenda", "POST", "/agenda/generate")
         self.record_stage("after_agenda")
         if status == 200:
             self.write("agenda_proposal.json", proposal)
@@ -266,7 +288,7 @@ class ScenarioRun:
 
         primary_down = any(f.get("step") == "generate_minutes" for f in self.sc.spec.get("fault_injection", []))
         with env_override(GROQ_API_KEY="") if primary_down else contextlib.nullcontext():
-            status, minutes = self.call("generate_minutes", "POST", "/minutes/generate")
+            status, minutes = self.call_llm_step("generate_minutes", "POST", "/minutes/generate")
         self.record_stage("after_minutes")
 
         edit = (spec.get("user_actions") or {}).get("minutes_edits")
@@ -289,12 +311,17 @@ class ScenarioRun:
         change = (self.sc.spec.get("user_actions") or {}).get("agenda_edits")
         if not change:
             return edits
-        matcher = Matcher("lexical")
-        remove = change.get("remove", [])
-        kept = [e for e in edits
-                if not remove or max(row[0] for row in matcher.matrix(remove, [e["title"]])) < 0.5]
-        if len(kept) == len(edits) and remove:
-            print(f"  agenda edit: no proposed item looks like {remove}; nothing removed")
+        # The leader removes the proposed item that is about the given title, whatever its wording:
+        # the closest title, if it shares at least one content word.
+        kept = list(edits)
+        sim = Matcher("lexical").matrix(change.get("remove", []), [e["title"] for e in edits])
+        for title, row in zip(change.get("remove", []), sim):
+            best = max(range(len(row)), key=row.__getitem__, default=None)
+            if best is None or row[best] < 0.2:
+                print(f"  agenda edit: no proposed item is about {title!r}; nothing removed")
+            else:
+                print(f"  agenda edit: removed {edits[best]['title']!r} (for {title!r})")
+                kept.remove(edits[best])
         for add in change.get("add", []):
             kept.append({"id": None, "title": add["title"], "estimated_minutes": add.get("estimated_minutes", 5),
                          "order": len(kept) + 1})
@@ -332,6 +359,24 @@ class ScenarioRun:
         shutil.rmtree(data_root, ignore_errors=True)
 
 
+def code_version(root: Path) -> dict:
+    """Branch and commit of the code under test, so that every report says what it measured."""
+    import subprocess
+
+    def git(*args):
+        try:
+            return subprocess.run(["git", "-C", str(root), *args], capture_output=True, text=True,
+                                  check=True).stdout.strip()
+        except (OSError, subprocess.CalledProcessError):
+            return ""
+
+    # Line-ending differences (CRLF / LF) are not changes to the code.
+    dirty = bool(git("diff", "--ignore-cr-at-eol", "--shortstat", "HEAD", "--", "src")
+                 or git("ls-files", "--others", "--exclude-standard", "--", "src"))
+    return {"branch": git("rev-parse", "--abbrev-ref", "HEAD") or "?",
+            "commit": git("rev-parse", "--short", "HEAD") or "?", "dirty": dirty}
+
+
 def main():
     sys.stdout.reconfigure(errors="replace")  # Windows consoles without UTF-8
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -339,12 +384,23 @@ def main():
     ap.add_argument("--all", action="store_true", help="run every scenario")
     ap.add_argument("--name", help="run name (default: date and time)")
     ap.add_argument("--no-score", action="store_true", help="only run, do not score")
+    ap.add_argument("--app-root", type=Path, default=REPO,
+                    help="checkout whose backend is tested (default: this repository), for example a "
+                         "git worktree of a fix branch; it needs its own .env")
     args = ap.parse_args()
     ids = scenario_ids() if args.all else args.scenarios
     if not ids:
         sys.exit("Give --scenarios S01 ... or --all")
 
-    os.chdir(REPO)
+    app_root = args.app_root.resolve()
+    if not (app_root / "src" / "backend" / "main.py").is_file():
+        sys.exit(f"No backend in {app_root} (src/backend/main.py not found)")
+    if not (app_root / ".env").is_file():
+        print(f"WARNING: {app_root / '.env'} not found: the API keys may be missing")
+    if str(REPO) in sys.path:
+        sys.path.remove(str(REPO))
+    sys.path.insert(0, str(app_root))
+    os.chdir(app_root)
     from fastapi.testclient import TestClient
 
     from src.backend import main as backend
@@ -358,9 +414,17 @@ def main():
     for module in (pre_meeting, during_meeting, post_meeting):
         module.now = CLOCK  # the meeting takes place on the scenario's meeting_date
 
+    if not Path(backend.__file__).resolve().is_relative_to(app_root):
+        sys.exit(f"The backend was imported from {backend.__file__}, not from {app_root}")
+
     run_dir = E2E_DIR / "runs" / (args.name or datetime.now().strftime("%Y-%m-%d_%H%M"))
     run_dir.mkdir(parents=True, exist_ok=True)
+    code = code_version(app_root)
+    (run_dir / "run_info.json").write_text(json.dumps(
+        {"app_root": str(app_root), **code, "started": datetime.now().isoformat(timespec="seconds")},
+        indent=2), encoding="utf-8")
     print(f"Run folder: {run_dir}")
+    print(f"Code under test: {app_root} ({code['branch']} {code['commit']}{' + local changes' if code['dirty'] else ''})")
 
     real_request = llm._request_text
     current = {"run": None}
@@ -402,8 +466,9 @@ def main():
 
     if not args.no_score:
         import subprocess
-        subprocess.run([sys.executable, str(HARNESS / "score.py"), "--run", str(run_dir), "--scenarios", *ids],
-                       check=False)
+        # Score every scenario folder of the run, so that re-running a few scenarios into an
+        # existing run keeps the report complete.
+        subprocess.run([sys.executable, str(HARNESS / "score.py"), "--run", str(run_dir)], check=False)
 
 
 if __name__ == "__main__":

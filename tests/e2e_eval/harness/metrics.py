@@ -2,6 +2,7 @@
 
 import json
 import math
+import re
 import urllib.request
 
 from textnorm import content_words, normalize, phrase_in, tokens
@@ -68,7 +69,17 @@ def entity_recall(entities: list[dict], hypothesis: str) -> dict:
 
 
 def quote_grounded(quote: str, transcript_tokens: list[str], min_ratio: float = 0.8) -> bool:
-    """MN8: the quote appears in the transcript, allowing a few word errors."""
+    """MN8: the quote appears in the transcript, allowing a few word errors.
+
+    A quote made of fragments joined by "..." is grounded when every fragment is.
+    """
+    fragments = [f for f in re.split(r"\.{3,}|\u2026", quote) if tokens(f)]
+    if len(fragments) > 1:
+        return all(_fragment_grounded(f, transcript_tokens, min_ratio) for f in fragments)
+    return _fragment_grounded(quote, transcript_tokens, min_ratio)
+
+
+def _fragment_grounded(quote: str, transcript_tokens: list[str], min_ratio: float) -> bool:
     q = tokens(quote)
     if not q or not transcript_tokens:
         return False
