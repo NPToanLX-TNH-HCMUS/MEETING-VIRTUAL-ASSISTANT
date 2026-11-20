@@ -45,23 +45,17 @@
   },
   "aliases": {
     "Ann": [
-      "Khanh Ann",
-      "Khánh Ann",
+      "Ann Carter",
       "leader"
     ],
-    "Hung": [
-      "Hưng",
-      "Khanh Hung",
-      "Đoàn Khánh Hưng"
+    "Henry": [
+      "Henry Clark"
     ],
-    "Toan": [
-      "Toàn",
-      "Ngô Phước Toàn"
+    "Tom": [
+      "Tom Hughes"
     ],
-    "Binh": [
-      "Bình",
-      "An Binh",
-      "Nguyễn Cao An Bình"
+    "Ben": [
+      "Ben Foster"
     ],
     "Team": [
       "team",
@@ -104,22 +98,16 @@
       "alts": []
     },
     {
-      "text": "Binh",
-      "alts": [
-        "Bình"
-      ]
+      "text": "Ben",
+      "alts": []
     },
     {
-      "text": "Toan",
-      "alts": [
-        "Toàn"
-      ]
+      "text": "Tom",
+      "alts": []
     },
     {
-      "text": "Hung",
-      "alts": [
-        "Hưng"
-      ]
+      "text": "Henry",
+      "alts": []
     },
     {
       "text": "next Monday",

@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.8 (draft) |
+| Version | 0.9 (draft) |
 | Date | 2026-11-20 |
 | Scope | 13 end-to-end scenarios, English meetings |
 | Related | `USE_CASES.md` (UC1–UC12), `SPECIAL_CASES.md` (A1–F10, G1–G3), `coverage.csv` (status tracking) |
@@ -290,3 +290,4 @@ One row per scenario.
 | 0.6 | 2026-11-20 | S09–S11 cards updated with the selected Denver clips and the rebuilt agendas. |
 | 0.7 | 2026-11-20 | S06 and S07 are synthetic meetings built from scripts with TTS voices, instead of team recordings. S12 pause and stop times moved into silent gaps of the S07 audio (60–80.2 s, 192 s, 202 s). |
 | 0.8 | 2026-11-20 | S01: the user interface designer introduces himself as Greg. Dataset checks: `harness/validate.py`; runs and scores: `harness/run.py`, `harness/score.py`. |
+| 0.9 | 2026-11-20 | S06–S08 and S12: the team members have English names; the lines that name someone were read again. |

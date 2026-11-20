@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.5 (draft) |
+| Version | 0.6 (draft) |
 | Date | 2026-11-20 |
 | Scope | Ground truth of the end-to-end scenarios (English meetings) |
 | Related | `USE_CASES.md`, `SPECIAL_CASES.md`, `SCENARIOS.md`, `sources.csv`, `coverage.csv` |
@@ -198,6 +198,7 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 12 | 2026-11-20 | Words in the AMI annotation that cannot be heard in the clip (for example a speaker whose headset was not yet plugged in) are removed from the transcript: the ground truth follows the audio file, not the source annotation. |
 | 13 | 2026-11-20 | AMI transcripts have one sentence per line (scripts/ami_transcript.py splits at . ? !), so that the order of the lines follows the audio when people talk over each other. Speech that is there but cannot be made out in the clip (quiet overlap) is written `[inaudible]`, which is not scored; speech that cannot be heard at all is removed (decision 12). |
 | 14 | 2026-11-20 | Requirements handed down from outside the group and only announced (S01: price, market and cost from the brief; S02: teletext, TV only, corporate colour and slogan from the company) are optional decisions. Only what the group settles in the meeting is a required decision. |
+| 15 | 2026-11-20 | The people of the synthetic team meetings (S06–S08, S12) have English first names (Ann, Ben, Henry, Kevin, Tim, Tom); their audio was read again by the same voices. |
 
 ---
 
@@ -210,3 +211,4 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 0.3 | 2026-11-20 | MeetingBank transcript drafts; decisions 8–10. |
 | 0.4 | 2026-11-20 | Decision 11: synthetic meetings. |
 | 0.5 | 2026-11-20 | Decisions 12–14: inaudible words removed, AMI sentence lines, announced requirements optional. |
+| 0.6 | 2026-11-20 | Decision 15: English names in the team meetings. |

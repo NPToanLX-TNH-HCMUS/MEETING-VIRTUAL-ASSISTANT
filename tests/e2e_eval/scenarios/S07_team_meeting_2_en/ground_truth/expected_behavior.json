@@ -16,7 +16,7 @@
       "target": "action_items",
       "where": {
         "field": "assignee",
-        "equals": "Khoi"
+        "equals": "Kevin"
       },
       "n": 3
     },
@@ -26,7 +26,7 @@
       "type": "action_item_field",
       "match": "AI1",
       "field": "assignee",
-      "equals": "Tai"
+      "equals": "Tim"
     },
     {
       "id": "S07-04",
@@ -34,7 +34,7 @@
       "type": "action_item_field",
       "match": "AI2",
       "field": "assignee",
-      "equals": "Toan"
+      "equals": "Tom"
     },
     {
       "id": "S07-05",

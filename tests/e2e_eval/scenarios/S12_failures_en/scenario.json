@@ -56,21 +56,17 @@
   },
   "aliases": {
     "Ann": [
-      "Khanh Ann",
-      "Khánh Ann",
+      "Ann Carter",
       "leader"
     ],
-    "Khoi": [
-      "Khôi",
-      "Bùi Đăng Khôi"
+    "Kevin": [
+      "Kevin Wright"
     ],
-    "Tai": [
-      "Tài",
-      "Nguyễn Thành Tài"
+    "Tim": [
+      "Tim Baker"
     ],
-    "Toan": [
-      "Toàn",
-      "Ngô Phước Toàn"
+    "Tom": [
+      "Tom Hughes"
     ],
     "Team": [
       "team",
@@ -80,22 +76,16 @@
   },
   "key_entities": [
     {
-      "text": "Tai",
-      "alts": [
-        "Tài"
-      ]
+      "text": "Tim",
+      "alts": []
     },
     {
-      "text": "Toan",
-      "alts": [
-        "Toàn"
-      ]
+      "text": "Tom",
+      "alts": []
     },
     {
-      "text": "Khoi",
-      "alts": [
-        "Khôi"
-      ]
+      "text": "Kevin",
+      "alts": []
     },
     {
       "text": "websocket",

@@ -14,7 +14,8 @@
       "case": "A6",
       "type": "doc_text_contains",
       "file": "previous_minutes.md",
-      "text": "Bình"
+      "text": "Tư duy tính toán",
+      "note": "Vietnamese course name with diacritics"
     },
     {
       "id": "S06-03",
@@ -40,7 +41,7 @@
       "type": "action_item_field",
       "match": "AI2",
       "field": "assignee",
-      "equals": "Toan"
+      "equals": "Tom"
     },
     {
       "id": "S06-06",

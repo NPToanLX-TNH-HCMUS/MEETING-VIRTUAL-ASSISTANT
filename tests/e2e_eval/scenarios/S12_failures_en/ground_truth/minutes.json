@@ -2,11 +2,11 @@
   "summary_points": [
     {
       "id": "P1",
-      "text": "The realtime transcription sometimes freezes after pause and resume; Tai will fix it and Toan will review the API router pull request"
+      "text": "The realtime transcription sometimes freezes after pause and resume; Tim will fix it and Tom will review the API router pull request"
     },
     {
       "id": "P2",
-      "text": "Khoi will update the README, fix the login bug and send the slides"
+      "text": "Kevin will update the README, fix the login bug and send the slides"
     },
     {
       "id": "P3",
@@ -29,10 +29,10 @@
     {
       "id": "AI1",
       "task": "Fix the realtime transcription bug",
-      "assignee": "Tai",
+      "assignee": "Tim",
       "due": null,
       "spoken_due": null,
-      "quote": "Tai, you handle the realtime transcription bug",
+      "quote": "Tim, you handle the realtime transcription bug",
       "line": "L11",
       "cases": [
         "C9"
@@ -42,10 +42,10 @@
     {
       "id": "AI2",
       "task": "Review the API router pull request",
-      "assignee": "Toan",
+      "assignee": "Tom",
       "due": null,
       "spoken_due": null,
-      "quote": "Toan, you review the API router pull request",
+      "quote": "Tom, you review the API router pull request",
       "line": "L11",
       "cases": [
         "C9"
@@ -55,10 +55,10 @@
     {
       "id": "AI4",
       "task": "Update the README",
-      "assignee": "Khoi",
+      "assignee": "Kevin",
       "due": null,
       "spoken_due": null,
-      "quote": "Khoi, please update the README, fix the login bug and send the slides",
+      "quote": "Kevin, please update the README, fix the login bug and send the slides",
       "line": "L27",
       "cases": [
         "C8"
@@ -68,10 +68,10 @@
     {
       "id": "AI5",
       "task": "Fix the login bug",
-      "assignee": "Khoi",
+      "assignee": "Kevin",
       "due": null,
       "spoken_due": null,
-      "quote": "Khoi, please update the README, fix the login bug and send the slides",
+      "quote": "Kevin, please update the README, fix the login bug and send the slides",
       "line": "L27",
       "cases": [
         "C8"
@@ -81,10 +81,10 @@
     {
       "id": "AI6",
       "task": "Send the slides",
-      "assignee": "Khoi",
+      "assignee": "Kevin",
       "due": null,
       "spoken_due": null,
-      "quote": "Khoi, please update the README, fix the login bug and send the slides",
+      "quote": "Kevin, please update the README, fix the login bug and send the slides",
       "line": "L27",
       "cases": [
         "C8"

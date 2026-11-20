@@ -2,7 +2,7 @@
   "summary_points": [
     {
       "id": "P1",
-      "text": "The team decided to show a live demo and keep a recorded video as a backup; Binh moved the slides deadline to next Monday"
+      "text": "The team decided to show a live demo and keep a recorded video as a backup; Ben moved the slides deadline to next Monday"
     },
     {
       "id": "P2",
@@ -14,7 +14,7 @@
     },
     {
       "id": "P4",
-      "text": "Toan took over the test report from Hung, due at the end of next week, and the final results are due in two weeks"
+      "text": "Tom took over the test report from Henry, due at the end of next week, and the final results are due in two weeks"
     }
   ],
   "decisions": [
@@ -29,10 +29,10 @@
     {
       "id": "AI1",
       "task": "Finish the slides",
-      "assignee": "Binh",
+      "assignee": "Ben",
       "due": "2026-11-30",
       "spoken_due": "this Friday, then moved to next Monday",
-      "quote": "Binh, can you finish the slides by this Friday?",
+      "quote": "Ben, can you finish the slides by this Friday?",
       "line": "L12",
       "cases": [
         "C2"
@@ -42,10 +42,10 @@
     {
       "id": "AI2",
       "task": "Write the test report",
-      "assignee": "Toan",
+      "assignee": "Tom",
       "due": "2026-12-04",
       "spoken_due": "at the end of next week",
-      "quote": "Then Toan, can you take the test report?",
+      "quote": "Then Tom, can you take the test report?",
       "line": "L35",
       "cases": [
         "C1",
@@ -56,10 +56,10 @@
     {
       "id": "AI3",
       "task": "Prepare the annotation examples",
-      "assignee": "Hung",
+      "assignee": "Henry",
       "due": "2026-11-25",
       "spoken_due": "by tomorrow",
-      "quote": "Hung, can you prepare the annotation examples by tomorrow?",
+      "quote": "Henry, can you prepare the annotation examples by tomorrow?",
       "line": "L38",
       "cases": [
         "C3"
@@ -69,7 +69,7 @@
     {
       "id": "AI4",
       "task": "Download the MeetingBank audio",
-      "assignee": "Toan",
+      "assignee": "Tom",
       "due": "2026-11-26",
       "spoken_due": "by Thursday",
       "quote": "please download the MeetingBank audio by Thursday",

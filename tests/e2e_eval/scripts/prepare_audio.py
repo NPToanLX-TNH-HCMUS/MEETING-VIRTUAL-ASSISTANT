@@ -9,6 +9,7 @@ Usage (from the repository root):
     python tests/e2e_eval/scripts/prepare_audio.py --raw-root D:/CT/audio_raw
     python tests/e2e_eval/scripts/prepare_audio.py --raw-root D:/CT/audio_raw --only S01 S13
     python tests/e2e_eval/scripts/prepare_audio.py --raw-root D:/CT/audio_raw --update-hashes
+    (--update-hashes also accepts a rebuilt source, for example a synthetic meeting read again)
 
 Row kinds:
     cut      one or more time ranges of a source file, joined in order
@@ -68,12 +69,15 @@ def parse_segments(text: str) -> list[tuple[float, float]]:
     return segments
 
 
-def build_cut(row: dict, raw_root: Path, out: Path) -> None:
+def build_cut(row: dict, raw_root: Path, out: Path, update_hashes: bool = False) -> None:
     src = raw_root / row["source_file"]
     if not src.is_file():
         sys.exit(f"[{row['clip_id']}] source not found: {src}")
     if row.get("source_sha256") and sha256(src) != row["source_sha256"]:
-        sys.exit(f"[{row['clip_id']}] source SHA-256 does not match: {src}")
+        if not update_hashes:
+            sys.exit(f"[{row['clip_id']}] source SHA-256 does not match: {src}")
+        row["source_sha256"] = sha256(src)  # the source was rebuilt on purpose (synthetic meetings)
+        print(f"[{row['clip_id']}] source SHA-256 updated: {src.name}")
     filters, labels = [], []
     for i, (start, end) in enumerate(parse_segments(row["segments"])):
         length = end - start
@@ -187,7 +191,7 @@ def main() -> None:
         out = EVAL_DIR / row["output"]
         out.parent.mkdir(parents=True, exist_ok=True)
         if row["kind"] == "cut":
-            build_cut(row, args.raw_root, out)
+            build_cut(row, args.raw_root, out, args.update_hashes)
         elif row["kind"] == "silence":
             build_silence(row, out)
         elif row["kind"] == "babble":
@@ -215,7 +219,7 @@ def main() -> None:
 
     if changed:
         with open(SOURCES, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fields)
+            writer = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
             writer.writeheader()
             writer.writerows(rows)
     sys.exit(1 if failed else 0)

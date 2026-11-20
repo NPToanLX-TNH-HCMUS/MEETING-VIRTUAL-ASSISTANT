@@ -2,7 +2,7 @@
 
 > **Project:** Meeting Intelligence Assistant  
 > **Domain:** D  
-> **Course Code:** CSC10014 — Computational Thinking  
+> **Course Code:** CSC10014 — Computational Thinking (Tư duy tính toán)  
 
 ---
 
@@ -19,12 +19,12 @@
 
 | Full Name | Role | Present |
 |-----------|------|---------|
-| Võ Lê Nam Khánh Ann | Leader | ✅ |
-| Nguyễn Thành Tài | Member | ✅ |
-| Nguyễn Cao An Bình | Member | ✅ |
-| Đoàn Khánh Hưng | Member (Tester) | ✅ |
-| Bùi Đăng Khôi | Member | ✅ |
-| Ngô Phước Toàn | Member | ✅ |
+| Ann Carter | Leader | ✅ |
+| Tim Baker | Member | ✅ |
+| Ben Foster | Member | ✅ |
+| Henry Clark | Member (Tester) | ✅ |
+| Kevin Wright | Member | ✅ |
+| Tom Hughes | Member | ✅ |
 
 ---
 
@@ -32,10 +32,10 @@
 
 | ID | Task | Owner | Status | Notes / Outcomes |
 |:---|:-----|:------|:-------|:-----------------|
-| 01 | Download the AMI meetings for the test set | Đoàn Khánh Hưng | ✅ Completed | Four meetings of one group downloaded |
-| 02 | Write the use case specification | Đoàn Khánh Hưng | ✅ Completed | Twelve use cases, reviewed by Bình |
-| 03 | Find MeetingBank meetings with a vote and a postponed item | Ngô Phước Toàn | 🔄 In Progress | Two candidates found, one missing |
-| 04 | Prepare a first version of the demo script | Nguyễn Cao An Bình | 🔄 In Progress | Order of the screens not decided |
+| 01 | Download the AMI meetings for the test set | Henry Clark | ✅ Completed | Four meetings of one group downloaded |
+| 02 | Write the use case specification | Henry Clark | ✅ Completed | Twelve use cases, reviewed by Ben |
+| 03 | Find MeetingBank meetings with a vote and a postponed item | Tom Hughes | 🔄 In Progress | Two candidates found, one missing |
+| 04 | Prepare a first version of the demo script | Ben Foster | 🔄 In Progress | Order of the screens not decided |
 
 ---
 
@@ -50,7 +50,7 @@
 
 | # | Issue | Notes |
 |---|-------|-------|
-| OI-1 | Which numbers to show in the final report besides word error rate | Khôi suggested also showing F1 for action items |
+| OI-1 | Which numbers to show in the final report besides word error rate | Kevin suggested also showing F1 for action items |
 
 ---
 

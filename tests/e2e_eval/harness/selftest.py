@@ -92,7 +92,7 @@ def main() -> None:
         sc = Scenario("S06")
         folder = run / "S06"
         minutes = json.loads((folder / "minutes.json").read_text(encoding="utf-8"))
-        minutes["action_items"][0]["assignee"] = "Hung"            # wrong owner for AI1
+        minutes["action_items"][0]["assignee"] = "Henry"            # wrong owner for AI1
         minutes["action_items"][1]["due"] = None                   # missing deadline for AI2
         minutes["action_items"].append({"task": "Order pizza for the demo day", "assignee": "Ann",
                                          "due": None, "quote": "let us order pizza for everyone"})

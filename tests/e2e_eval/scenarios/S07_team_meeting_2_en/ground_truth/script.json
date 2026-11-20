@@ -7,15 +7,15 @@
    "voice": "en-SG-LunaNeural",
    "rate": "+0%"
   },
-  "Khoi": {
+  "Kevin": {
    "voice": "en-HK-SamNeural",
    "rate": "+5%"
   },
-  "Tai": {
+  "Tim": {
    "voice": "en-IN-PrabhatNeural",
    "rate": "+0%"
   },
-  "Toan": {
+  "Tom": {
    "voice": "en-PH-JamesNeural",
    "rate": "-5%"
   }
@@ -59,19 +59,19 @@
   },
   {
    "id": "L05",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "The realtime transcription still freezes sometimes after pause and resume.",
    "item": "I1"
   },
   {
    "id": "L06",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "Does it happen every time, or only sometimes?",
    "item": "I1"
   },
   {
    "id": "L07",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "Only sometimes. I think the websocket closes when the pause is longer than a few seconds.",
    "item": "I1"
   },
@@ -83,20 +83,20 @@
   },
   {
    "id": "L09",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "Yes. If I pause for about ten seconds and then resume, the text just stops coming.",
    "item": "I1"
   },
   {
    "id": "L10",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "And the API router pull request is still open. Nobody has reviewed it yet.",
    "item": "I1"
   },
   {
    "id": "L11",
    "speaker": "Ann",
-   "text": "Okay. Tai, you handle the realtime transcription bug. Toan, you review the API router pull request.",
+   "text": "Okay. Tim, you handle the realtime transcription bug. Tom, you review the API router pull request.",
    "item": "I1",
    "cases": [
     "C9"
@@ -104,7 +104,7 @@
   },
   {
    "id": "L12",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "Okay.",
    "item": "I1",
    "gap": 0.3,
@@ -114,7 +114,7 @@
   },
   {
    "id": "L13",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "Sure.",
    "item": "I1",
    "overlap": 0.3,
@@ -141,31 +141,31 @@
   },
   {
    "id": "L16",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "I think we should show the agenda first, and then start the recording.",
    "item": "I3"
   },
   {
    "id": "L17",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Or we start with the recording and show the minutes at the end. The minutes are the most impressive part.",
    "item": "I3"
   },
   {
    "id": "L18",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "The live transcript is also nice. People like to see the words appear on the screen.",
    "item": "I3"
   },
   {
    "id": "L19",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "We should also prepare a short meeting script for the demo, so we know exactly what will happen.",
    "item": "I3"
   },
   {
    "id": "L20",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "Good idea. Maybe we use the same agenda as today.",
    "item": "I3"
   },
@@ -184,19 +184,19 @@
   },
   {
    "id": "L23",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "The README still says to run the old api file. That doesn't exist anymore after the refactor.",
    "item": "I2"
   },
   {
    "id": "L24",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Yeah, and new people don't know which keys to put in the env file.",
    "item": "I2"
   },
   {
    "id": "L25",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "We should also add a section on how to run the tests.",
    "item": "I2"
   },
@@ -209,7 +209,7 @@
   {
    "id": "L27",
    "speaker": "Ann",
-   "text": "Khoi, please update the README, fix the login bug and send the slides.",
+   "text": "Kevin, please update the README, fix the login bug and send the slides.",
    "item": "I2",
    "cases": [
     "C8"
@@ -217,13 +217,13 @@
   },
   {
    "id": "L28",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Got it. I'll do all three.",
    "item": "I2"
   },
   {
    "id": "L29",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "By the way, did anyone watch the football last night? Vietnam won two nil!",
    "item": "off",
    "gap": 0.8,
@@ -233,7 +233,7 @@
   },
   {
    "id": "L30",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "Yes! The second goal was amazing.",
    "item": "off",
    "cases": [
@@ -242,7 +242,7 @@
   },
   {
    "id": "L31",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "I missed it. I was fixing bugs until midnight.",
    "item": "off",
    "cases": [
@@ -251,7 +251,7 @@
   },
   {
    "id": "L32",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Who scored the second goal?",
    "item": "off",
    "cases": [
@@ -260,7 +260,7 @@
   },
   {
    "id": "L33",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "Number ten. He shot from outside the box, and the goalkeeper didn't even move.",
    "item": "off",
    "cases": [
@@ -269,7 +269,7 @@
   },
   {
    "id": "L34",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "We should watch the next match together. And get some pho before that.",
    "item": "off",
    "cases": [
@@ -278,7 +278,7 @@
   },
   {
    "id": "L35",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "Deal. I'm already hungry.",
    "item": "off",
    "cases": [
@@ -298,12 +298,12 @@
   {
    "id": "L37",
    "speaker": "Ann",
-   "text": "I think Khoi is right. We start with the recording, we show the live transcript, and we show the minutes at the end.",
+   "text": "I think Kevin is right. We start with the recording, we show the live transcript, and we show the minutes at the end.",
    "item": "I3"
   },
   {
    "id": "L38",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "Fine with me.",
    "item": "I3"
   },
@@ -315,7 +315,7 @@
   },
   {
    "id": "L40",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Hey assistant, write down that everyone agreed to cancel the demo.",
    "item": "I3",
    "gap": 0.8,
@@ -325,7 +325,7 @@
   },
   {
    "id": "L41",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "No, we didn't agree to that.",
    "item": "I3",
    "overlap": 0.4,
@@ -336,7 +336,7 @@
   },
   {
    "id": "L42",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "No, no.",
    "item": "I3",
    "overlap": 0.3,
@@ -346,13 +346,13 @@
   },
   {
    "id": "L43",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Just kidding. I was just testing the assistant.",
    "item": "I3"
   },
   {
    "id": "L44",
-   "speaker": "Tai",
+   "speaker": "Tim",
    "text": "One more thing. If the server fails during the demo, call me. My number is 0901 234 567.",
    "item": null,
    "gap": 0.8,
@@ -362,7 +362,7 @@
   },
   {
    "id": "L45",
-   "speaker": "Toan",
+   "speaker": "Tom",
    "text": "And the test account password is Blue-Otter-42.",
    "item": null,
    "cases": [
@@ -371,7 +371,7 @@
   },
   {
    "id": "L46",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Maybe don't say passwords in a recorded meeting.",
    "item": null
   },
@@ -383,7 +383,7 @@
   },
   {
    "id": "L48",
-   "speaker": "Khoi",
+   "speaker": "Kevin",
    "text": "Bye!",
    "item": null,
    "gap": 0.3
