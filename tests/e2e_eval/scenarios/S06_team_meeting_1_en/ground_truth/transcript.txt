@@ -1,0 +1,46 @@
+[00:00.5] Ann: Okay, I think everyone is here. Thanks for coming, guys. Let's get started.
+[00:08.3] Hung: Hi everyone.
+[00:09.6] Ann: So, let's start with the demo plan, because the presentation is coming soon.
+[00:15.0] Hung: Right. Um, I think we have two options. We can do a live demo in front of the class, or we can play a recorded video.
+[00:24.5] Toan: A live demo looks better, but if the internet is slow, the transcription can take a long time.
+[00:30.2] Binh: Yeah, last time the API took almost a minute to answer.
+[00:34.9] Hung: Maybe we do both? Live first, and if something breaks, we switch to the video.
+[00:41.5] Toan: And what do we show in the live part? The whole meeting is too long for ten minutes.
+[00:47.2] Hung: We can record a short meeting, maybe two minutes, and then show the agenda, the transcript and the minutes.
+[00:54.4] Ann: I like that. Okay, decided: we show a live demo, and we keep a recorded video as a backup.
+[01:02.2] Toan: Sounds good.
+[01:03.3] Ann: Binh, can you finish the slides by this Friday?
+[01:06.8] Binh: Hmm, Friday is hard for me, I have two exams this week. Can I do it next Monday?
+[01:13.9] Ann: Okay, next Monday then. That still works.
+[01:18.5] Binh: Thanks.
+[01:19.7] Ann: Now, the dataset sources.
+[01:22.6] Toan: So for the test set we have the AMI corpus, which is four meetings from the same group, and MeetingBank, which is city council meetings from the US. Both are free for research.
+[01:34.5] Hung: AMI is nice because the transcripts were typed by people, so the answer key is easier to make.
+[01:40.4] Toan: MeetingBank is harder. The transcripts were made by a machine, so we have to listen and fix the names.
+[01:47.3] Ann: How long does it take to fix one clip?
+[01:50.0] Toan: About twenty minutes for a five minute clip, if the audio is clear.
+[01:54.2] Binh: Should we also add a third source? Maybe some podcasts with Asian speakers, to test different accents.
+[02:02.4] Toan: Maybe, but we need to check the license first. A lot of podcasts don't allow it.
+[02:08.3] Ann: Good point. Let's think about it next time.
+[02:12.6] Ann: Next, how do we check if the results are good?
+[02:15.9] Toan: For the transcript, we count how many words are wrong. That's the word error rate, and lower is better.
+[02:22.9] Hung: And for the action items, we compare them with our answer key and compute precision, recall and F1.
+[02:29.6] Binh: Do we also check the deadlines and the owners?
+[02:32.9] Hung: Yes. An action item only counts if the task, the owner and the deadline are all correct.
+[02:40.0] Binh: That sounds strict. Even a small mistake in the date makes it wrong?
+[02:45.6] Hung: Yes, but we also report the score without the date, so we can see where it fails.
+[02:51.0] Ann: Great. Hung, you write the test report.
+[02:55.0] Hung: Okay.
+[02:56.5] Hung: Actually, wait. I'm busy with the dataset this week, so I don't think I have time for the report.
+[03:03.6] Ann: No problem. Then Toan, can you take the test report?
+[03:08.4] Toan: Yes, I'll do it.
+[03:10.1] Ann: Thanks, Toan. The test report is due at the end of next week.
+[03:15.9] Ann: Before we finish, two quick things. Hung, can you prepare the annotation examples by tomorrow?
+[03:23.5] Hung: Sure, no problem.
+[03:25.6] Ann: And Toan, please download the MeetingBank audio by Thursday.
+[03:29.6] Toan: Okay, I'll do it.
+[03:31.2] Ann: And remember, we present in two weeks, so the final results must be ready in two weeks.
+[03:37.8] Binh: That's tight, but okay. We can do it.
+[03:41.8] Ann: Alright, I think that's everything for today. Thanks, everyone.
+[03:47.2] Hung: Thanks, bye.
+[03:47.9] Toan: Bye.

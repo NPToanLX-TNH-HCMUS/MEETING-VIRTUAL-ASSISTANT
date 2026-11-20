@@ -1,0 +1,104 @@
+{
+  "max_total_minutes": 10,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Bug fixes before the demo",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            16.66,
+            62.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "README and documentation",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            102.15,
+            130.81
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Demo plan",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            65.45,
+            101.35
+          ],
+          [
+            162.62,
+            191.69
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I4",
+      "title": "API budget",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    }
+  ],
+  "off_agenda": [
+    [
+      131.61,
+      161.82
+    ]
+  ],
+  "carry_over": [],
+  "must_not_include": [
+    {
+      "id": "X1",
+      "text": "Merge the API router refactor",
+      "reason": "Done on the task board",
+      "case": "A1",
+      "keywords": [
+        "merge the api router"
+      ]
+    },
+    {
+      "id": "X2",
+      "text": "Merge the realtime transcription feature",
+      "reason": "Done on the task board",
+      "case": "A1",
+      "keywords": [
+        "merge the realtime"
+      ]
+    }
+  ],
+  "notes": "The budget is only named and postponed (F2): not_discussed. The demo plan is discussed twice (F6) and concluded on the return. Tracking spans are filled by synth_meeting.py gt."
+}

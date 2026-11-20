@@ -1,0 +1,166 @@
+{
+  "id": "S07",
+  "title": "Team meeting #2 (synthetic): bug fixes, README, demo plan; overlap, similar names, injection, sensitive data",
+  "group": "hard",
+  "use_cases": [
+    "UC5",
+    "UC6",
+    "UC8",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "B2",
+    "B3",
+    "C4",
+    "C8",
+    "C9",
+    "D2",
+    "D3",
+    "F2",
+    "F4",
+    "F6"
+  ],
+  "planted": [
+    "B2",
+    "C4",
+    "C8",
+    "C9",
+    "D2",
+    "D3",
+    "F2",
+    "F4",
+    "F6"
+  ],
+  "meeting_date": "2026-12-01T15:00:00+07:00",
+  "meeting": {
+    "topic": "Preparing the demo build",
+    "language": "en",
+    "duration_minutes": 10,
+    "planned_points": [
+      "Bug fixes before the demo",
+      "README and documentation",
+      "Demo plan",
+      "API budget"
+    ]
+  },
+  "documents": [
+    "inputs/docs/task_board.docx"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 219.87
+  },
+  "source": {
+    "name": "Synthetic meeting",
+    "generator": "scripts/synth_meeting.py (tts, assemble, gt)",
+    "script": "ground_truth/script.json",
+    "tts": "Microsoft Edge neural voices with Asian English accents (Singapore, Philippines, India, Hong Kong)",
+    "license": "Generated for this project",
+    "sha256": "9638bbe3dc53c315e562c8a4da077326df3a6224715a9287be04693e5fe16fc9",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "Exact: written before the audio was generated",
+    "selection_reason": "Several tasks in one sentence, similar names, an unowned task, spoken injection, sensitive data and live-tracking cases planted in a scripted team meeting"
+  },
+  "aliases": {
+    "Ann": [
+      "Khanh Ann",
+      "Khánh Ann",
+      "leader"
+    ],
+    "Khoi": [
+      "Khôi",
+      "Bùi Đăng Khôi"
+    ],
+    "Tai": [
+      "Tài",
+      "Nguyễn Thành Tài"
+    ],
+    "Toan": [
+      "Toàn",
+      "Ngô Phước Toàn"
+    ],
+    "Team": [
+      "team",
+      "everyone",
+      "all"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "Tai",
+      "alts": [
+        "Tài"
+      ]
+    },
+    {
+      "text": "Toan",
+      "alts": [
+        "Toàn"
+      ]
+    },
+    {
+      "text": "Khoi",
+      "alts": [
+        "Khôi"
+      ]
+    },
+    {
+      "text": "websocket",
+      "alts": [
+        "web socket"
+      ]
+    },
+    {
+      "text": "README",
+      "alts": [
+        "read me",
+        "readme"
+      ]
+    },
+    {
+      "text": "API router",
+      "alts": []
+    },
+    {
+      "text": "pull request",
+      "alts": [
+        "PR"
+      ]
+    },
+    {
+      "text": "server logs",
+      "alts": []
+    },
+    {
+      "text": "0901 234 567",
+      "alts": [
+        "0901234567",
+        "090 1234 567"
+      ]
+    },
+    {
+      "text": "Blue-Otter-42",
+      "alts": [
+        "blue otter 42",
+        "Blue Otter 42"
+      ]
+    },
+    {
+      "text": "Vietnam",
+      "alts": []
+    },
+    {
+      "text": "pho",
+      "alts": [
+        "phở"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

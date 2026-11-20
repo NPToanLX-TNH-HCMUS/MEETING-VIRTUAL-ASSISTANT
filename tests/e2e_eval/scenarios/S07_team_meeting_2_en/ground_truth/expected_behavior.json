@@ -1,0 +1,113 @@
+{
+  "scenario_id": "S07",
+  "checks": [
+    {
+      "id": "S07-01",
+      "case": "C4",
+      "type": "action_item_field",
+      "match": "AI3",
+      "field": "assignee",
+      "equals": null
+    },
+    {
+      "id": "S07-02",
+      "case": "C8",
+      "type": "count_equals",
+      "target": "action_items",
+      "where": {
+        "field": "assignee",
+        "equals": "Khoi"
+      },
+      "n": 3
+    },
+    {
+      "id": "S07-03",
+      "case": "C9",
+      "type": "action_item_field",
+      "match": "AI1",
+      "field": "assignee",
+      "equals": "Tai"
+    },
+    {
+      "id": "S07-04",
+      "case": "C9",
+      "type": "action_item_field",
+      "match": "AI2",
+      "field": "assignee",
+      "equals": "Toan"
+    },
+    {
+      "id": "S07-05",
+      "case": "D2",
+      "type": "not_contains",
+      "target": "decisions",
+      "any_of": [
+        "cancel the demo"
+      ]
+    },
+    {
+      "id": "S07-06",
+      "case": "D3",
+      "type": "not_contains",
+      "target": "minutes_text",
+      "any_of": [
+        "0901",
+        "234 567",
+        "blue-otter",
+        "blue otter"
+      ]
+    },
+    {
+      "id": "S07-07",
+      "case": "F2",
+      "type": "agenda_state",
+      "match": "I4",
+      "stage": "end",
+      "equals": "not_discussed"
+    },
+    {
+      "id": "S07-08",
+      "case": "F4",
+      "type": "no_event_between",
+      "event": "agenda.item_state",
+      "from_s": 131.61,
+      "to_s": 161.82,
+      "note": "the off-agenda span in agenda.json"
+    },
+    {
+      "id": "S07-09",
+      "case": "F6",
+      "type": "state_change_within",
+      "match": "I3",
+      "to": "in_progress",
+      "span": 1,
+      "tolerance_s": 30
+    },
+    {
+      "id": "S07-10",
+      "case": "B3",
+      "type": "metric_at_least",
+      "metric": "TR3",
+      "value": 0.9
+    },
+    {
+      "id": "S07-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S07-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S07-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+{
+  "scenario_id": "S12",
+  "checks": [
+    {
+      "id": "S12-01",
+      "case": "E4",
+      "type": "http_status",
+      "step": "fault:E4",
+      "status": 503,
+      "code": "LLM_UNAVAILABLE",
+      "note": "every model down at agenda/generate"
+    },
+    {
+      "id": "S12-02",
+      "case": "E4",
+      "type": "http_status",
+      "step": "retry:E4",
+      "status": 200
+    },
+    {
+      "id": "S12-03",
+      "case": "E6",
+      "type": "contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "demo checklist"
+      ],
+      "stage": "after_confirm_agenda"
+    },
+    {
+      "id": "S12-04",
+      "case": "E6",
+      "type": "not_contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "budget"
+      ],
+      "stage": "after_confirm_agenda"
+    },
+    {
+      "id": "S12-05",
+      "case": "E6",
+      "type": "agenda_item_field",
+      "title": "Demo checklist",
+      "field": "source",
+      "equals": "manual"
+    },
+    {
+      "id": "S12-06",
+      "case": "E6",
+      "type": "llm_prompt_contains",
+      "stage": "minutes",
+      "text": "Demo checklist"
+    },
+    {
+      "id": "S12-07",
+      "case": "E5",
+      "type": "http_status",
+      "step": "fault:E5",
+      "status": 422,
+      "code": "TRANSCRIPTION_INPUT_INVALID"
+    },
+    {
+      "id": "S12-08",
+      "case": "E5",
+      "type": "http_status",
+      "step": "retry:E5",
+      "status": 200
+    },
+    {
+      "id": "S12-09",
+      "case": "E4",
+      "type": "llm_fallback_used",
+      "stage": "minutes"
+    },
+    {
+      "id": "S12-10",
+      "case": "E7",
+      "type": "file_equals",
+      "path": "post_meeting/meeting_minutes/minutes_final.md",
+      "equals_sent": "edit_minutes"
+    },
+    {
+      "id": "S12-11",
+      "case": "E3",
+      "type": "http_status",
+      "step": "fault:E3-confirm",
+      "status": 409,
+      "code": "INVALID_MEETING_STATE"
+    },
+    {
+      "id": "S12-12",
+      "case": "E3",
+      "type": "http_status",
+      "step": "fault:E3-edit",
+      "status": 409,
+      "code": "INVALID_MEETING_STATE"
+    },
+    {
+      "id": "S12-13",
+      "case": "E3",
+      "type": "file_equals",
+      "path": "post_meeting/meeting_minutes/minutes_final.md",
+      "equals_sent": "edit_minutes",
+      "note": "unchanged after the second confirm and edit"
+    },
+    {
+      "id": "S12-14",
+      "case": "F8",
+      "type": "no_event_between",
+      "event": "transcript.segment",
+      "from_s": 60.0,
+      "to_s": 80.2
+    },
+    {
+      "id": "S12-15",
+      "case": "F8",
+      "type": "no_event_between",
+      "event": "agenda.item_state",
+      "from_s": 60.0,
+      "to_s": 80.2
+    },
+    {
+      "id": "S12-16",
+      "case": "F8",
+      "type": "meeting_status",
+      "stage": "during_pause",
+      "equals": "paused"
+    },
+    {
+      "id": "S12-17",
+      "case": "F10",
+      "type": "event_exists",
+      "event": "error",
+      "data": {
+        "recoverable": true
+      }
+    },
+    {
+      "id": "S12-18",
+      "case": "F10",
+      "type": "http_status",
+      "step": "retry:E5",
+      "status": 200,
+      "note": "post-meeting transcript produced after the live connection dropped"
+    },
+    {
+      "id": "S12-19",
+      "case": "F9",
+      "type": "http_status",
+      "step": "stop_recording",
+      "status": 200
+    },
+    {
+      "id": "S12-20",
+      "case": "F9",
+      "type": "meeting_status",
+      "stage": "after_stop",
+      "equals": "processing"
+    },
+    {
+      "id": "S12-21",
+      "case": "F9",
+      "type": "audio_duration",
+      "path": "during_meeting/audio/record.wav",
+      "equals_s": 171.8,
+      "tolerance_s": 2,
+      "note": "paused 60.0-80.2 s, paused again at 192.0 s, stopped at 202.0 s: 60.0 + 111.8 = 171.8 s recorded"
+    },
+    {
+      "id": "S12-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S12-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S12-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

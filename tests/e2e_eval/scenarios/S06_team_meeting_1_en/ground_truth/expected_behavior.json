@@ -1,0 +1,160 @@
+{
+  "scenario_id": "S06",
+  "checks": [
+    {
+      "id": "S06-01",
+      "case": "A6",
+      "type": "http_status",
+      "step": "upload_document",
+      "file": "previous_minutes.md",
+      "status": 201
+    },
+    {
+      "id": "S06-02",
+      "case": "A6",
+      "type": "doc_text_contains",
+      "file": "previous_minutes.md",
+      "text": "Bình"
+    },
+    {
+      "id": "S06-03",
+      "case": "A6",
+      "type": "doc_text_not_contains",
+      "file": "previous_minutes.md",
+      "text": "﻿"
+    },
+    {
+      "id": "S06-04",
+      "case": "A1",
+      "type": "not_contains",
+      "target": "agenda_titles",
+      "any_of": [
+        "download the ami",
+        "ami meetings",
+        "use case specification"
+      ]
+    },
+    {
+      "id": "S06-05",
+      "case": "C1",
+      "type": "action_item_field",
+      "match": "AI2",
+      "field": "assignee",
+      "equals": "Toan"
+    },
+    {
+      "id": "S06-06",
+      "case": "C2",
+      "type": "action_item_field",
+      "match": "AI1",
+      "field": "due",
+      "equals": "2026-11-30"
+    },
+    {
+      "id": "S06-07",
+      "case": "C3",
+      "type": "action_item_field",
+      "match": "AI3",
+      "field": "due",
+      "equals": "2026-11-25",
+      "note": "'tomorrow'"
+    },
+    {
+      "id": "S06-08",
+      "case": "C3",
+      "type": "action_item_field",
+      "match": "AI4",
+      "field": "due",
+      "equals": "2026-11-26",
+      "note": "'by Thursday'"
+    },
+    {
+      "id": "S06-09",
+      "case": "C3",
+      "type": "action_item_field",
+      "match": "AI2",
+      "field": "due",
+      "equals": "2026-12-04",
+      "note": "'end of next week'"
+    },
+    {
+      "id": "S06-10",
+      "case": "C3",
+      "type": "action_item_field",
+      "match": "AI5",
+      "field": "due",
+      "equals": "2026-12-08",
+      "note": "'in two weeks'"
+    },
+    {
+      "id": "S06-11",
+      "case": "B3",
+      "type": "metric_at_least",
+      "metric": "TR3",
+      "value": 0.9
+    },
+    {
+      "id": "S06-12",
+      "case": "F1",
+      "type": "state_change_within",
+      "match": "I2",
+      "to": "in_progress",
+      "span": 0,
+      "tolerance_s": 30,
+      "note": "'how do we check if the results are good'"
+    },
+    {
+      "id": "S06-13",
+      "case": "F3",
+      "type": "agenda_state",
+      "match": "I4",
+      "stage": "end",
+      "equals": "not_discussed"
+    },
+    {
+      "id": "S06-14",
+      "case": "F5",
+      "type": "state_change_within",
+      "match": "I3",
+      "to": "in_progress",
+      "span": 0,
+      "tolerance_s": 30,
+      "note": "third item discussed first"
+    },
+    {
+      "id": "S06-15",
+      "case": "F7",
+      "type": "agenda_state",
+      "match": "I3",
+      "stage": "end",
+      "equals": "concluded"
+    },
+    {
+      "id": "S06-16",
+      "case": "F7",
+      "type": "agenda_state",
+      "match": "I1",
+      "stage": "end",
+      "equals": "discussed"
+    },
+    {
+      "id": "S06-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S06-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S06-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

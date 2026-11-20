@@ -1,0 +1,166 @@
+{
+  "id": "S06",
+  "title": "Team meeting #1 (synthetic): demo plan, dataset sources, how to check results",
+  "group": "normal",
+  "use_cases": [
+    "UC1",
+    "UC2",
+    "UC5",
+    "UC6",
+    "UC7",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "A1",
+    "A6",
+    "B3",
+    "C1",
+    "C2",
+    "C3",
+    "F1",
+    "F3",
+    "F5",
+    "F7"
+  ],
+  "planted": [
+    "A1",
+    "A6",
+    "C1",
+    "C2",
+    "C3",
+    "F1",
+    "F3",
+    "F5",
+    "F7"
+  ],
+  "meeting_date": "2026-11-24T15:00:00+07:00",
+  "meeting": {
+    "topic": "Evaluation dataset and demo preparation",
+    "language": "en",
+    "duration_minutes": 10,
+    "planned_points": [
+      "Choose the dataset sources",
+      "Evaluation metrics",
+      "Demo plan",
+      "API budget"
+    ]
+  },
+  "documents": [
+    "inputs/docs/previous_minutes.md"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 229.13
+  },
+  "source": {
+    "name": "Synthetic meeting",
+    "generator": "scripts/synth_meeting.py (tts, assemble, gt)",
+    "script": "ground_truth/script.json",
+    "tts": "Microsoft Edge neural voices with Asian English accents (Singapore, Philippines, India, Hong Kong)",
+    "license": "Generated for this project",
+    "sha256": "16c71ec80340c4b2b76aeaead82967ef4b1de5747a1826b86957e33eb313f2b6",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "Exact: written before the audio was generated",
+    "selection_reason": "Owner change, moved deadline, relative dates and live-tracking cases planted in a scripted team meeting"
+  },
+  "aliases": {
+    "Ann": [
+      "Khanh Ann",
+      "Khánh Ann",
+      "leader"
+    ],
+    "Hung": [
+      "Hưng",
+      "Khanh Hung",
+      "Đoàn Khánh Hưng"
+    ],
+    "Toan": [
+      "Toàn",
+      "Ngô Phước Toàn"
+    ],
+    "Binh": [
+      "Bình",
+      "An Binh",
+      "Nguyễn Cao An Bình"
+    ],
+    "Team": [
+      "team",
+      "everyone",
+      "all"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "AMI",
+      "alts": [
+        "A.M.I."
+      ]
+    },
+    {
+      "text": "MeetingBank",
+      "alts": [
+        "Meeting Bank"
+      ]
+    },
+    {
+      "text": "word error rate",
+      "alts": [
+        "WER"
+      ]
+    },
+    {
+      "text": "F1",
+      "alts": [
+        "F one",
+        "F-1"
+      ]
+    },
+    {
+      "text": "precision",
+      "alts": []
+    },
+    {
+      "text": "recall",
+      "alts": []
+    },
+    {
+      "text": "Binh",
+      "alts": [
+        "Bình"
+      ]
+    },
+    {
+      "text": "Toan",
+      "alts": [
+        "Toàn"
+      ]
+    },
+    {
+      "text": "Hung",
+      "alts": [
+        "Hưng"
+      ]
+    },
+    {
+      "text": "next Monday",
+      "alts": []
+    },
+    {
+      "text": "Thursday",
+      "alts": []
+    },
+    {
+      "text": "two weeks",
+      "alts": [
+        "2 weeks"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

@@ -1,0 +1,246 @@
+{
+  "id": "S12",
+  "title": "Failures and user actions on the S07 audio: model and STT faults, agenda and minutes edits, pause, stop while paused, live STT drop",
+  "group": "failure",
+  "use_cases": [
+    "UC4",
+    "UC5",
+    "UC6",
+    "UC9",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "E3",
+    "E4",
+    "E5",
+    "E6",
+    "E7",
+    "F8",
+    "F9",
+    "F10"
+  ],
+  "planted": [],
+  "shares_ground_truth_with": "S07 (derived)",
+  "meeting_date": "2026-12-01T15:00:00+07:00",
+  "meeting": {
+    "topic": "Preparing the demo build",
+    "language": "en",
+    "duration_minutes": 10,
+    "planned_points": [
+      "Bug fixes before the demo",
+      "README and documentation",
+      "Demo plan",
+      "API budget"
+    ]
+  },
+  "documents": [
+    "inputs/docs/task_board.docx"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 219.87,
+    "recorded_seconds": 171.8,
+    "note": "Same audio as S07. The harness plays the whole file; only the parts outside the pauses are recorded"
+  },
+  "source": {
+    "name": "Synthetic meeting",
+    "generator": "scripts/synth_meeting.py (tts, assemble, gt)",
+    "script": "../S07_team_meeting_2_en/ground_truth/script.json",
+    "tts": "Microsoft Edge neural voices with Asian English accents (Singapore, Philippines, India, Hong Kong)",
+    "license": "Generated for this project",
+    "sha256": "9638bbe3dc53c315e562c8a4da077326df3a6224715a9287be04693e5fe16fc9",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "Derived from the S07 ground truth: lines spoken while paused or after the second pause are removed",
+    "selection_reason": "Service failures, user edits, pause and stop while paused, in one meeting with known content"
+  },
+  "aliases": {
+    "Ann": [
+      "Khanh Ann",
+      "Khánh Ann",
+      "leader"
+    ],
+    "Khoi": [
+      "Khôi",
+      "Bùi Đăng Khôi"
+    ],
+    "Tai": [
+      "Tài",
+      "Nguyễn Thành Tài"
+    ],
+    "Toan": [
+      "Toàn",
+      "Ngô Phước Toàn"
+    ],
+    "Team": [
+      "team",
+      "everyone",
+      "all"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "Tai",
+      "alts": [
+        "Tài"
+      ]
+    },
+    {
+      "text": "Toan",
+      "alts": [
+        "Toàn"
+      ]
+    },
+    {
+      "text": "Khoi",
+      "alts": [
+        "Khôi"
+      ]
+    },
+    {
+      "text": "websocket",
+      "alts": [
+        "web socket"
+      ]
+    },
+    {
+      "text": "README",
+      "alts": [
+        "read me",
+        "readme"
+      ]
+    },
+    {
+      "text": "API router",
+      "alts": []
+    },
+    {
+      "text": "pull request",
+      "alts": [
+        "PR"
+      ]
+    },
+    {
+      "text": "Vietnam",
+      "alts": []
+    },
+    {
+      "text": "pho",
+      "alts": [
+        "phở"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": {
+      "case": "E6",
+      "before_step": "confirm_agenda",
+      "remove": [
+        "API budget"
+      ],
+      "add": [
+        {
+          "title": "Demo checklist",
+          "source": "manual"
+        }
+      ]
+    },
+    "minutes_edits": {
+      "case": "E7",
+      "before_step": "confirm_minutes",
+      "append_line": "Added by the leader: freeze the demo build on Friday evening."
+    }
+  },
+  "live_actions": [
+    {
+      "at_s": 60.0,
+      "action": "pause",
+      "case": "F8",
+      "step": "pause_recording"
+    },
+    {
+      "at_s": 80.2,
+      "action": "resume",
+      "case": "F8",
+      "step": "resume_recording"
+    },
+    {
+      "at_s": 120.0,
+      "action": "close_live_stt",
+      "case": "F10",
+      "step": "fault:F10",
+      "note": "close the live STT connection once; recording continues"
+    },
+    {
+      "at_s": 192.0,
+      "action": "pause",
+      "case": "F9",
+      "step": "pause_recording"
+    },
+    {
+      "at_s": 202.0,
+      "action": "stop",
+      "case": "F9",
+      "step": "stop_recording",
+      "note": "stopped while paused"
+    }
+  ],
+  "fault_injection": [
+    {
+      "id": "E4",
+      "step": "fault:E4",
+      "at_step": "generate_agenda",
+      "fault": "every LLM model fails",
+      "then": "retry:E4 after the models are back"
+    },
+    {
+      "id": "E5",
+      "step": "fault:E5",
+      "at_step": "transcribe",
+      "fault": "ElevenLabs key removed for one call",
+      "then": "retry:E5 with the key back"
+    },
+    {
+      "id": "E4",
+      "step": "generate_minutes",
+      "at_step": "generate_minutes",
+      "fault": "primary LLM fails; the fallback model must answer"
+    },
+    {
+      "id": "E3",
+      "step": "fault:E3-confirm",
+      "after_step": "confirm_minutes",
+      "request": "POST /api/v1/meetings/{id}/minutes/confirm",
+      "note": "second confirm after archive"
+    },
+    {
+      "id": "E3",
+      "step": "fault:E3-edit",
+      "after_step": "confirm_minutes",
+      "request": "PUT /api/v1/meetings/{id}/minutes",
+      "note": "edit after archive"
+    }
+  ],
+  "live_actions_note": "Times are seconds from the start of meeting.wav; the audio keeps playing during pauses. Pause and resume times fall in silent gaps between lines, so no line is cut in the middle",
+  "run_order": [
+    "create_meeting",
+    "upload_document",
+    "fault:E4",
+    "retry:E4",
+    "edit agenda (E6)",
+    "confirm_agenda",
+    "start_recording",
+    "pause at 60.0 s",
+    "resume at {R1} s",
+    "fault:F10 at 120.0 s",
+    "pause at 192.0 s",
+    "stop at 202.0 s",
+    "fault:E5",
+    "retry:E5",
+    "generate_minutes (primary model down)",
+    "edit_minutes (E7)",
+    "confirm_minutes",
+    "fault:E3-confirm",
+    "fault:E3-edit"
+  ]
+}

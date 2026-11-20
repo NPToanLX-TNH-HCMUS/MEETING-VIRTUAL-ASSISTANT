@@ -1,0 +1,362 @@
+{
+ "scenario": "S06",
+ "meeting_date": "2026-11-24",
+ "note": "Synthetic team meeting: every line is read by a text-to-speech voice with an Asian English accent.",
+ "voices": {
+  "Ann": {
+   "voice": "en-SG-LunaNeural",
+   "rate": "+0%"
+  },
+  "Hung": {
+   "voice": "en-SG-WayneNeural",
+   "rate": "+5%"
+  },
+  "Toan": {
+   "voice": "en-PH-JamesNeural",
+   "rate": "-5%"
+  },
+  "Binh": {
+   "voice": "en-IN-PrabhatNeural",
+   "rate": "+0%"
+  }
+ },
+ "final_states": {
+  "I1": "discussed",
+  "I2": "concluded",
+  "I3": "concluded",
+  "I4": "not_discussed"
+ },
+ "lines": [
+  {
+   "id": "L01",
+   "speaker": "Ann",
+   "text": "Okay, I think everyone is here. Thanks for coming, guys. Let's get started.",
+   "item": null
+  },
+  {
+   "id": "L02",
+   "speaker": "Hung",
+   "text": "Hi everyone.",
+   "item": null,
+   "gap": 0.3
+  },
+  {
+   "id": "L03",
+   "speaker": "Ann",
+   "text": "So, let's start with the demo plan, because the presentation is coming soon.",
+   "item": "I3",
+   "cases": [
+    "F5"
+   ]
+  },
+  {
+   "id": "L04",
+   "speaker": "Hung",
+   "text": "Right. Um, I think we have two options. We can do a live demo in front of the class, or we can play a recorded video.",
+   "item": "I3"
+  },
+  {
+   "id": "L05",
+   "speaker": "Toan",
+   "text": "A live demo looks better, but if the internet is slow, the transcription can take a long time.",
+   "item": "I3"
+  },
+  {
+   "id": "L06",
+   "speaker": "Binh",
+   "text": "Yeah, last time the API took almost a minute to answer.",
+   "item": "I3"
+  },
+  {
+   "id": "L07",
+   "speaker": "Hung",
+   "text": "Maybe we do both? Live first, and if something breaks, we switch to the video.",
+   "item": "I3"
+  },
+  {
+   "id": "L08",
+   "speaker": "Toan",
+   "text": "And what do we show in the live part? The whole meeting is too long for ten minutes.",
+   "item": "I3"
+  },
+  {
+   "id": "L09",
+   "speaker": "Hung",
+   "text": "We can record a short meeting, maybe two minutes, and then show the agenda, the transcript and the minutes.",
+   "item": "I3"
+  },
+  {
+   "id": "L10",
+   "speaker": "Ann",
+   "text": "I like that. Okay, decided: we show a live demo, and we keep a recorded video as a backup.",
+   "item": "I3",
+   "cases": [
+    "F7"
+   ]
+  },
+  {
+   "id": "L11",
+   "speaker": "Toan",
+   "text": "Sounds good.",
+   "item": "I3",
+   "gap": 0.2
+  },
+  {
+   "id": "L12",
+   "speaker": "Ann",
+   "text": "Binh, can you finish the slides by this Friday?",
+   "item": "I3",
+   "cases": [
+    "C2"
+   ]
+  },
+  {
+   "id": "L13",
+   "speaker": "Binh",
+   "text": "Hmm, Friday is hard for me, I have two exams this week. Can I do it next Monday?",
+   "item": "I3",
+   "cases": [
+    "C2"
+   ]
+  },
+  {
+   "id": "L14",
+   "speaker": "Ann",
+   "text": "Okay, next Monday then. That still works.",
+   "item": "I3",
+   "cases": [
+    "C2"
+   ]
+  },
+  {
+   "id": "L15",
+   "speaker": "Binh",
+   "text": "Thanks.",
+   "item": "I3",
+   "gap": 0.3
+  },
+  {
+   "id": "L16",
+   "speaker": "Ann",
+   "text": "Now, the dataset sources.",
+   "item": "I1",
+   "gap": 0.8
+  },
+  {
+   "id": "L17",
+   "speaker": "Toan",
+   "text": "So for the test set we have the AMI corpus, which is four meetings from the same group, and MeetingBank, which is city council meetings from the US. Both are free for research.",
+   "item": "I1"
+  },
+  {
+   "id": "L18",
+   "speaker": "Hung",
+   "text": "AMI is nice because the transcripts were typed by people, so the answer key is easier to make.",
+   "item": "I1"
+  },
+  {
+   "id": "L19",
+   "speaker": "Toan",
+   "text": "MeetingBank is harder. The transcripts were made by a machine, so we have to listen and fix the names.",
+   "item": "I1"
+  },
+  {
+   "id": "L20",
+   "speaker": "Ann",
+   "text": "How long does it take to fix one clip?",
+   "item": "I1"
+  },
+  {
+   "id": "L21",
+   "speaker": "Toan",
+   "text": "About twenty minutes for a five minute clip, if the audio is clear.",
+   "item": "I1"
+  },
+  {
+   "id": "L22",
+   "speaker": "Binh",
+   "text": "Should we also add a third source? Maybe some podcasts with Asian speakers, to test different accents.",
+   "item": "I1"
+  },
+  {
+   "id": "L23",
+   "speaker": "Toan",
+   "text": "Maybe, but we need to check the license first. A lot of podcasts don't allow it.",
+   "item": "I1"
+  },
+  {
+   "id": "L24",
+   "speaker": "Ann",
+   "text": "Good point. Let's think about it next time.",
+   "item": "I1",
+   "cases": [
+    "F7"
+   ]
+  },
+  {
+   "id": "L25",
+   "speaker": "Ann",
+   "text": "Next, how do we check if the results are good?",
+   "item": "I2",
+   "gap": 0.8,
+   "cases": [
+    "F1"
+   ]
+  },
+  {
+   "id": "L26",
+   "speaker": "Toan",
+   "text": "For the transcript, we count how many words are wrong. That's the word error rate, and lower is better.",
+   "item": "I2"
+  },
+  {
+   "id": "L27",
+   "speaker": "Hung",
+   "text": "And for the action items, we compare them with our answer key and compute precision, recall and F1.",
+   "item": "I2"
+  },
+  {
+   "id": "L28",
+   "speaker": "Binh",
+   "text": "Do we also check the deadlines and the owners?",
+   "item": "I2"
+  },
+  {
+   "id": "L29",
+   "speaker": "Hung",
+   "text": "Yes. An action item only counts if the task, the owner and the deadline are all correct.",
+   "item": "I2"
+  },
+  {
+   "id": "L30",
+   "speaker": "Binh",
+   "text": "That sounds strict. Even a small mistake in the date makes it wrong?",
+   "item": "I2"
+  },
+  {
+   "id": "L31",
+   "speaker": "Hung",
+   "text": "Yes, but we also report the score without the date, so we can see where it fails.",
+   "item": "I2"
+  },
+  {
+   "id": "L32",
+   "speaker": "Ann",
+   "text": "Great. Hung, you write the test report.",
+   "item": "I2",
+   "cases": [
+    "C1"
+   ]
+  },
+  {
+   "id": "L33",
+   "speaker": "Hung",
+   "text": "Okay.",
+   "item": "I2",
+   "gap": 0.3
+  },
+  {
+   "id": "L34",
+   "speaker": "Hung",
+   "text": "Actually, wait. I'm busy with the dataset this week, so I don't think I have time for the report.",
+   "item": "I2",
+   "gap": 1.0,
+   "cases": [
+    "C1"
+   ]
+  },
+  {
+   "id": "L35",
+   "speaker": "Ann",
+   "text": "No problem. Then Toan, can you take the test report?",
+   "item": "I2",
+   "cases": [
+    "C1"
+   ]
+  },
+  {
+   "id": "L36",
+   "speaker": "Toan",
+   "text": "Yes, I'll do it.",
+   "item": "I2",
+   "cases": [
+    "C1"
+   ]
+  },
+  {
+   "id": "L37",
+   "speaker": "Ann",
+   "text": "Thanks, Toan. The test report is due at the end of next week.",
+   "item": "I2",
+   "cases": [
+    "C3"
+   ]
+  },
+  {
+   "id": "L38",
+   "speaker": "Ann",
+   "text": "Before we finish, two quick things. Hung, can you prepare the annotation examples by tomorrow?",
+   "item": null,
+   "gap": 0.8,
+   "cases": [
+    "C3"
+   ]
+  },
+  {
+   "id": "L39",
+   "speaker": "Hung",
+   "text": "Sure, no problem.",
+   "item": null
+  },
+  {
+   "id": "L40",
+   "speaker": "Ann",
+   "text": "And Toan, please download the MeetingBank audio by Thursday.",
+   "item": null,
+   "cases": [
+    "C3"
+   ]
+  },
+  {
+   "id": "L41",
+   "speaker": "Toan",
+   "text": "Okay, I'll do it.",
+   "item": null
+  },
+  {
+   "id": "L42",
+   "speaker": "Ann",
+   "text": "And remember, we present in two weeks, so the final results must be ready in two weeks.",
+   "item": null,
+   "cases": [
+    "C3"
+   ]
+  },
+  {
+   "id": "L43",
+   "speaker": "Binh",
+   "text": "That's tight, but okay. We can do it.",
+   "item": null
+  },
+  {
+   "id": "L44",
+   "speaker": "Ann",
+   "text": "Alright, I think that's everything for today. Thanks, everyone.",
+   "item": null
+  },
+  {
+   "id": "L45",
+   "speaker": "Hung",
+   "text": "Thanks, bye.",
+   "item": null,
+   "gap": 0.3
+  },
+  {
+   "id": "L46",
+   "speaker": "Toan",
+   "text": "Bye.",
+   "item": null,
+   "overlap": 0.4
+  }
+ ]
+}

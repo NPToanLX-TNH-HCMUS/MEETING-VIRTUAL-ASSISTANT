@@ -1,0 +1,103 @@
+{
+  "max_total_minutes": 10,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Bug fixes before the demo",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            16.66,
+            59.75
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "README and documentation",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            102.15,
+            130.81
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Demo plan",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            80.42,
+            101.35
+          ],
+          [
+            162.62,
+            191.69
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I5",
+      "title": "Demo checklist",
+      "required": true,
+      "from": [
+        "manual"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    }
+  ],
+  "off_agenda": [
+    [
+      131.61,
+      161.82
+    ]
+  ],
+  "carry_over": [],
+  "must_not_include": [
+    {
+      "id": "X1",
+      "text": "Merge the API router refactor",
+      "reason": "Done on the task board",
+      "case": "A1",
+      "keywords": [
+        "merge the api router"
+      ]
+    },
+    {
+      "id": "X2",
+      "text": "Merge the realtime transcription feature",
+      "reason": "Done on the task board",
+      "case": "A1",
+      "keywords": [
+        "merge the realtime"
+      ]
+    }
+  ],
+  "notes": "Derived from S07. Agenda after the leader's edits (E6): 'API budget' removed, 'Demo checklist' added by hand; nobody talks about a checklist, so it stays not_discussed. Spans only cover recorded audio (paused 60.0-80.2 s, paused again at 192.0 s and stopped at 202.0 s). Times are seconds from the start of meeting.wav."
+}

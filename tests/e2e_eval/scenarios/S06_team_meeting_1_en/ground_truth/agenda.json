@@ -1,0 +1,99 @@
+{
+  "max_total_minutes": 10,
+  "items": [
+    {
+      "id": "I1",
+      "title": "Choose the dataset sources",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "discussed",
+        "spans": [
+          [
+            79.74,
+            131.81
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I2",
+      "title": "Evaluation metrics",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            132.61,
+            195.06
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I3",
+      "title": "Demo plan",
+      "required": true,
+      "from": [
+        "planned_point",
+        "document"
+      ],
+      "tracking": {
+        "final_state": "concluded",
+        "spans": [
+          [
+            9.61,
+            78.94
+          ]
+        ]
+      }
+    },
+    {
+      "id": "I4",
+      "title": "API budget",
+      "required": true,
+      "from": [
+        "planned_point"
+      ],
+      "tracking": {
+        "final_state": "not_discussed",
+        "spans": []
+      }
+    }
+  ],
+  "off_agenda": [],
+  "carry_over": [
+    "I1",
+    "I2",
+    "I3"
+  ],
+  "must_not_include": [
+    {
+      "id": "X1",
+      "text": "Download the AMI meetings",
+      "reason": "Completed (✅) in previous minutes",
+      "case": "A1",
+      "keywords": [
+        "download the ami",
+        "ami meetings"
+      ]
+    },
+    {
+      "id": "X2",
+      "text": "Write the use case specification",
+      "reason": "Completed (✅) in previous minutes",
+      "case": "A1",
+      "keywords": [
+        "use case specification"
+      ]
+    }
+  ],
+  "notes": "The open tasks and the open issue of the previous minutes repeat the planned points, so each is one item. Tracking spans are filled by synth_meeting.py gt."
+}

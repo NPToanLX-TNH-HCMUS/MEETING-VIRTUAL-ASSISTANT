@@ -1,0 +1,145 @@
+{
+  "id": "S08",
+  "title": "S06 with café noise mixed in at 10 dB SNR",
+  "group": "hard",
+  "use_cases": [
+    "UC5",
+    "UC11",
+    "UC12"
+  ],
+  "special_cases": [
+    "B1",
+    "B3"
+  ],
+  "planted": [],
+  "shares_ground_truth_with": "S06",
+  "meeting_date": "2026-11-24T15:00:00+07:00",
+  "meeting": {
+    "topic": "Evaluation dataset and demo preparation",
+    "language": "en",
+    "duration_minutes": 10,
+    "planned_points": [
+      "Choose the dataset sources",
+      "Evaluation metrics",
+      "Demo plan",
+      "API budget"
+    ]
+  },
+  "documents": [
+    "inputs/docs/previous_minutes.md"
+  ],
+  "audio": {
+    "file": "inputs/audio/meeting.wav",
+    "seconds": 229.13
+  },
+  "source": {
+    "name": "Synthetic meeting S06 + café babble",
+    "speech": "S06 clip (synthetic, scripts/synth_meeting.py)",
+    "noise": "noise/cafe_babble.wav (NOISE_BABBLE in sources.csv): six unused parts of AMI ES2002 b–d, summed",
+    "noise_license": "CC BY 4.0",
+    "mix": "scripts/prepare_audio.py, kind mix, snr_db 10 over the whole clip",
+    "sha256": "f1ee053009bcf758c866c1788becc5eacf22e7e0c2fb6127103540728bbc9578",
+    "meeting_date_is_assumed": true,
+    "transcript_origin": "Shared with S06 (exact)",
+    "selection_reason": "Same content as S06, so the effect of background noise can be measured on its own"
+  },
+  "aliases": {
+    "Ann": [
+      "Khanh Ann",
+      "Khánh Ann",
+      "leader"
+    ],
+    "Hung": [
+      "Hưng",
+      "Khanh Hung",
+      "Đoàn Khánh Hưng"
+    ],
+    "Toan": [
+      "Toàn",
+      "Ngô Phước Toàn"
+    ],
+    "Binh": [
+      "Bình",
+      "An Binh",
+      "Nguyễn Cao An Bình"
+    ],
+    "Team": [
+      "team",
+      "everyone",
+      "all"
+    ]
+  },
+  "key_entities": [
+    {
+      "text": "AMI",
+      "alts": [
+        "A.M.I."
+      ]
+    },
+    {
+      "text": "MeetingBank",
+      "alts": [
+        "Meeting Bank"
+      ]
+    },
+    {
+      "text": "word error rate",
+      "alts": [
+        "WER"
+      ]
+    },
+    {
+      "text": "F1",
+      "alts": [
+        "F one",
+        "F-1"
+      ]
+    },
+    {
+      "text": "precision",
+      "alts": []
+    },
+    {
+      "text": "recall",
+      "alts": []
+    },
+    {
+      "text": "Binh",
+      "alts": [
+        "Bình"
+      ]
+    },
+    {
+      "text": "Toan",
+      "alts": [
+        "Toàn"
+      ]
+    },
+    {
+      "text": "Hung",
+      "alts": [
+        "Hưng"
+      ]
+    },
+    {
+      "text": "next Monday",
+      "alts": []
+    },
+    {
+      "text": "Thursday",
+      "alts": []
+    },
+    {
+      "text": "two weeks",
+      "alts": [
+        "2 weeks"
+      ]
+    }
+  ],
+  "user_actions": {
+    "agenda_edits": null,
+    "minutes_edits": null
+  },
+  "live_actions": [],
+  "fault_injection": []
+}

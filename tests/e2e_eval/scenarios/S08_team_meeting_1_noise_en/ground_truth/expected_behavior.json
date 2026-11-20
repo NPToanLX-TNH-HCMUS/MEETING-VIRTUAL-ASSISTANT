@@ -1,0 +1,32 @@
+{
+  "scenario_id": "S08",
+  "checks": [
+    {
+      "id": "S08-01",
+      "case": "B1",
+      "type": "metric_at_least",
+      "metric": "TR3",
+      "value": 0.9,
+      "note": "Noise (B1) on top of accented voices (B3): names, dates and numbers still transcribed; WER increase versus S06 (TR5) is reported"
+    },
+    {
+      "id": "S08-G1",
+      "case": "G1",
+      "type": "meeting_status",
+      "stage": "end",
+      "equals": "archived"
+    },
+    {
+      "id": "S08-G2",
+      "case": "G2",
+      "type": "file_exists",
+      "path": "post_meeting/meeting_minutes/minutes_final.md"
+    },
+    {
+      "id": "S08-G3",
+      "case": "G3",
+      "type": "no_status",
+      "status": 500
+    }
+  ]
+}

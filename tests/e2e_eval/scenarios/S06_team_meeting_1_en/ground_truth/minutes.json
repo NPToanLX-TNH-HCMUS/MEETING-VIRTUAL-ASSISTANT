@@ -1,0 +1,105 @@
+{
+  "summary_points": [
+    {
+      "id": "P1",
+      "text": "The team decided to show a live demo and keep a recorded video as a backup; Binh moved the slides deadline to next Monday"
+    },
+    {
+      "id": "P2",
+      "text": "The test set uses AMI and MeetingBank; a third source with Asian speakers was left for next time because of licensing"
+    },
+    {
+      "id": "P3",
+      "text": "Results are checked with the word error rate and with precision, recall and F1 on action items, where task, owner and deadline must all be correct"
+    },
+    {
+      "id": "P4",
+      "text": "Toan took over the test report from Hung, due at the end of next week, and the final results are due in two weeks"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D1",
+      "text": "The team shows a live demo and keeps a recorded video as a backup",
+      "line": "L10",
+      "time": 54.37
+    }
+  ],
+  "action_items": [
+    {
+      "id": "AI1",
+      "task": "Finish the slides",
+      "assignee": "Binh",
+      "due": "2026-11-30",
+      "spoken_due": "this Friday, then moved to next Monday",
+      "quote": "Binh, can you finish the slides by this Friday?",
+      "line": "L12",
+      "cases": [
+        "C2"
+      ],
+      "time": 63.31
+    },
+    {
+      "id": "AI2",
+      "task": "Write the test report",
+      "assignee": "Toan",
+      "due": "2026-12-04",
+      "spoken_due": "at the end of next week",
+      "quote": "Then Toan, can you take the test report?",
+      "line": "L35",
+      "cases": [
+        "C1",
+        "C3"
+      ],
+      "time": 183.6
+    },
+    {
+      "id": "AI3",
+      "task": "Prepare the annotation examples",
+      "assignee": "Hung",
+      "due": "2026-11-25",
+      "spoken_due": "by tomorrow",
+      "quote": "Hung, can you prepare the annotation examples by tomorrow?",
+      "line": "L38",
+      "cases": [
+        "C3"
+      ],
+      "time": 195.86
+    },
+    {
+      "id": "AI4",
+      "task": "Download the MeetingBank audio",
+      "assignee": "Toan",
+      "due": "2026-11-26",
+      "spoken_due": "by Thursday",
+      "quote": "please download the MeetingBank audio by Thursday",
+      "line": "L40",
+      "cases": [
+        "C3"
+      ],
+      "time": 205.62
+    },
+    {
+      "id": "AI5",
+      "task": "Have the final results ready for the presentation",
+      "assignee": "Team",
+      "due": "2026-12-08",
+      "spoken_due": "in two weeks",
+      "quote": "the final results must be ready in two weeks",
+      "line": "L42",
+      "cases": [
+        "C3"
+      ],
+      "time": 211.24
+    }
+  ],
+  "unresolved_issues": [
+    {
+      "id": "U1",
+      "text": "Whether to add a third data source with Asian speakers (licence to check)",
+      "line": "L24",
+      "time": 128.33
+    }
+  ],
+  "must_not_appear": []
+}
