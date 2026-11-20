@@ -155,7 +155,9 @@ def confirm_minutes(session: SessionDep):
         if minutes is None:
             return error(409, "MINUTES_NOT_READY", "No minutes to confirm yet.")
 
-        session.path(MINUTES_FINAL_FILE).write_text(minutes["markdown"], encoding="utf-8")
+        session.path(MINUTES_FINAL_FILE).write_text(
+            minutes["markdown"], encoding="utf-8"
+        )
         minutes["status"] = "confirmed"
         minutes["updated_at"] = now()
         session.status = "archived"
