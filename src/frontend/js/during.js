@@ -1,5 +1,6 @@
 import { api } from './api.js';
 import { connectTranscriptTest } from "./socket.js";
+import { TYPE_LABELS, extractionDetails, formatTime, renderReviewList } from "./review.js";
 
 const $ = (id) => document.getElementById(id);
 const meetingId = new URLSearchParams(location.search).get('meeting');
@@ -18,6 +19,9 @@ let pausePending = false;
 let agendaItems = [];
 // Extractions by id, in the order the backend created them. The backend merges; the UI never dedupes.
 const extractions = new Map();
+// Conflicts by id (two values said for one field); the user picks, never the UI.
+const conflicts = new Map();
+let meetingStatus = null;
 
 function renderRealtimeControls() {
   const connected = transcriptTestSocket?.readyState === WebSocket.OPEN;
@@ -35,7 +39,7 @@ function renderRealtimeControls() {
 }
 
 function render() {
-  $('transcript-empty').hidden = hasTranscript || !!transcriptTestSocket;
+  $('transcript-empty').hidden = hasTranscript || segments.length > 0 || !!transcriptTestSocket;
   $('agenda-empty').hidden = $('agenda-list').children.length > 0;
   $("go-after-box").hidden = !hasTranscript;
   $('go-after').href = `/after_meeting.html?meeting=${encodeURIComponent(meetingId)}`;
@@ -44,39 +48,10 @@ function render() {
   renderRealtimeControls();
 }
 
-// Seconds from the meeting start (pauses excluded) as m:ss; "—" when the backend sent no time.
-function formatTime(seconds) {
-  if (typeof seconds !== "number") return "—";
-  const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
-}
-
-const TYPE_LABELS = {
-  decision: "Decision",
-  action_item: "Action item",
-  deadline: "Deadline",
-  unresolved_issue: "Unresolved issue",
-};
-
-// "2026-10-30" -> "30/10"; split instead of Date so no time zone can shift the day.
-function formatDeadline(deadline) {
-  const [, month, day] = deadline.split("-");
-  return `${day}/${month}`;
-}
-
-// Owner, due date and what is missing; a missing field is said in words, never guessed.
-function extractionDetails(item) {
-  return [
-    item.assignee,
-    item.deadline && `due ${formatDeadline(item.deadline)}`,
-    ...item.missing_fields.map((field) => `${field} missing`),
-  ].filter(Boolean);
-}
-
 function segmentTag(item) {
   const tag = document.createElement("span");
   tag.className = `seg-tag seg-tag--${item.type}` + (item.needs_confirmation ? " seg-tag--confirm" : "");
-  tag.textContent = [TYPE_LABELS[item.type], item.content, ...extractionDetails(item)].join(" · ");
+  tag.textContent = [TYPE_LABELS[item.type], item.content, ...extractionDetails(item, conflicts.values())].join(" · ");
   return tag;
 }
 
@@ -134,7 +109,7 @@ function renderCaptured() {
       content.textContent = item.content;
       card.append(type, content);
 
-      const details = extractionDetails(item);
+      const details = extractionDetails(item, conflicts.values());
       if (details.length) {
         const meta = document.createElement("p");
         meta.className = "capture__meta";
@@ -160,20 +135,66 @@ function renderCaptured() {
   );
 }
 
-function setExtractions(items) {
-  extractions.clear();
-  for (const item of items) extractions.set(item.id, item);
+// "Needs your choice": open conflicts, then items missing a field or evidence.
+function renderChoices() {
+  const count = renderReviewList($("choice-list"), {
+    items: [...extractions.values()],
+    conflicts: [...conflicts.values()],
+    segmentsById: new Map(segments.map((segment) => [segment.id, segment])),
+    onChoose: chooseValue,
+    canChoose: ["live", "paused", "processing", "review"].includes(meetingStatus),
+  });
+  $("choice-count").textContent = count ? `${count} open` : "";
+  $("choice-empty").hidden = count > 0;
+}
+
+function renderReview() {
+  renderChoices();
   renderCaptured();
   renderSegments();
 }
 
+function setExtractions(items) {
+  extractions.clear();
+  for (const item of items) extractions.set(item.id, item);
+  renderReview();
+}
+
+function setConflicts(items) {
+  conflicts.clear();
+  for (const conflict of items) conflicts.set(conflict.id, conflict);
+  renderReview();
+}
+
 async function loadExtractions() {
   try {
-    setExtractions((await api.getExtractions(meetingId)).items);
+    const [found, disputes] = await Promise.all([api.getExtractions(meetingId), api.getConflicts(meetingId)]);
+    // After a page refresh the socket has sent nothing yet: the times come from the stored transcript.
+    if (!segments.length) {
+      segments = (await api.getTranscript(meetingId)).segments;
+      render();
+    }
+    conflicts.clear();
+    for (const conflict of disputes.items) conflicts.set(conflict.id, conflict);
+    setExtractions(found.items);
   } catch (e) {
     // Before the meeting starts there is nothing to load yet.
     if (e.code !== "INVALID_MEETING_STATE") showError(`Could not load the captured items: ${e.message}`);
   }
+}
+
+async function chooseValue(conflict, value) {
+  try {
+    conflicts.set(conflict.id, await api.resolveConflict(meetingId, conflict.id, value));
+  } catch (e) {
+    showError(`Could not save the choice: ${e.message}`);
+    // Someone else may have chosen already: show what the backend has now.
+    if (e.code === "CONFLICT_ALREADY_RESOLVED") setConflicts((await api.getConflicts(meetingId)).items);
+    else renderChoices();
+    return;
+  }
+  // The extraction took the chosen value on the backend; read it back.
+  await loadExtractions();
 }
 
 function showError(message) {
@@ -257,6 +278,7 @@ async function loadMeeting() {
     const day = new Date(m.created_at).toLocaleDateString('en-US', { dateStyle: 'full' });
     $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} min`, m.id].join(' · ');
     // After a refresh, bring back what was already captured.
+    meetingStatus = m.status;
     if (!["draft", "ready"].includes(m.status)) loadExtractions();
   } catch (e) {
     showError(`${e.code ?? 'ERROR'}: ${e.message}`);
@@ -341,8 +363,14 @@ $("test-transcript").addEventListener("click", () => {
 
       if (message.type === "extraction.created" || message.type === "extraction.updated") {
         extractions.set(message.data.id, message.data);
+        renderChoices();
         renderCaptured();
         renderSegments();
+      }
+
+      if (message.type === "conflict.created") {
+        conflicts.set(message.data.id, message.data);
+        renderReview();
       }
 
       if (message.type === "agenda.item_state") {
@@ -359,6 +387,7 @@ $("test-transcript").addEventListener("click", () => {
         realtimeReady = false;
         completed = true;
         realtimeTranscriptSaved = message.saved === true;
+        if (realtimeTranscriptSaved) meetingStatus = "processing";
 
         if (realtimeTranscriptSaved) {
           hasTranscript = true;
@@ -391,11 +420,13 @@ $("test-transcript").addEventListener("click", () => {
       }
 
       if (message.type === "ready") {
+        meetingStatus = "live";
         realtimeReady = true;
         resetRealtimeLevel("Waiting for speech…");
         $("test-transcript-status").textContent = message.message;
       }
       if (message.type === "paused" || message.type === "resumed") {
+        meetingStatus = message.type === "paused" ? "paused" : "live";
         realtimePaused = message.type === "paused";
         pausePending = false;
         resetRealtimeLevel(

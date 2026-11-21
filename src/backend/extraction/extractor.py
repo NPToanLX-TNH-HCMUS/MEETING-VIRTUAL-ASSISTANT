@@ -87,7 +87,8 @@ processed and are only context: report only what the lines from {first_new} on s
 - A new item: update_of = null. Never repeat a captured item.
 - A line that changes a captured item (a new or moved deadline, an owner is named): \
 update_of = that item's id, the same type and content, the new values, and null for \
-anything the line does not say.
+anything the line does not say. A new or moved date for a captured action item is \
+always such an update, never a separate "deadline" item.
 Return {{"items": []}} when there is nothing new.
 """
 
@@ -152,7 +153,16 @@ def build_extractions(
     return result
 
 
-def _set_flags(item: dict, by_id: dict[str, dict]) -> None:
+# Fields whose two different stated values make a Conflict instead of an overwrite.
+CONFLICT_FIELDS = ("assignee", "deadline")
+
+
+def _has_open_conflict(item_id: str, conflicts: list[dict]) -> bool:
+    return any(c["extraction_id"] == item_id and not c["resolved"] for c in conflicts)
+
+
+def _set_flags(item: dict, by_id: dict[str, dict], conflicts: list[dict] = ()) -> None:
+    """Recompute the review flags from the item's current data (never sticky)."""
     item["missing_fields"] = [
         field for field in REQUIRED_FIELDS.get(item["type"], ()) if item[field] is None
     ]
@@ -161,7 +171,17 @@ def _set_flags(item: dict, by_id: dict[str, dict]) -> None:
         item["missing_fields"]
         or not item["evidence"]["segment_ids"]
         or item["is_low_confidence"]
+        or _has_open_conflict(item["id"], conflicts)
     )
+
+
+def _with_evidence(evidence: dict, extra: dict) -> dict:
+    """Cite both statements: the old ids first, then the new ones; the newest quote."""
+    old = evidence["segment_ids"]
+    return {
+        "segment_ids": old + [i for i in extra["segment_ids"] if i not in old],
+        "quote": extra["quote"] or evidence["quote"],
+    }
 
 
 def _same_as_captured(item: dict, store: list[dict]) -> bool:
@@ -177,15 +197,63 @@ def _same_as_captured(item: dict, store: list[dict]) -> bool:
     return False
 
 
+def _record_conflict(
+    conflicts: list[dict], target: dict, field: str, value: str, evidence: dict, meeting_id: str
+) -> dict | None:
+    """Open a Conflict for target.field, or add a third value to the open one.
+
+    Returns the conflict to send, or None when nothing new was learned.
+    """
+    for conflict in conflicts:
+        if (
+            conflict["extraction_id"] == target["id"]
+            and conflict["field"] == field
+            and not conflict["resolved"]
+        ):
+            if value in (option["value"] for option in conflict["options"]):
+                return None
+            conflict["options"].append({"value": value, "evidence": dict(evidence)})
+            return conflict
+    conflict = {
+        "id": f"cfl_{len(conflicts) + 1:03d}",
+        "meeting_id": meeting_id,
+        "task_id": target["task_id"],  # None until the Task store exists
+        "extraction_id": target["id"],
+        "field": field,
+        "options": [
+            # shortcut: the old value cites the item's evidence as a whole; per-field
+            # evidence is not tracked. Track it per field if reviewers need precision.
+            {"value": target[field], "evidence": dict(target["evidence"])},
+            {"value": value, "evidence": dict(evidence)},
+        ],
+        "resolved": False,
+        "chosen_value": None,
+    }
+    conflicts.append(conflict)
+    return conflict
+
+
+def _copy(store: list[dict], conflicts: list[dict]) -> tuple[list[dict], list[dict]]:
+    return (
+        [{**item, "evidence": dict(item["evidence"])} for item in store],
+        [{**c, "options": [dict(o) for o in c["options"]]} for c in conflicts],
+    )
+
+
 def merge_items(
     store: list[dict],
+    conflicts: list[dict],
     raw_items: list[dict],
     segments: list[dict],
     meeting_id: str,
     agenda_ids: set[str] | frozenset[str] = frozenset(),
-) -> tuple[list[dict], list[tuple[str, dict]]]:
-    """Return the new store and the events ("extraction.created"/"updated", item) to send."""
-    store = [{**item, "evidence": dict(item["evidence"])} for item in store]
+) -> tuple[list[dict], list[dict], list[tuple[str, dict]]]:
+    """Merge LLM items into the store. Inputs are not modified.
+
+    Returns (store, conflicts, events); events are (type, payload) pairs:
+    "extraction.created", "extraction.updated", "conflict.created".
+    """
+    store, conflicts = _copy(store, conflicts)
     by_ext = {item["id"]: item for item in store}
     by_seg = {segment["id"]: segment for segment in segments}
     events = []
@@ -209,51 +277,85 @@ def merge_items(
         # A captured item only changes on verified evidence, never on a weak signal.
         if not item["evidence"]["segment_ids"]:
             continue
-        # null in an update means "not said this time", so it never erases a value.
-        changed = [
-            field
-            for field in ("assignee", "deadline", "agenda_item_id")
-            if item[field] is not None and item[field] != target[field]
-        ]
-        if not changed:
-            continue
-        # Two different stated values (e.g. two deadlines) are for the user to settle.
-        overwritten = any(target[field] is not None for field in changed)
-        for field in changed:
-            target[field] = item[field]
-        old_ids = target["evidence"]["segment_ids"]
-        target["evidence"] = {
-            # Keep citing the earlier statement too, so both are visible.
-            "segment_ids": old_ids + [i for i in item["evidence"]["segment_ids"] if i not in old_ids],
-            "quote": item["evidence"]["quote"],
-        }
-        was_flagged = target["needs_confirmation"]
-        _set_flags(target, by_seg)
-        # Never clear a flag automatically: only the user's confirmation may do that.
-        target["needs_confirmation"] = target["needs_confirmation"] or overwritten or was_flagged
-        events.append(("extraction.updated", dict(target)))
+        before = dict(target)
+        filled = False
+        if item["agenda_item_id"] is not None and target["agenda_item_id"] is None:
+            target["agenda_item_id"] = item["agenda_item_id"]
+            filled = True
+        for field in CONFLICT_FIELDS:
+            value = item[field]
+            # null in an update means "not said this time", so it never erases a value.
+            if value is None or value == target[field]:
+                continue
+            if target[field] is None:
+                target[field] = value
+                filled = True
+            else:
+                # Two different stated values: the user chooses, the backend never does.
+                conflict = _record_conflict(
+                    conflicts, target, field, value, item["evidence"], meeting_id
+                )
+                if conflict is not None:
+                    events.append(("conflict.created", dict(conflict)))
+        if filled:
+            target["evidence"] = _with_evidence(target["evidence"], item["evidence"])
+        _set_flags(target, by_seg, conflicts)
+        if target != before:
+            events.append(("extraction.updated", dict(target)))
 
-    return store, events
+    return store, conflicts, events
+
+
+def resolve_conflict(
+    store: list[dict],
+    conflicts: list[dict],
+    conflict_id: str,
+    chosen_value: str,
+    segments: list[dict],
+) -> tuple[list[dict], list[dict], dict, dict]:
+    """Apply the user's choice. Returns (store, conflicts, conflict, item).
+
+    Raises LookupError (no such conflict), RuntimeError (already resolved) or
+    ValueError (the value is not one of the options).
+    """
+    store, conflicts = _copy(store, conflicts)
+    conflict = next((c for c in conflicts if c["id"] == conflict_id), None)
+    if conflict is None:
+        raise LookupError(conflict_id)
+    if conflict["resolved"]:
+        raise RuntimeError(conflict_id)
+    option = next((o for o in conflict["options"] if o["value"] == chosen_value), None)
+    if option is None:
+        # Only a stated value can be chosen: every option has evidence, a new value has none.
+        raise ValueError(chosen_value)
+
+    conflict["resolved"] = True
+    conflict["chosen_value"] = chosen_value
+    item = next(i for i in store if i["id"] == conflict["extraction_id"])
+    item[conflict["field"]] = chosen_value
+    item["evidence"] = _with_evidence(item["evidence"], option["evidence"])
+    _set_flags(item, {s["id"]: s for s in segments}, conflicts)
+    return store, conflicts, conflict, item
 
 
 def _transcript_block(segments: list[dict]) -> str:
     return "\n".join(f"[{s['id']}] {s['text']}" for s in segments)
 
 
-def extract_pass(
+def propose_items(
     segments: list[dict],
     cursor: int,
     store: list[dict],
-    meeting_id: str,
     meeting_date: str,
     agenda_items: list[dict] | None = None,
-) -> tuple[list[dict], list[tuple[str, dict]]]:
-    """Process segments[cursor:] against what is already captured.
+) -> list[dict]:
+    """Ask the LLM about segments[cursor:] (cursor = segments earlier passes covered).
 
-    Returns (new store, events). cursor = how many segments earlier passes covered.
+    Only the LLM call: the caller merges the answer into the CURRENT store under the
+    session lock (merge_items), so a choice the user made meanwhile is never lost.
     """
     if cursor >= len(segments):
-        return store, []
+        return []
 
     agenda = agenda_items or []
     window = segments[max(0, cursor - CONTEXT_LINES) :]
@@ -274,7 +376,4 @@ def extract_pass(
         "\n\n".join(parts), _max_tokens=3000, _schema=EXTRACTION_SCHEMA
     )
     # call_llm already validated the JSON against EXTRACTION_SCHEMA.
-    raw_items = json.loads(raw_json)["items"]
-    return merge_items(
-        store, raw_items, segments, meeting_id, {item["id"] for item in agenda}
-    )
+    return json.loads(raw_json)["items"]

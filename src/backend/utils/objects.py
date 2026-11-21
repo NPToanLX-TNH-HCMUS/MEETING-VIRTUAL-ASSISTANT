@@ -178,3 +178,30 @@ class Extraction(BaseModel):
 
 class ExtractionList(BaseModel):
     items: list[Extraction]
+
+
+# Conflict (§5.7 of api-contract.md)
+class ConflictOption(BaseModel):
+    value: str
+    evidence: Evidence
+
+
+class Conflict(BaseModel):
+    id: str
+    meeting_id: str
+    task_id: str | None  # None until the Task store exists; use extraction_id meanwhile
+    extraction_id: str  # the Extraction (action item) whose field got two values
+    field: Literal["assignee", "deadline"]
+    options: list[ConflictOption]  # one per stated value, each with its evidence
+    resolved: bool
+    chosen_value: str | None
+
+
+class ConflictList(BaseModel):
+    items: list[Conflict]
+
+
+class ConflictResolve(BaseModel):
+    """FRONT END SENDS: the value the user picked; it must be one of the options."""
+
+    chosen_value: str

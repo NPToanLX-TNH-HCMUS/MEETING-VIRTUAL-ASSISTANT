@@ -1,9 +1,10 @@
 # Live meeting analysis: agenda state machine and extractions
 
-> **Status:** implemented on branch `feat/extractions-agenda-fsm` (2026-11-21). Contract version 0.2.0.
-> **Scope:** two features that run *while people talk*:
+> **Status:** implemented on branch `feat/extractions-agenda-fsm` (2026-11-22). Contract version 0.3.0.
+> **Scope:** two features that run *while people talk*, plus the review step they feed:
 > 1. **Agenda FSM.** Each agenda item moves `not_discussed → in_progress → discussed → concluded` (and `discussed → in_progress` when reopened), driven by the conversation.
 > 2. **Extractions.** Decisions, action items, deadlines and unresolved issues are pulled out of the transcript, each with evidence (segment, quote, time).
+> 3. **Needs your choice.** Two different values for one field (e.g. two deadlines) open a **Conflict** the user resolves. Items missing an owner or a deadline are listed for the host until someone states the value.
 >
 > Both rest on a third piece: **transcript segments with ids and times** (`seg_001`, `start_seconds`, `end_seconds`).
 
@@ -24,12 +25,15 @@ Test material:
 | Live extractions | `extraction/extractor.py` | Tags under each cited transcript line, plus the **Captured so far** panel |
 | `extraction.created` / `.updated` events | Live socket | Upsert by `id`, then re-render |
 | `GET /meetings/{id}/extractions` | `api/extractions.py` | Called after a page refresh and after Stop (covers the last lines) |
+| Conflicts: detection, `GET /conflicts`, `POST /conflicts/{cid}/resolve` | `extractor.merge_items` / `resolve_conflict`, `api/conflicts.py` | **Needs your choice** panel at the top of the right column (During) and **Before you confirm** (After), both via `js/review.js` |
+| `minutes/confirm` refuses with `409 UNRESOLVED_CONFLICTS` | `api/post_meeting.py` | The confirm button stays disabled while a conflict is open; a 409 reloads the list |
 
 **Not done** (separate tasks):
-- The **Needs your choice** panel. Conflicts between two values need the Conflict / Task-merge task.
+- Editing a missing owner or deadline by hand. There is no endpoint for it in the contract; it needs the Task store (`PATCH /tasks/{id}`).
+- The Task store itself (`task_id` is still `null`).
 - `timer.sync`.
 - Q&A.
-- Showing extractions on the After page.
+- Feeding the resolved values into the minutes Markdown (the minutes are still drafted by their own LLM call).
 - Moving the events to the main socket `/ws/meetings/{id}`. They ride on `/ws/meetings/{id}/transcript-test` today.
 
 ---
@@ -79,7 +83,7 @@ Step by step:
    2. **Extraction pass:**
       - The LLM gets the new lines (plus context) and the list of items already captured.
       - It returns new items, or updates of captured ones (`update_of`).
-      - `merge_items` verifies the evidence, drops repeats, applies the updates, computes `missing_fields`, `is_low_confidence` and `needs_confirmation`, and emits the events.
+      - Back under the session lock, `merge_items` merges the answer into the **current** list (so a choice the user made during the LLM call is kept). It verifies the evidence, drops repeats, fills missing fields, opens a Conflict when a field gets a second, different value, recomputes `missing_fields`, `is_low_confidence` and `needs_confirmation`, and emits the events.
 4. **Failures are contained.**
    - An LLM error is logged, and the transcript keeps going.
    - The cursor of the failed check is not moved, so the next check covers those lines too.
@@ -87,6 +91,10 @@ Step by step:
    - The page calls `GET /extractions`. The backend runs one more pass on the lines after the extraction cursor, then stores the result.
    - Later GETs only read the stored list.
    - A batch transcript (`POST /transcribe`) starts with cursor 0, so the same call extracts everything.
+6. **Choosing.**
+   - A Conflict card shows every stated value as a button, each with its time and quote. Nothing is pre-selected.
+   - `POST /conflicts/{cid}/resolve` sets the chosen value on the Extraction. The page then reads the extractions back.
+   - `minutes/confirm` is refused (`409 UNRESOLVED_CONFLICTS`) while any conflict is open.
 
 ---
 
@@ -115,11 +123,13 @@ The key abstraction is the split between **propose** and **verify**. Language un
 | `utils/evidence.py` | `verify` (quote verbatim in the cited segments), `locate` (the one segment holding a quote), `is_low_confidence` | Yes |
 | `agenda_tracker/fsm.py` | `ALLOWED` edges, `apply_transition`, `apply_proposals` | Yes |
 | `agenda_tracker/tracker.py` | Prompt and schema; `propose_transitions` (one LLM call) | LLM only |
-| `extraction/extractor.py` | `build_extractions` (validate one batch), `merge_items` (create/update/dedupe), `extract_pass` (prompt + LLM + merge) | Pure except `extract_pass` |
+| `extraction/extractor.py` | `build_extractions` (validate one batch), `merge_items` (create / fill / dedupe / open conflicts), `resolve_conflict`, `propose_items` (prompt + LLM) | Pure except `propose_items` |
 | `api/during_meeting.py` | Scheduling (`TRACK_EVERY`, one task in flight), cursors, session writes, sending events | Orchestration |
-| `api/extractions.py` | `GET` by meeting status: live read, or a tail pass after Stop | Orchestration |
+| `api/extractions.py` | `GET` by meeting status: live read, or a tail pass after Stop; `merge_into_session` (shared with the live socket) | Orchestration |
+| `api/conflicts.py` | List conflicts; resolve one (status and choice checks) | Orchestration |
 | `utils/utils.py` → `envelope` | The WebSocket message wrapper | Yes |
-| `frontend/js/during.js` | Render segments, tags, the Captured panel and agenda badges; no inference | UI |
+| `frontend/js/review.js` | Shared review cards: conflict choice buttons, flagged items with text reasons | UI |
+| `frontend/js/during.js`, `after.js` | Render segments, tags, panels and agenda badges; no inference | UI |
 
 The pure parts can be unit-tested with no network: `fsm`, `evidence`, `build_extractions`, `merge_items`, `segments`. The I/O parts are tested with fakes (`tests/unit/test_agenda_socket.py` replaces the STT stream and the LLM).
 
@@ -129,10 +139,12 @@ The pure parts can be unit-tested with no network: `fsm`, `evidence`, `build_ext
 
    | Step | Agenda | Extractions |
    |---|---|---|
-   | Propose | `propose_transitions` | `extract_pass` (the LLM part) |
+   | Propose | `propose_transitions` | `propose_items` |
    | Verify | `ALLOWED` + `evidence.verify` + not low confidence + cites a new line | `evidence.verify` / `locate` + date and field cleaning |
-   | Apply | Mutate the item's state and times | `merge_items` creates or updates |
-   | Emit | `agenda.item_state` | `extraction.created` / `.updated` |
+   | Apply | Mutate the item's state and times | `merge_items` creates, fills, or opens a Conflict |
+   | Emit | `agenda.item_state` | `extraction.created` / `.updated`, `conflict.created` |
+
+   Both apply steps run **under the session lock on the current data**, not on the snapshot sent to the LLM. A user action during the LLM call (a resolved conflict) is therefore never overwritten.
 
 2. **Incremental cursor + context overlap.** Both checks keep a cursor: how many segments they have covered.
    - Each call sends `segments[cursor − 3 :]` and tells the LLM that lines before `segments[cursor]` are context only.
@@ -185,17 +197,24 @@ for raw in llm_items:
         item.id = next ext_###;  store.append(item);  emit created
     else:
         if item has no verified evidence → skip            # weak signal never edits
-        changed = fields where item.value ≠ null and ≠ target.value
-        if none → skip
-        overwrote = any changed field already had a value  # e.g. deadline moved
-        copy changed fields; evidence.segment_ids ← old ∪ new; quote ← new
-        recompute flags; needs_confirmation ← flags OR overwrote OR was_flagged
-        emit updated
+        for field in (assignee, deadline):
+            new = item[field]
+            if new is null or new = target[field] → nothing   # null = "not said this time"
+            elif target[field] is null → fill it                # e.g. the deadline is finally said
+            else → open Conflict(target, field, [old, new])   # or add `new` to the open one
+        if filled: evidence.segment_ids ← old ∪ new
+        recompute flags (missing, no evidence, low confidence, open conflict)
+        emit updated if anything changed
+
+resolve(conflict, chosen):
+    chosen must be one of the options → item[field] ← chosen; conflict.resolved ← true
+    evidence ← evidence ∪ chosen option's evidence; recompute flags
 ```
 
 - **`null` never erases.** In an update, `null` means "not said this time".
-- **Flags only go up.** `needs_confirmation` is never cleared automatically, because only the user's confirmation may do that.
-- **Both statements stay visible.** When a deadline moves, the union of `segment_ids` keeps the old and the new line, so a reviewer sees both.
+- **The backend never picks.** Two different stated values become a Conflict. The item keeps the first value until the user chooses.
+- **Flags follow the data.** `needs_confirmation` is recomputed on every change. It turns off once the missing field is stated or the conflict is resolved, so the item leaves the "Needs your choice" panel on its own.
+- **Both statements stay visible.** Each Conflict option carries its own evidence.
 
 **d) Scheduling:** in the socket handler
 
@@ -224,8 +243,8 @@ on committed sentence:
 | Check any LLM claim against the transcript | `utils/evidence.verify`, `locate`, `is_low_confidence` | Pass the cited ids, the quote, and `{id: segment}` |
 | Plug in another speech-to-text provider | `make_segment`, `ActiveClock`, `from_batch` | Emit `committed` events with `id`, `start_seconds`, `end_seconds`; or map provider output to `make_segment` |
 | Let the user correct an agenda state by hand (future endpoint) | `fsm.apply_transition` | Pass the user's chosen line as evidence; the same rules apply |
-| Build Task merge / Conflicts | `merge_items` update branch | The "overwrote a stated value" branch is the exact place a `conflict.created` should be raised instead of only flagging |
-| Show extractions on the After page | `GET /extractions`, `extractionDetails`, `segmentTag` in `during.js` | Move the two helpers to a shared module when a second page needs them |
+| Build the Task store | `merge_items` update branch, `Conflict.extraction_id` | Give each action item a `task_id`, then key conflicts by it; the detection and resolve logic stay the same |
+| Show review items on another page | `js/review.js` → `renderReviewList` | Pass `items`, `conflicts`, `segmentsById`, `onChoose`, `canChoose`; the After page already does |
 | Send a new WebSocket event | `utils.envelope` + `send()` in the socket handler | One shared `seq` counter keeps the order the contract asks for |
 
 Constants to tune (all marked as design assumptions in code):
@@ -244,7 +263,7 @@ Constants to tune (all marked as design assumptions in code):
 |---|---|
 | `tests/unit/test_segments.py` | Time parsing, batch conversion, the confidence flag, `ActiveClock` with pauses |
 | `tests/unit/test_agenda_fsm.py` | Every allowed and refused transition, weak evidence, reopen, the two-step conclude, old lines cannot re-trigger |
-| `tests/unit/test_extractions.py` | Validation, `missing_fields`, invented quotes, Vietnamese NFC/NFD, merge create/update/dedupe, the endpoint by status, the tail pass |
+| `tests/unit/test_extractions.py` | Validation, `missing_fields`, invented quotes, Vietnamese NFC/NFD, merge create/fill/dedupe, flags clearing, conflicts (open, third value, assignee, resolve, re-open), the endpoints by status, the tail pass, confirm refused with 409 |
 | `tests/unit/test_agenda_socket.py` | The live socket with fake STT and LLM: envelope and `seq` order, segments kept, LLM failure does not stop the transcript, cursors |
 | `tests/test_realtime_controls.py` | Pause/resume/stop, plus committed events carrying an id and times |
 | `tests/e2e/live_demo_en/test_script_en.md` | Manual end-to-end test with a microphone (English) |
@@ -269,7 +288,9 @@ A replay of the English script through the real LLM (text, no microphone) matche
 | 2 LLM calls per 3 sentences | Groq can answer HTTP 429 in fast talk | Raise `TRACK_EVERY`, or merge both checks into one call |
 | `started_at` / `ended_at` use the time the backend accepted the change | They lag the speech by the LLM delay | Use the cited segment's `start_seconds` |
 | Events ride on `/transcript-test`, and the older messages there have no `seq` | Not yet the main socket in the contract | Move them when the main socket is built |
-| A moved deadline is flagged, not offered as a choice | The "Needs your choice" panel is still empty | Conflict task (`conflict.created`) |
+| The old value of a conflict cites the item's whole evidence | Its time may point to the line that created the item rather than the exact line where that value was said | Track evidence per field |
+| A missing owner or deadline cannot be typed in | The host must get someone to say it | Task store + `PATCH /tasks/{id}` |
+| The LLM may create a second item instead of an update | Two cards, no conflict | Stronger prompt, or match items by content |
 
 Problems found by the real-LLM replays and fixed:
 1. Two items were `in_progress` at once. Fixed with the prompt rule "one topic at a time".

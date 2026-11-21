@@ -155,6 +155,14 @@ def confirm_minutes(session: SessionDep):
         if minutes is None:
             return error(409, "MINUTES_NOT_READY", "No minutes to confirm yet.")
 
+        open_conflicts = [c["id"] for c in session.get("conflicts", []) if not c["resolved"]]
+        if open_conflicts:
+            return error(
+                409,
+                "UNRESOLVED_CONFLICTS",
+                f"Choose a value for every conflict first: {', '.join(open_conflicts)}.",
+            )
+
         session.path(MINUTES_FINAL_FILE).write_text(minutes["markdown"], encoding="utf-8")
         minutes["status"] = "confirmed"
         minutes["updated_at"] = now()

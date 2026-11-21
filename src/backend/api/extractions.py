@@ -8,7 +8,7 @@ Contract: docs/system_design/api-contract.md §5.4 and §6.10
 
 from fastapi import APIRouter
 
-from ..extraction.extractor import TYPES, extract_pass
+from ..extraction.extractor import TYPES, merge_items, propose_items
 from ..utils.objects import ExtractionList
 from ..utils.utils import error, now
 from .common import SessionDep
@@ -19,6 +19,29 @@ router = APIRouter(prefix="/meetings/{meeting_id}/extractions", tags=["extractio
 LIVE_STATUSES = {"live", "paused"}
 # After the recording stops, a GET also covers sentences the live passes did not reach.
 DONE_STATUSES = {"processing", "review", "archived"}
+
+
+def merge_into_session(session, raw_items: list[dict], segments: list[dict], covered: int):
+    """Merge LLM items into the session's CURRENT extractions and conflicts.
+
+    Call with the session lock held. `covered` = how many segments this answer covers.
+    Returns the events to send, or [] when another pass already covered these lines.
+    """
+    if session.get("extraction_cursor", 0) >= covered:
+        return []
+    agenda_ids = {item["id"] for item in session.get("agenda", [])}
+    store, conflicts, events = merge_items(
+        session.get("extractions") or [],
+        session.get("conflicts") or [],
+        raw_items,
+        segments,
+        session.id,
+        agenda_ids,
+    )
+    session.emplace("extractions", store)
+    session.emplace("conflicts", conflicts)
+    session.emplace("extraction_cursor", covered)
+    return events
 
 
 @router.get("", response_model=ExtractionList)
@@ -52,14 +75,12 @@ def read_extractions(session: SessionDep, type: str | None = None):
     if status in DONE_STATUSES and cursor < len(segments):
         # The LLM call can take seconds, so it runs outside the session lock.
         meeting_date = (meeting.get("ended_at") or now())[:10]
-        built, _ = extract_pass(segments, cursor, items, session.id, meeting_date, agenda)
+        # shortcut: two simultaneous first calls both pay for the LLM; only the first
+        # answer is merged. Add a per-session lock if that ever costs real money.
+        raw_items = propose_items(segments, cursor, items, meeting_date, agenda)
         with session:
-            # shortcut: two simultaneous calls both hit the LLM and the last write
-            # wins. Add a per-session lock if that ever costs real money.
-            if session.get("extraction_cursor", 0) == cursor:
-                session.emplace("extractions", built)
-                session.emplace("extraction_cursor", len(segments))
-            items = list(session.get("extractions"))
+            merge_into_session(session, raw_items, segments, len(segments))
+            items = list(session.get("extractions") or [])
     elif status in DONE_STATUSES and not segments:
         return error(
             409,

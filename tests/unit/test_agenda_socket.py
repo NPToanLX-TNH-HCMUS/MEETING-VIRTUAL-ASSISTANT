@@ -35,7 +35,7 @@ def good_proposal(agenda, segments, cursor):
 
 
 def no_extraction(segments, cursor, store, *_):
-    return store, []
+    return []
 
 
 class TestAgendaSocket(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestAgendaSocket(unittest.TestCase):
         with (
             patch.object(during_meeting, "stream_transcript", fake_stream),
             patch.object(during_meeting, "propose_transitions", proposer),
-            patch.object(during_meeting, "extract_pass", extractor),
+            patch.object(during_meeting, "propose_items", extractor),
             TestClient(app) as client,
             client.websocket_connect(f"/ws/meetings/{self.session.id}/transcript-test") as ws,
         ):
@@ -91,15 +91,17 @@ class TestAgendaSocket(unittest.TestCase):
         self.assertEqual(self.session.get("agenda")[0]["state"], "not_discussed")
 
     def test_extractions_are_pushed_live_after_the_agenda_check(self):
-        def extractor(segments, cursor, store, meeting_id, *_):
-            item = {"id": "ext_001", "type": "decision"}
-            return [item], [("extraction.created", item)]
+        def extractor(segments, cursor, store, *_):
+            return [{"type": "decision", "content": "Bàn API contract", "assignee": None,
+                     "deadline": None, "agenda_item_id": None, "update_of": None,
+                     "segment_ids": ["seg_001"], "quote": "bàn về API contract"}]
 
         messages = self.run_socket(good_proposal, extractor)
         envelopes = [m for m in messages if "seq" in m]
         self.assertEqual([(m["type"], m["seq"]) for m in envelopes],
                          [("agenda.item_state", 1), ("extraction.created", 2)])
         self.assertEqual(envelopes[1]["data"]["id"], "ext_001")
+        self.assertEqual(envelopes[1]["data"]["evidence"]["segment_ids"], ["seg_001"])
         self.assertEqual(self.session.get("extraction_cursor"), 3)
 
     def test_failed_extraction_keeps_the_cursor(self):

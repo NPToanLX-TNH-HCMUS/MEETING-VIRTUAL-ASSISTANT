@@ -20,12 +20,13 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from ..agenda_tracker.fsm import apply_proposals
 from ..agenda_tracker.tracker import propose_transitions
 from ..audio.recorder import Recorder
-from ..extraction.extractor import extract_pass
+from ..extraction.extractor import propose_items
 from ..context.app_context import MeetingNotFoundError
 from ..speech_to_text.realtime_transcriber import stream_transcript
 from ..speech_to_text.segments import from_batch, make_segment
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
 from ..utils.objects import Meeting, TranscriptList
+from .extractions import merge_into_session
 from ..utils.utils import envelope, error, now
 from .common import SessionDep, meeting_response
 
@@ -119,6 +120,7 @@ def transcribe_recording(session: SessionDep):
         # They were built from the old transcript.
         session.pop("extractions")
         session.pop("extraction_cursor")
+        session.pop("conflicts")
     return {"transcript": text}
 
 
@@ -185,15 +187,15 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
             store = list(session.get("extractions") or [])
             agenda = [dict(item) for item in session.get("agenda", [])]
         try:
-            store, events = await asyncio.to_thread(
-                extract_pass, segments, cursor, store, session.id, now()[:10], agenda
+            raw_items = await asyncio.to_thread(
+                propose_items, segments, cursor, store, now()[:10], agenda
             )
         except Exception:  # an LLM outage must not stop the transcript
             LOGGER.warning("Live extraction failed", exc_info=True)
             return  # the cursor stays, so the next pass covers these lines too
         with session:
-            session.emplace("extractions", store)
-            session.emplace("extraction_cursor", len(segments))
+            # Merged into the current data, so a conflict the user resolved meanwhile stays.
+            events = merge_into_session(session, raw_items, segments, len(segments))
         for event_type, item in events:
             await send(event_type, item)
 
@@ -280,6 +282,7 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
             session.emplace("transcript", [])  # a new run replaces the old segments
             session.pop("extractions")
             session.pop("extraction_cursor")
+            session.pop("conflicts")
 
         stream_task = asyncio.create_task(
             stream_transcript(
