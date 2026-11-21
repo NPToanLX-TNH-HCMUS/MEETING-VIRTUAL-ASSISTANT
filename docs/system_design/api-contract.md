@@ -1,11 +1,11 @@
 # API CONTRACT — Meeting Virtual Assistant
 
-> **Version:** 0.1.1 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-10-30
+> **Version:** 0.2.0 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-11-21
 > **Purpose:** The single source of truth for how `frontend/` talks to `src/server/`. If the code and this file disagree, fix one of them in the same pull request.
 
 **Why this file exists.** The frontend and backend only meet at this interface. If both sides follow it, the UI can be built against fake data (mock mode) while the real pipeline (speech-to-text → LLM → state machine) is still being written.
 
-**What changed in 0.1.1:** wording only. No field, endpoint or event was added, removed or renamed. New: §0 (overview), §8.2 (what the mock server does differently from this contract today), and a changelog.
+**What changed in 0.2.0:** new optional field `deadline_phrase` on action items (§5.4): the deadline words as spoken; the server computes `deadline` from it.
 
 ---
 
@@ -245,6 +245,7 @@ All four kinds share one shape, so the frontend can render them with one compone
 |---|---|
 | `type` | `decision`, `action_item`, `deadline` or `unresolved_issue` |
 | `assignee`, `deadline` | `null` when nobody said it. The field name is then added to `missing_fields` |
+| `deadline_phrase` | Optional. The deadline words as spoken ("next Monday", "end of next week"); the last one agreed if it changed during the meeting. The server computes `deadline` from it with the conversion table of UC7, so the LLM never computes dates. `null` when nobody said a deadline. In the current minutes response the two fields are called `due_phrase` and `due` |
 | `agenda_item_id` | Which agenda item this belongs to, or `null` |
 | `evidence` | Required (see §4) |
 | `missing_fields` | Names of the fields that are `null`, e.g. `["assignee"]` |
@@ -585,5 +586,6 @@ When the backend closes one of these gaps, delete its row here.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.2.0 | 2026-11-21 | Added the optional field `deadline_phrase` to action items; `deadline` is computed by the server from it |
 | 0.1.1 | 2026-10-30 | Wording only. Added §0 overview, §4 Evidence, §8.2 mock differences, the changelog, and endpoint sections for tasks, conflicts and `GET /meetings/{id}` |
 | 0.1 | 2026-10-28 | First draft |
