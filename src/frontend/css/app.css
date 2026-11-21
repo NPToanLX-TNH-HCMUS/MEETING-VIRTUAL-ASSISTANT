@@ -1426,6 +1426,18 @@ textarea {
 }
 
 /* Transcript */
+.transcript-scroll {
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.transcript-scroll:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
 .segment {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
@@ -1469,6 +1481,99 @@ textarea {
   width: 72px;
   height: 8px;
   accent-color: var(--c-primary);
+}
+
+.segment--low .segment__text {
+  padding: var(--s-1) var(--s-2);
+  border: 1px dashed var(--c-warn-border);
+  border-radius: var(--r-sm);
+  background: var(--c-warn-bg);
+}
+
+.segment__note {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--c-warn-text);
+}
+
+/* Extraction tags under a transcript sentence: the type is always written out, not only coloured. */
+.seg-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: var(--s-1);
+}
+
+.seg-tag {
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: var(--c-primary-soft);
+  color: var(--c-primary-hover);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.seg-tag--decision {
+  background: var(--c-info-bg);
+  color: var(--c-info-text);
+}
+
+.seg-tag--unresolved_issue {
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+}
+
+.seg-tag--confirm {
+  box-shadow: inset 0 0 0 1px var(--c-warn-border);
+}
+
+/* Captured so far */
+.capture-list {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capture {
+  padding: var(--s-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.capture--confirm {
+  border-color: var(--c-warn-border);
+  background: var(--c-warn-bg);
+}
+
+.capture__type {
+  margin: 0;
+  font: 600 var(--fs-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-primary);
+}
+
+.capture--confirm .capture__type {
+  color: var(--c-warn-text);
+}
+
+.capture__content {
+  margin: var(--s-1) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.capture__meta {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.capture__flag {
+  color: var(--c-error-text);
+  font-weight: 500;
 }
 
 /* Assistant (not connected yet) */

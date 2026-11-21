@@ -67,11 +67,14 @@
         </div>
         <p id="test-transcript-status" class="muted" role="status">Not connected</p>
 
-        <!-- Mỗi câu backend chốt là một .segment; thời điểm của câu chưa có trong dữ liệu nên để “—”. -->
-        <div id="test-transcript-final"></div>
-        <div class="segment segment--partial" aria-live="polite">
-          <span class="segment__time"></span>
-          <p id="test-transcript-partial" class="segment__text"></p>
+        <!-- Mỗi câu backend chốt là một .segment; thời điểm là start_seconds của backend, thiếu thì để “—”. -->
+        <!-- Khung cao cố định: câu mới nhất ở dưới cùng và tự cuộn theo, trừ khi người dùng đang cuộn lên đọc lại. -->
+        <div id="transcript-scroll" class="transcript-scroll" tabindex="0" aria-label="Transcript">
+          <div id="test-transcript-final"></div>
+          <div class="segment segment--partial" aria-live="polite">
+            <span class="segment__time"></span>
+            <p id="test-transcript-partial" class="segment__text"></p>
+          </div>
         </div>
 
         <div id="transcript-empty" class="empty">
@@ -96,9 +99,11 @@
         <section class="card" aria-labelledby="captured-title">
           <div class="card__head">
             <h2 id="captured-title" class="card__title card__title--sm">Captured so far</h2>
-            <span class="card__count">0 items</span>
+            <span id="captured-count" class="card__count">0 items</span>
           </div>
-          <p class="pending">Decisions, action items and unresolved issues: pending update.</p>
+          <!-- During.js điền từ extraction.created / extraction.updated và GET .../extractions. -->
+          <ul id="captured-list" class="capture-list" aria-live="polite"></ul>
+          <p id="captured-empty" class="muted">Decisions, action items and open issues appear here while people talk.</p>
         </section>
 
         <section class="card" aria-labelledby="ask-title">

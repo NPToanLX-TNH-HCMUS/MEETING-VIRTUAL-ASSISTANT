@@ -1,9 +1,11 @@
 # API CONTRACT — Meeting Virtual Assistant
 
-> **Version:** 0.1.1 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-10-30
+> **Version:** 0.2.0 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-11-21
 > **Purpose:** The single source of truth for how `frontend/` talks to `src/server/`. If the code and this file disagree, fix one of them in the same pull request.
 
 **Why this file exists.** The frontend and backend only meet at this interface. If both sides follow it, the UI can be built against fake data (mock mode) while the real pipeline (speech-to-text → LLM → state machine) is still being written.
+
+**What changed in 0.2.0:** `Extraction` gets an optional `is_low_confidence`; `evidence` may be empty (`segment_ids: []`, `quote: ""`) when the quote could not be checked against the transcript; `agenda.item_state`, `extraction.created` and `extraction.updated` are sent on the live transcript socket for now (§7.1); `GET .../extractions` also answers while the meeting is `live` or `paused` (§6.10). No field was removed or renamed.
 
 **What changed in 0.1.1:** wording only. No field, endpoint or event was added, removed or renamed. New: §0 (overview), §8.2 (what the mock server does differently from this contract today), and a changelog.
 
@@ -236,6 +238,7 @@ All four kinds share one shape, so the frontend can render them with one compone
     "quote": "Bình sẽ hoàn thành frontend trước ngày 20/10."
   },
   "missing_fields": [],
+  "is_low_confidence": false,
   "needs_confirmation": false,
   "task_id": "tsk_001"
 }
@@ -246,9 +249,10 @@ All four kinds share one shape, so the frontend can render them with one compone
 | `type` | `decision`, `action_item`, `deadline` or `unresolved_issue` |
 | `assignee`, `deadline` | `null` when nobody said it. The field name is then added to `missing_fields` |
 | `agenda_item_id` | Which agenda item this belongs to, or `null` |
-| `evidence` | Required (see §4) |
+| `evidence` | Required (see §4). The backend keeps it only when `quote` is verbatim in the cited segments; otherwise it is `{ "segment_ids": [], "quote": "" }` and the UI shows "no evidence" |
 | `missing_fields` | Names of the fields that are `null`, e.g. `["assignee"]` |
-| `needs_confirmation` | `true` when something is missing or in conflict. The UI shows a warning marker |
+| `is_low_confidence` | `true` when a segment cited in `evidence` is low confidence (§5.5). Added in 0.2.0 |
+| `needs_confirmation` | `true` when a field is missing, the evidence is empty, `is_low_confidence` is `true`, or there is a conflict. The UI shows a warning marker |
 | `task_id` | Set only for `action_item`. Points to the Task in §5.6 |
 
 ### 5.5 TranscriptSegment
@@ -270,6 +274,7 @@ All four kinds share one shape, so the frontend can render them with one compone
 - `start_seconds` and `end_seconds` are measured from the meeting start and **exclude paused time**.
 - `speaker` is `null` in the MVP (no speaker detection).
 - When `is_low_confidence` is `true`, the UI highlights the segment for review instead of hiding it.
+- `start_seconds`, `end_seconds` and `confidence` are `null` when the speech-to-text provider gave none. They are never guessed, and `null` confidence does not count as low.
 
 ### 5.6 Task (kept across meetings; the Hash Map keyed by id)
 
@@ -459,6 +464,10 @@ Response `200`: `{ "segments": TranscriptSegment[] }`.
 
 `type` is optional and may list several values separated by commas. Response `200`: `{ "items": Extraction[] }`.
 
+- `live` / `paused`: returns what has been captured so far (used after a page refresh); no LLM call.
+- `processing` / `review` / `archived`: the first call also covers the sentences the live checks did not reach, then the list is kept.
+- Any other status: `409 INVALID_MEETING_STATE`. No transcript after the meeting: `409 TRANSCRIPT_NOT_FOUND`. Unknown `type`: `422 INVALID_TYPE`.
+
 ### 6.11 `POST /meetings/{id}/ask`
 
 Request: `{ "question": "How much time is left?" }`
@@ -519,9 +528,9 @@ Response `200`:
 | `meeting.status` | The status changed | `{ "status": "live" }` |
 | `transcript.segment` | A new speech-to-text segment is ready | **TranscriptSegment** |
 | `summary.window` | A rolling summary, every 5 to 10 minutes | `{ "from_seconds": 0, "to_seconds": 600, "text": "..." }` |
-| `agenda.item_state` | An agenda item changed state | `{ "agenda_item_id": "agd_002", "from": "not_discussed", "to": "in_progress", "evidence": { "segment_ids": ["seg_010"], "quote": "..." } }` |
-| `extraction.created` | The LLM found a decision, action item, etc. | **Extraction** |
-| `extraction.updated` | An existing one changed | **Extraction** |
+| `agenda.item_state` | An agenda item changed state (today it arrives on `ws/meetings/{id}/transcript-test`, not yet on the main socket) | `{ "agenda_item_id": "agd_002", "from": "not_discussed", "to": "in_progress", "evidence": { "segment_ids": ["seg_010"], "quote": "..." } }` |
+| `extraction.created` | The LLM found a decision, action item, etc. (today on `ws/meetings/{id}/transcript-test`) | **Extraction** |
+| `extraction.updated` | An existing one changed, e.g. a deadline was stated or moved. Earlier evidence stays in `segment_ids`; a changed value sets `needs_confirmation` | **Extraction** |
 | `conflict.created` | The user must choose between two values | **Conflict** |
 | `timer.sync` | Every 5 seconds | `{ "elapsed_seconds": 1530, "remaining_seconds": 2070 }` |
 | `timer.warning` | Remaining time is at or below the user's threshold | `{ "remaining_seconds": 300 }` |
@@ -585,5 +594,6 @@ When the backend closes one of these gaps, delete its row here.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.2.0 | 2026-11-21 | `Extraction.is_low_confidence` (new, optional); empty `evidence` allowed; `GET .../transcript` and `GET .../extractions` implemented; `agenda.item_state`, `extraction.created` and `extraction.updated` sent by the backend during the meeting |
 | 0.1.1 | 2026-10-30 | Wording only. Added §0 overview, §4 Evidence, §8.2 mock differences, the changelog, and endpoint sections for tasks, conflicts and `GET /meetings/{id}` |
 | 0.1 | 2026-10-28 | First draft |
