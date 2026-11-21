@@ -6,6 +6,8 @@ The agenda extraction module: builds the prompt from planned points and uploaded
 calls the LLM with a strict JSON schema, and parses the proposed agenda topics.
 """
 
+import logging
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -14,6 +16,41 @@ from ..utils.json_handler import parse_topics
 from ..utils.llm import call_llm
 
 load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+
+LOGGER = logging.getLogger(__name__)
+
+# Lines of a document that talk to the AI instead of describing the meeting.
+INSTRUCTION_LIKE = re.compile(
+    r"\b(ignore|disregard|forget)\b.{0,40}\b(instructions?|prompts?|rules?)\b"
+    r"|\b(you are now|act as|system prompt|as an ai)\b"
+    r"|\badd (?:an? )?(?:new )?(?:agenda )?item\b",
+    re.IGNORECASE,
+)
+_STOP = {"a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "with", "item", "agenda", "add"}
+
+
+def split_instructions(text: str) -> tuple[str, list[str]]:
+    """Return the document without instruction-like lines, and those lines."""
+    kept, flagged = [], []
+    for line in text.splitlines():
+        (flagged if INSTRUCTION_LIKE.search(line) else kept).append(line)
+    return "\n".join(kept), flagged
+
+
+def _words(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9%]+", text.lower())) - _STOP
+
+
+def drop_injected(items: list[dict], flagged: list[str]) -> list[dict]:
+    """Remove agenda items whose title comes from an instruction-like line."""
+    bad = [_words(line) for line in flagged]
+    kept = []
+    for item in items:
+        if any(len(_words(item["title"]) & b) >= 3 for b in bad):
+            LOGGER.warning("Agenda item dropped (instruction in a document): %s", item["title"])
+        else:
+            kept.append(item)
+    return kept
 
 
 INSTRUCTIONS = """\
@@ -96,7 +133,13 @@ def extract_topics(
     duration_minutes: int = 60,
     topic: str = "",
 ) -> list[dict]:
-    prompt = build_prompt(planned_points, documents, topic)
+    cleaned, flagged = [], []
+    for document in documents:
+        text, bad = split_instructions(document["text"])
+        cleaned.append({**document, "text": text})
+        flagged += bad
+
+    prompt = build_prompt(planned_points, cleaned, topic)
     if not prompt and not topic:
         return []
 
@@ -105,4 +148,5 @@ def extract_topics(
         _schema=AGENDA_SCHEMA,
         _max_tokens=1536,
     )
-    return parse_topics(reply, planned_points, documents, duration_minutes)
+    items = parse_topics(reply, planned_points, cleaned, duration_minutes)
+    return drop_injected(items, flagged)
