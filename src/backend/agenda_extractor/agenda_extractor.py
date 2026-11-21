@@ -20,10 +20,15 @@ load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 LOGGER = logging.getLogger(__name__)
 
 # Lines of a document that talk to the AI instead of describing the meeting.
+# Only clear signs count, so that ordinary sentences ("the leader will act as the
+# session monitor", "ignore the old instructions in README v1") are kept.
 INSTRUCTION_LIKE = re.compile(
-    r"\b(ignore|disregard|forget)\b.{0,40}\b(instructions?|prompts?|rules?)\b"
-    r"|\b(you are now|act as|system prompt|as an ai)\b"
-    r"|\badd (?:an? )?(?:new )?(?:agenda )?item\b",
+    r"\b(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?(?:the\s+|your\s+)?"
+    r"(?:previous|prior|above|earlier|preceding|original)\s+(?:instructions?|prompts?|rules?|directions?)\b"
+    r"|\bact\s+as\s+(?:an?\s+|the\s+)?(?:ai|assistant|language\s+model|chatbot|llm)\b"
+    r"|\byou\s+are\s+now\s+(?:an?\s+|the\s+)?(?:ai|assistant|language\s+model|chatbot|llm)\b"
+    r"|\b(?:system|developer)\s+(?:prompt|message)\b"
+    r"|^\W*(?:(?:hey|dear|attention)\s+)?(?:assistant|ai|chatbot|llm|language\s+model)\s*[,:]",
     re.IGNORECASE,
 )
 _STOP = {"a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "with", "item", "agenda", "add"}

@@ -33,10 +33,32 @@ class ResolveDueTest(unittest.TestCase):
         self.assertEqual(resolve_due("in two weeks", S06_TUESDAY), "2026-12-08")
         self.assertEqual(resolve_due("before Friday", S07_TUESDAY), "2026-12-04")
 
-    def test_no_phrase(self):
-        self.assertIsNone(resolve_due(None, MONDAY))
-        self.assertIsNone(resolve_due("", MONDAY))
-        self.assertIsNone(resolve_due("some day", MONDAY))
+    def test_other_phrases(self):
+        cases = {
+            "Friday next week": "2026-12-04",
+            "next week on Friday": "2026-12-04",
+            "day after tomorrow": "2026-11-26",
+            "in a week": "2026-12-01",
+            "in 10 days": "2026-12-04",
+            "by November 25th": "2026-11-25",
+            "25th of November": "2026-11-25",
+            "Nov. 30": "2026-11-30",
+            "end of the month": "2026-11-30",
+            "end of next month": "2026-12-31",
+        }
+        for phrase, expected in cases.items():
+            with self.subTest(phrase=phrase):
+                self.assertEqual(resolve_due(phrase, S06_TUESDAY), expected)
+
+    def test_dates_across_the_year(self):
+        december = date(2026, 12, 28)
+        self.assertEqual(resolve_due("January 5th", december), "2027-01-05")
+        self.assertEqual(resolve_due("end of next month", december), "2027-01-31")
+
+    def test_no_clear_date(self):
+        for phrase in (None, "", "some day", "next week", "by the 31st"):  # November has 30 days
+            with self.subTest(phrase=phrase):
+                self.assertIsNone(resolve_due(phrase, S06_TUESDAY))
 
 
 if __name__ == "__main__":
