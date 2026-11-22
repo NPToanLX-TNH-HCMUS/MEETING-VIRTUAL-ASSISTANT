@@ -14,7 +14,7 @@ from fastapi import APIRouter
 from ..minutes_extractor.minutes_extractor import assemble_markdown, extract_minutes
 from ..utils.objects import Meeting, Minutes, MinutesEdit
 from ..utils.utils import error, now
-from .common import SessionDep, meeting_response
+from .common import CtxDep, SessionDep, meeting_response
 
 router = APIRouter(prefix="/meetings/{meeting_id}/minutes", tags=["post-meeting"])
 
@@ -33,7 +33,7 @@ def _not_processing(session):
 
 
 @router.post("/generate", response_model=Minutes)
-def generate_minutes(session: SessionDep):
+def generate_minutes(session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  nothing (POST with empty body)
     BACK END RETURNS: Minutes object (status="draft") with summary, decisions,
@@ -90,6 +90,7 @@ def generate_minutes(session: SessionDep):
             "markdown": markdown,
             "updated_at": now(),
         }
+        ctx.meeting_repository.save_minutes(session.id, minutes, status="review")
         session.emplace("minutes", minutes)
         session.status = "review"
         return dict(minutes)
@@ -113,7 +114,7 @@ def read_minutes(session: SessionDep):
 
 
 @router.put("", response_model=Minutes)
-def update_minutes(body: MinutesEdit, session: SessionDep):
+def update_minutes(body: MinutesEdit, session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  { "markdown": "..." }
     BACK END RETURNS: Updated Minutes object. Only allowed while meeting status is "review".
@@ -131,13 +132,17 @@ def update_minutes(body: MinutesEdit, session: SessionDep):
         if minutes is None:
             return error(409, "MINUTES_NOT_READY", "No minutes to edit yet.")
 
+        updated_at = now()
+        ctx.meeting_repository.update_minutes_markdown(
+            session.id, body.markdown, updated_at
+        )
         minutes["markdown"] = body.markdown
-        minutes["updated_at"] = now()
+        minutes["updated_at"] = updated_at
         return dict(minutes)
 
 
 @router.post("/confirm", response_model=Meeting)
-def confirm_minutes(session: SessionDep):
+def confirm_minutes(session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  nothing (POST with empty body)
     BACK END RETURNS: Meeting with status "archived".
@@ -155,8 +160,10 @@ def confirm_minutes(session: SessionDep):
         if minutes is None:
             return error(409, "MINUTES_NOT_READY", "No minutes to confirm yet.")
 
+        updated_at = now()
         session.path(MINUTES_FINAL_FILE).write_text(minutes["markdown"], encoding="utf-8")
+        ctx.meeting_repository.confirm_minutes(session.id, updated_at)
         minutes["status"] = "confirmed"
-        minutes["updated_at"] = now()
+        minutes["updated_at"] = updated_at
         session.status = "archived"
         return meeting_response(session)

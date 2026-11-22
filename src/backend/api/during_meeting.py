@@ -20,7 +20,7 @@ from ..speech_to_text.realtime_transcriber import stream_transcript
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
 from ..utils.objects import Meeting
 from ..utils.utils import error, now
-from .common import SessionDep, meeting_response
+from .common import CtxDep, SessionDep, meeting_response
 
 router = APIRouter(prefix="/meetings/{meeting_id}", tags=["during-meeting"])
 # The WebSocket lives outside /api/v1 (see the contract), so it gets its own router.
@@ -34,7 +34,7 @@ TRANSCRIPT_FILE = "during_meeting/transcript/transcript.txt"
 
 
 @router.post("/recording/start", response_model=Meeting)
-def start_recording(session: SessionDep):
+def start_recording(session: SessionDep, ctx: CtxDep):
     if transcript_test_lock.locked():
         return error(409, "MICROPHONE_BUSY", "Microphone đang được dùng cho transcript trực tiếp.")
     with session:
@@ -49,14 +49,18 @@ def start_recording(session: SessionDep):
             recorder.start()
         except Exception as exc:  # sounddevice raises PortAudioError when there is no microphone / no permission
             return error(500, "RECORDER_FAILED", str(exc))
+        started_at = now()
+        ctx.meeting_repository.update_status(
+            session.id, "live", started_at=started_at
+        )
         session.emplace("recorder", recorder)
         session.status = "live"
-        session.at("meeting")["started_at"] = now()
+        session.at("meeting")["started_at"] = started_at
         return meeting_response(session)
 
 
 @router.post("/recording/stop", response_model=Meeting)
-def stop_recording(session: SessionDep):
+def stop_recording(session: SessionDep, ctx: CtxDep):
     with session:
         recorder = session.get("recorder")
         if session.status != "live" or recorder is None:
@@ -67,13 +71,17 @@ def stop_recording(session: SessionDep):
             )
         recorder.stop(str(session.path(AUDIO_FILE)))
         session.pop("recorder")
+        ended_at = now()
+        ctx.meeting_repository.update_status(
+            session.id, "processing", ended_at=ended_at
+        )
         session.status = "processing"
-        session.at("meeting")["ended_at"] = now()
+        session.at("meeting")["ended_at"] = ended_at
         return meeting_response(session)
 
 
 @router.post("/transcribe")
-def transcribe_recording(session: SessionDep):
+def transcribe_recording(session: SessionDep, ctx: CtxDep):
     with session:
         audio = session.path(AUDIO_FILE)
         if not audio.is_file():
@@ -97,6 +105,7 @@ def transcribe_recording(session: SessionDep):
     )
 
     with session:
+        ctx.meeting_repository.save_transcript(session.id, segments, text, now())
         session.emplace("transcript", segments)
         session.emplace("transcript_text", text)
     return {"transcript": text}
@@ -135,11 +144,16 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
     pause_event = asyncio.Event()
 
     async def forward_event(event):
+        new_status = None
         with session:
             if event["type"] == "paused":
-                session.status = "paused"
+                session.status = new_status = "paused"
             elif event["type"] in {"ready", "resumed"}:
-                session.status = "live"
+                session.status = new_status = "live"
+        if new_status is not None:
+            await asyncio.to_thread(
+                ctx.meeting_repository.update_status, session.id, new_status
+            )
         await websocket.send_json(event)
 
     async def wait_for_disconnect():
@@ -163,14 +177,22 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
                         pause_event.clear()
 
     async with transcript_test_lock:
+        started_at = now()
         with session:
             meeting = session.at("meeting")
             session.status = "live"
-            meeting["started_at"] = now()
+            meeting["started_at"] = started_at
             meeting["ended_at"] = None
             audio_path = session.path(AUDIO_FILE)
             transcript_path = session.path(TRANSCRIPT_FILE)
             language = meeting["language"]
+        await asyncio.to_thread(
+            ctx.meeting_repository.update_status,
+            session.id,
+            "live",
+            started_at=started_at,
+            ended_at=None,
+        )
 
         stream_task = asyncio.create_task(
             stream_transcript(
@@ -199,8 +221,24 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
                 )
 
             transcript_path.write_text(transcript, encoding="utf-8")
+            ended_at = now()
+            await asyncio.to_thread(
+                ctx.meeting_repository.save_transcript,
+                session.id,
+                [],
+                transcript,
+                ended_at,
+            )
+            await asyncio.to_thread(
+                ctx.meeting_repository.update_status,
+                session.id,
+                "processing",
+                ended_at=ended_at,
+            )
             with session:
-                meeting["ended_at"] = now()
+                session.emplace("transcript", [])
+                session.emplace("transcript_text", transcript)
+                meeting["ended_at"] = ended_at
                 session.status = "processing"
 
             await websocket.send_json(
@@ -219,11 +257,22 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
                 task.cancel()
             await asyncio.gather(stream_task, disconnect_task, return_exceptions=True)
 
+            reset_needed = False
             with session:
                 if session.status in {"live", "paused"}:
                     session.status = "ready"
                     meeting["started_at"] = None
                     meeting["ended_at"] = None
+                    reset_needed = True
+            if reset_needed:
+                with suppress(Exception):
+                    await asyncio.to_thread(
+                        ctx.meeting_repository.update_status,
+                        session.id,
+                        "ready",
+                        started_at=None,
+                        ended_at=None,
+                    )
 
             with suppress(Exception):
                 await websocket.close()

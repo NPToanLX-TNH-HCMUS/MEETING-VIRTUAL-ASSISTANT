@@ -58,6 +58,7 @@ def create_meeting(body: NewMeeting, ctx: CtxDep):
         session.emplace("meeting", meeting)
         session.emplace("documents", [])
         session.emplace("agenda", [])
+        ctx.meeting_repository.create_meeting(meeting, status=session.status)
         return meeting_response(session)
 
 
@@ -143,7 +144,9 @@ async def upload_document(file: UploadFile, session: SessionDep, ctx: CtxDep):
             "size_bytes": len(content),
             "uploaded_at": now(),
         }
-        documents.append({**document, "text": text, "headings": headings})
+        full_doc = {**document, "text": text, "headings": headings}
+        ctx.meeting_repository.add_document(full_doc)
+        documents.append(full_doc)
 
     return document
 
@@ -208,7 +211,7 @@ def _agenda_locked(session) -> object | None:
 
 
 @router.post("/{meeting_id}/agenda/generate", response_model=AgendaProposal)
-def generate_agenda(session: SessionDep):
+def generate_agenda(session: SessionDep, ctx: CtxDep):
     """
     BACK END RETURNS: AgendaProposal = {items, dropped, total_estimated_minutes, duration_minutes}
     The UI shows items in "order" and lists "dropped". Nothing is official until PUT /agenda.
@@ -241,6 +244,7 @@ def generate_agenda(session: SessionDep):
         # Re-check: the status may have changed while the LLM was running.
         if (locked := _agenda_locked(session)) is not None:
             return locked
+        ctx.meeting_repository.replace_agenda(session.id, items, status="draft")
         session.emplace("agenda", items)
         session.status = "draft"  # a new proposal is not confirmed yet
 
@@ -256,7 +260,7 @@ def generate_agenda(session: SessionDep):
 
 
 @router.put("/{meeting_id}/agenda", response_model=AgendaList)
-def save_agenda(body: AgendaEdit, session: SessionDep):
+def save_agenda(body: AgendaEdit, session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  AgendaEdit = {items: [{id, title, estimated_minutes, order}]}
     BACK END RETURNS: AgendaList = {items: AgendaItem[]} with full fields; meeting becomes "ready".
@@ -297,6 +301,7 @@ def save_agenda(body: AgendaEdit, session: SessionDep):
                 }
             )
 
+        ctx.meeting_repository.replace_agenda(session.id, saved, status="ready")
         session.emplace("agenda", saved)
         session.status = "ready"
         return {"items": saved}
