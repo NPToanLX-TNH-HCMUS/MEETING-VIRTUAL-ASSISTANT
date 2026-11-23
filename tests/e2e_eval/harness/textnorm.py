@@ -41,7 +41,7 @@ COMPOUNDS = {("kick", "off"): "kickoff", ("all", "right"): "alright", ("e", "mai
              ("any", "more"): "anymore", ("on", "line"): "online", ("set", "up"): "setup",
              ("width", "wise"): "widthwise", ("height", "wise"): "heightwise",
              ("straight", "forward"): "straightforward", ("home", "page"): "homepage",
-             ("woo", "hoo"): "woohoo"}
+             ("woo", "hoo"): "woohoo", ("real", "time"): "realtime"}
 
 PRONOUN_IS = {"it", "that", "what", "there", "here", "he", "she", "who", "where", "how"}
 
