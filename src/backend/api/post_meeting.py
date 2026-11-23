@@ -9,11 +9,16 @@ STAGE 3 (after meeting): meeting minutes.
 Contract: docs/system_design/api-contract.md §5.8 and §6.12
 """
 
+import asyncio
+import logging
+
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 from ..minutes_extractor.minutes_extractor import assemble_markdown, extract_minutes
 from ..utils.objects import Meeting, Minutes, MinutesEdit
 from ..utils.utils import error, now
+from ..utils.llm import LLMCallError
 from .common import SessionDep, meeting_response
 
 router = APIRouter(prefix="/meetings/{meeting_id}/minutes", tags=["post-meeting"])
@@ -32,8 +37,7 @@ def _not_processing(session):
     )
 
 
-@router.post("/generate", response_model=Minutes)
-def generate_minutes(session: SessionDep):
+def _generate_minutes(session):
     """
     FRONT END SENDS:  nothing (POST with empty body)
     BACK END RETURNS: Minutes object (status="draft") with summary, decisions,
@@ -80,6 +84,10 @@ def generate_minutes(session: SessionDep):
             return _not_processing(session)
 
         session.path(MINUTES_DRAFT_FILE).write_text(markdown, encoding="utf-8")
+        summary_path = session.path("post_meeting/summary/final_summary.md")
+        temporary = summary_path.with_suffix(".tmp")
+        temporary.write_text(extraction.summary, encoding="utf-8")
+        temporary.replace(summary_path)
         minutes = {
             "meeting_id": session.id,
             "status": "draft",
@@ -93,6 +101,42 @@ def generate_minutes(session: SessionDep):
         session.emplace("minutes", minutes)
         session.status = "review"
         return dict(minutes)
+
+
+@router.post("/generate", response_model=Minutes)
+async def generate_minutes(session: SessionDep):
+    # This function and the automatic post-recording task share one lock.
+    lock = session.get("minutes_lock")
+    if lock is None:
+        lock = asyncio.Lock()
+        session.emplace("minutes_lock", lock)
+    async with lock:
+        if session.has("minutes"):
+            return dict(session.at("minutes"))
+        realtime = session.get("realtime")
+        if realtime and not realtime.transcript_saved:
+            return error(409, "TRANSCRIPT_NOT_READY", "Transcript has not finished saving.")
+        try:
+            result = await asyncio.to_thread(_generate_minutes, session)
+        except LLMCallError as exc:
+            result = error(exc.status, exc.code, str(exc))
+        except Exception:
+            logging.getLogger(__name__).exception("Minutes failed for %s", session.id)
+            result = error(500, "MINUTES_FAILED", "Could not generate minutes; retry is available.")
+        if realtime:
+            if isinstance(result, JSONResponse):
+                import json
+                detail = json.loads(result.body).get("error", {})
+                realtime.pipeline_error = {"code": detail.get("code", "MINUTES_FAILED"),
+                    "message": detail.get("message", "Could not generate minutes."),
+                    "recoverable": True}
+                await realtime.publish("error", realtime.pipeline_error)
+            else:
+                realtime.pipeline_error = None
+                await realtime.publish("meeting.status", {"status": session.status})
+                await realtime.publish("minutes.ready", {
+                    "minutes_url": f"/api/v1/meetings/{session.id}/minutes"})
+        return result
 
 
 @router.get("", response_model=Minutes)

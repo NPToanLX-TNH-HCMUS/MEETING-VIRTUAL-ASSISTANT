@@ -1,80 +1,261 @@
-"""
-STAGE 2 (during meeting): record audio and transcribe it.
-
-    POST /api/v1/meetings/{id}/recording/start   microphone on            ready -> live
-    POST /api/v1/meetings/{id}/recording/stop    save record.wav          live  -> processing
-    POST /api/v1/meetings/{id}/transcribe        ElevenLabs STT + diarization
-    GET  /api/v1/meetings/{id}/recording/level   microphone volume of the batch recorder
-    WS   /ws/meetings/{id}/transcript-test       realtime STT with pause/resume/stop  ready -> live <-> paused -> processing
-"""
-
+"""REST controls and the outbound-only meeting event channel."""
 import asyncio
 import json
+import logging
 from contextlib import suppress
 
+from anyio import CancelScope
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from ..audio.recorder import Recorder
 from ..context.app_context import MeetingNotFoundError
-from ..speech_to_text.realtime_transcriber import stream_transcript
+from ..during_meeting.meeting_session import MeetingSession as RealtimeSession
+from ..during_meeting.meeting_service import run_recording, wait_for_ack
+from ..during_meeting.transcript_store import segments_after
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
-from ..utils.objects import Meeting
+from ..utils.objects import MeetingControlResponse, TranscriptList
 from ..utils.utils import error, now
-from .common import SessionDep, meeting_response
+from .common import SessionDep
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/meetings/{meeting_id}", tags=["during-meeting"])
-# The WebSocket lives outside /api/v1 (see the contract), so it gets its own router.
 ws_router = APIRouter(tags=["during-meeting"])
-
-# One microphone per laptop: the realtime session and the batch recorder must not overlap.
-transcript_test_lock = asyncio.Lock()
-
+microphone_lock = asyncio.Lock()
 AUDIO_FILE = "during_meeting/audio/record.wav"
 TRANSCRIPT_FILE = "during_meeting/transcript/transcript.txt"
 
 
-@router.post("/recording/start", response_model=Meeting)
-def start_recording(session: SessionDep):
-    if transcript_test_lock.locked():
-        return error(409, "MICROPHONE_BUSY", "Microphone đang được dùng cho transcript trực tiếp.")
-    with session:
-        if session.status != "ready":
-            return error(
-                409,
-                "INVALID_MEETING_STATE",
-                f"Cannot start recording while the meeting is {session.status}",
-            )
+async def finish_meeting(realtime, session):
+    from .post_meeting import generate_minutes
+    try:
+        await generate_minutes(session)
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        logger.exception("Minutes processing failed for %s", session.id)
+
+
+async def run_meeting_session(realtime, session):
+    try:
+        text = await run_recording(realtime, session)
+        with session:
+            session.emplace("transcript_text", text)
+            session.emplace("transcript", list(realtime.transcript_segments))
+        realtime.processing_task = asyncio.create_task(finish_meeting(realtime, session))
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        logger.exception("Recording failed for %s", session.id)
+        realtime.pipeline_error = {
+            "code": "RECORDING_FAILED",
+            "message": "Recording failed; captured segments are retained. Check backend logs.",
+            "recoverable": False,
+        }
+        with session:
+            session.status = "processing" if realtime.ready_ack.is_set() else "ready"
+            session.at("meeting")["ended_at"] = now() if realtime.ready_ack.is_set() else None
+        await realtime.publish("meeting.status", {"status": session.status})
+        await realtime.publish("error", realtime.pipeline_error)
+    finally:
+        realtime.stop_event.set()
+
+
+def release_microphone(task):
+    microphone_lock.release()
+    if not task.cancelled():
+        task.exception()
+
+
+@router.post("/start", response_model=MeetingControlResponse)
+async def start_meeting(session: SessionDep):
+    if session.status != "ready":
+        return error(409, "INVALID_MEETING_STATE", f"Cannot start while {session.status}.")
+    if microphone_lock.locked():
+        return error(409, "RECORDING_ALREADY_ACTIVE", "Microphone is already in use.")
+    await microphone_lock.acquire()
+    try:
+        previous = session.get("realtime")
+        realtime = RealtimeSession(session.id)
+        if previous:
+            # Preserve cursors and viewers on retry after a failed startup.
+            realtime.seq = previous.seq
+            realtime.subscribers = previous.subscribers
+            realtime.transcript_segments = previous.transcript_segments
+            realtime.temp_transcript = previous.temp_transcript
+            realtime.summary_history = previous.summary_history
+        with session:
+            session.emplace("realtime", realtime)
+            meeting = session.at("meeting")
+            meeting["started_at"] = None
+            meeting["ended_at"] = None
+            duration = meeting["duration_minutes"] * 60
+        realtime.stream_task = asyncio.create_task(run_meeting_session(realtime, session))
+    except BaseException:
+        microphone_lock.release()
+        raise
+    realtime.stream_task.add_done_callback(release_microphone)
+    try:
+        await wait_for_ack(realtime, realtime.ready_ack, timeout=30)
+        if realtime.pipeline_error or realtime.stream_task.done():
+            raise RuntimeError("Recording ended during startup.")
+    except BaseException as exc:
+        realtime.stream_task.cancel()
+        await asyncio.gather(realtime.stream_task, return_exceptions=True)
+        with session:
+            session.status = "ready"
+            meeting["started_at"] = None
+            meeting["ended_at"] = None
+        if isinstance(exc, asyncio.CancelledError):
+            raise
+        if not isinstance(exc, Exception):
+            raise
+        return error(503, "MIC_UNAVAILABLE", "Could not start recording. Check backend logs.")
+    return realtime.control_response("live", duration)
+
+
+async def control_meeting(session, command):
+    realtime = session.get("realtime")
+    allowed = {"pause": {"live"}, "resume": {"paused"}, "stop": {"live", "paused"}}
+    if realtime is None:
+        return error(409, "INVALID_MEETING_STATE", "No active recording.")
+    async with realtime.control_lock:
+        if (session.status not in allowed[command] or realtime.stop_event.is_set()
+                or realtime.stream_task is None or realtime.stream_task.done()):
+            return error(409, "INVALID_MEETING_STATE", f"Cannot {command} while {session.status}.")
+        ack = {"pause": realtime.paused_ack, "resume": realtime.resumed_ack,
+               "stop": realtime.stopped_ack}[command]
+        ack.clear()
+        if command == "pause":
+            realtime.pause_event.set()
+        elif command == "resume":
+            realtime.pause_event.clear()
+        else:
+            realtime.stop_event.set()
         try:
-            recorder = Recorder()
-            recorder.start()
-        except Exception as exc:  # sounddevice raises PortAudioError when there is no microphone / no permission
-            return error(500, "RECORDER_FAILED", str(exc))
-        session.emplace("recorder", recorder)
-        session.status = "live"
-        session.at("meeting")["started_at"] = now()
-        return meeting_response(session)
+            await wait_for_ack(realtime, ack)
+        except (Exception, asyncio.CancelledError) as exc:
+            realtime.stop_event.set()
+            if isinstance(exc, asyncio.CancelledError):
+                raise
+            return error(503, "MIC_UNAVAILABLE", "Recording did not acknowledge the command.")
+        status = {"pause": "paused", "resume": "live", "stop": "processing"}[command]
+        return realtime.control_response(status, session.at("meeting")["duration_minutes"] * 60)
 
 
-@router.post("/recording/stop", response_model=Meeting)
-def stop_recording(session: SessionDep):
+@router.post("/pause", response_model=MeetingControlResponse)
+async def pause_meeting(session: SessionDep):
+    return await control_meeting(session, "pause")
+
+
+@router.post("/resume", response_model=MeetingControlResponse)
+async def resume_meeting(session: SessionDep):
+    return await control_meeting(session, "resume")
+
+
+@router.post("/stop", response_model=MeetingControlResponse)
+async def stop_meeting(session: SessionDep):
+    return await control_meeting(session, "stop")
+
+
+@router.get("/transcript", response_model=TranscriptList)
+def read_transcript(session: SessionDep, after: str | None = None):
     with session:
-        recorder = session.get("recorder")
-        if session.status != "live" or recorder is None:
-            return error(
-                409,
-                "INVALID_MEETING_STATE",
-                f"Cannot stop recording while the meeting is {session.status}",
-            )
-        recorder.stop(str(session.path(AUDIO_FILE)))
-        session.pop("recorder")
-        session.status = "processing"
-        session.at("meeting")["ended_at"] = now()
-        return meeting_response(session)
+        realtime = session.get("realtime")
+        if realtime:
+            segments = list(realtime.transcript_segments)
+        else:
+            path = session.path("during_meeting/transcript/segments.jsonl")
+            try:
+                segments = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+                            if line.strip()] if path.exists() else []
+            except (ValueError, OSError):
+                return error(500, "TRANSCRIPT_READ_FAILED", "Could not read saved transcript.")
+    try:
+        return {"segments": segments_after(segments, after)}
+    except ValueError:
+        return error(400, "INVALID_TRANSCRIPT_CURSOR", "Unknown transcript segment ID.")
+
+
+@router.get("/state")
+async def read_state(session: SessionDep):
+    realtime = session.get("realtime")
+    duration = session.at("meeting")["duration_minutes"] * 60
+    state = realtime.control_response(session.status, duration) if realtime else {
+        "status": session.status, "started_at": session.at("meeting")["started_at"],
+        "elapsed_seconds": 0, "remaining_seconds": duration,
+    }
+    return {
+        **state, "seq": realtime.seq if realtime else 0,
+        "transcript_saved": realtime.transcript_saved if realtime else session.has("transcript_text"),
+        "minutes_ready": session.has("minutes"),
+        "error": realtime.pipeline_error if realtime else None,
+    }
+
+
+@router.get("/summaries")
+def read_summaries(session: SessionDep):
+    with session:
+        path = session.path("post_meeting/summary/summary_history.json")
+        try:
+            items = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+            if not isinstance(items, list):
+                raise ValueError("Invalid history")
+        except (ValueError, OSError):
+            return error(500, "SUMMARY_READ_FAILED", "Could not read summary history.")
+    return {"items": items}
+
+
+@ws_router.websocket("/ws/meetings/{meeting_id}")
+async def meeting_socket(websocket: WebSocket, meeting_id: str):
+    await websocket.accept()
+    try:
+        session = websocket.app.state.ctx.session(meeting_id)
+    except MeetingNotFoundError:
+        await websocket.close(code=1008)
+        return
+    realtime = session.get("realtime")
+    if realtime is None:
+        await websocket.close(code=1008)
+        return
+    queue = realtime.subscribe()
+
+    async def send_events():
+        while True:
+            event = await queue.get()
+            if event is None:
+                await websocket.close(code=1013)
+                return
+            await websocket.send_json(event)
+
+    async def wait_disconnect():
+        while True:
+            message = await websocket.receive()
+            if message["type"] == "websocket.disconnect":
+                return
+            # Application commands are deliberately ignored; REST owns state.
+
+    tasks = [asyncio.create_task(send_events()), asyncio.create_task(wait_disconnect())]
+    try:
+        done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        for task in done:
+            await task
+    except (WebSocketDisconnect, RuntimeError, asyncio.CancelledError):
+        pass
+    finally:
+        realtime.unsubscribe(queue)
+        with CancelScope(shield=True):
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            with suppress(Exception):
+                await websocket.close()
 
 
 @router.post("/transcribe")
 def transcribe_recording(session: SessionDep):
     with session:
+        if session.get("realtime") is not None or session.status not in {"ready", "processing"}:
+            return error(409, "INVALID_MEETING_STATE",
+                         "Batch transcription cannot overwrite a realtime meeting.")
         audio = session.path(AUDIO_FILE)
         if not audio.is_file():
             return error(
@@ -100,130 +281,3 @@ def transcribe_recording(session: SessionDep):
         session.emplace("transcript", segments)
         session.emplace("transcript_text", text)
     return {"transcript": text}
-
-
-@router.get("/recording/level")
-def get_recording_level(session: SessionDep):
-    recorder = session.get("recorder")
-    if recorder is None:
-        return {"level": 0, "dbfs": -60}
-    return recorder.get_audio_level()
-
-
-@ws_router.websocket("/ws/meetings/{meeting_id}/transcript-test")
-async def transcript_socket(websocket: WebSocket, meeting_id: str):
-    await websocket.accept()
-    ctx = websocket.app.state.ctx
-
-    try:
-        session = ctx.session(meeting_id)
-    except MeetingNotFoundError:
-        await websocket.send_json({"type": "error", "message": "Không tìm thấy cuộc họp."})
-        await websocket.close(code=1008)
-        return
-
-    batch_recording = any(s.get("recorder") is not None for s in ctx.sessions())
-    if session.status != "ready" or batch_recording or transcript_test_lock.locked():
-        await websocket.send_json({
-            "type": "error",
-            "message": "Hãy xác nhận agenda và dừng các phiên ghi âm trước khi test transcript.",
-        })
-        await websocket.close(code=1008)
-        return
-
-    stop_event = asyncio.Event()
-    pause_event = asyncio.Event()
-
-    async def forward_event(event):
-        with session:
-            if event["type"] == "paused":
-                session.status = "paused"
-            elif event["type"] in {"ready", "resumed"}:
-                session.status = "live"
-        await websocket.send_json(event)
-
-    async def wait_for_disconnect():
-        while True:
-            message = await websocket.receive()
-            if message["type"] == "websocket.disconnect":
-                return
-            if message["type"] == "websocket.receive" and message.get("text"):
-                try:
-                    command = json.loads(message["text"])
-                except json.JSONDecodeError:
-                    continue
-                if not isinstance(command, dict):
-                    continue
-                if command.get("type") == "stop":
-                    stop_event.set()
-                elif not stop_event.is_set():
-                    if command.get("type") == "pause":
-                        pause_event.set()
-                    elif command.get("type") == "resume":
-                        pause_event.clear()
-
-    async with transcript_test_lock:
-        with session:
-            meeting = session.at("meeting")
-            session.status = "live"
-            meeting["started_at"] = now()
-            meeting["ended_at"] = None
-            audio_path = session.path(AUDIO_FILE)
-            transcript_path = session.path(TRANSCRIPT_FILE)
-            language = meeting["language"]
-
-        stream_task = asyncio.create_task(
-            stream_transcript(
-                send_event=forward_event,
-                language=language,
-                stop_event=stop_event,
-                pause_event=pause_event,
-                audio_path=audio_path,
-            )
-        )
-        disconnect_task = asyncio.create_task(wait_for_disconnect())
-
-        try:
-            await asyncio.wait({stream_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED)
-
-            # The user closed the page: stop recognition, keep nothing but the WAV.
-            if disconnect_task.done():
-                return
-
-            # Re-raises a stream failure into the except branch below.
-            transcript = (await stream_task).strip()
-            if not transcript:
-                raise ValueError(
-                    "Chưa có câu nào được chốt. "
-                    "Hãy thử lại và ngừng nói vài giây trước khi phiên kết thúc."
-                )
-
-            transcript_path.write_text(transcript, encoding="utf-8")
-            with session:
-                meeting["ended_at"] = now()
-                session.status = "processing"
-
-            await websocket.send_json(
-                {"type": "done", "has_text": True, "saved": True, "transcript": transcript}
-            )
-
-        except WebSocketDisconnect:
-            pass
-
-        except Exception as exc:
-            with suppress(Exception):
-                await websocket.send_json({"type": "error", "message": str(exc)})
-
-        finally:
-            for task in (stream_task, disconnect_task):
-                task.cancel()
-            await asyncio.gather(stream_task, disconnect_task, return_exceptions=True)
-
-            with session:
-                if session.status in {"live", "paused"}:
-                    session.status = "ready"
-                    meeting["started_at"] = None
-                    meeting["ended_at"] = None
-
-            with suppress(Exception):
-                await websocket.close()

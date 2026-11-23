@@ -136,3 +136,31 @@ class MinutesEdit(BaseModel):
     """FRONT END SENDS when the user edits the minutes Markdown draft."""
 
     markdown: str
+
+class MeetingControlResponse(BaseModel):
+    """Response của start, pause, resume và stop."""
+
+    status: str
+    started_at: str | None
+    elapsed_seconds: float
+    remaining_seconds: float
+
+
+class TranscriptSegment(BaseModel):
+    """Một đoạn transcript đã chốt."""
+
+    id: str
+    meeting_id: str
+    start_seconds: float | None
+    end_seconds: float | None
+    speaker: str | None
+    text: str
+    language: str
+    confidence: float | None
+    is_low_confidence: bool
+
+
+class TranscriptList(BaseModel):
+    """Response của GET /meetings/{id}/transcript."""
+
+    segments: list[TranscriptSegment]

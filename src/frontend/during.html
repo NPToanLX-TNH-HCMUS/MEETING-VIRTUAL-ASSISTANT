@@ -19,9 +19,9 @@
       <div class="during-actions">
         <!-- Chỉ báo ghi âm: có chữ, không chỉ dựa vào màu. Chỉ hiện khi đang ghi. -->
         <span id="live-badge" class="live-badge" role="status" hidden></span>
-        <button id="test-transcript" type="button" class="btn btn--primary">Start recording</button>
+        <button id="start-recording" type="button" class="btn btn--primary">Start recording</button>
         <button id="pause" type="button" class="btn" disabled aria-pressed="false">Pause</button>
-        <button id="stop-transcript" type="button" class="btn btn--dark" disabled>Stop recording</button>
+        <button id="stop-recording" type="button" class="btn btn--dark" disabled>Stop recording</button>
         <span id="go-after-box" hidden>
           <a id="go-after" class="btn btn--primary" href="/after_meeting.html">Go to review →</a>
         </span>
@@ -35,8 +35,8 @@
       <section class="card clock" aria-label="Time">
         <div>
           <p class="eyebrow">Time left</p>
-          <span class="clock__value" aria-label="No data yet">--:--</span>
-          <p class="muted">Pending update</p>
+          <span id="meeting-timer" class="clock__value" role="timer">--:--</span>
+          <p class="muted">Paused time is excluded.</p>
         </div>
         <div>
           <p class="eyebrow">Agenda against the clock</p>
@@ -65,13 +65,14 @@
         <div class="card__head">
           <h2 id="transcript-title" class="card__title card__title--sm">Live transcript</h2>
         </div>
-        <p id="test-transcript-status" class="muted" role="status">Not connected</p>
+        <p id="connection-status" class="muted" role="status"></p>
+        <p id="transcript-status" class="muted" role="status">Not connected</p>
 
         <!-- Mỗi câu backend chốt là một .segment; thời điểm của câu chưa có trong dữ liệu nên để “—”. -->
-        <div id="test-transcript-final"></div>
+        <div id="transcript-final" style="white-space: pre-wrap;"></div>
         <div class="segment segment--partial" aria-live="polite">
           <span class="segment__time"></span>
-          <p id="test-transcript-partial" class="segment__text"></p>
+          <p id="transcript-partial" class="segment__text"></p>
         </div>
 
         <div id="transcript-empty" class="empty">
@@ -88,6 +89,11 @@
 
       <!-- ============ PHẢI: chờ cập nhật (backend chưa gửi các sự kiện này) ============ -->
       <div class="during-side">
+        <section class="card" aria-labelledby="summary-title">
+          <h2 id="summary-title" class="card__title card__title--sm">Live summaries</h2>
+          <p id="summary-status" class="muted" role="status">Waiting for committed speech.</p>
+          <div id="live-summary"></div>
+        </section>
         <section class="card card--alert" aria-labelledby="choice-title">
           <div class="card__head"><h2 id="choice-title" class="card__title card__title--sm">Needs your choice</h2></div>
           <p class="pending">Deadline conflicts and items needing confirmation: pending update.</p>

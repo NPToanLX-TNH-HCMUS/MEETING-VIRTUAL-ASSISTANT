@@ -13,6 +13,7 @@ Contract: docs/system_design/api-contract.md
 """
 
 from contextlib import asynccontextmanager
+import asyncio
 
 from fastapi import FastAPI, Request
 
@@ -28,12 +29,16 @@ API_PREFIX = "/api/v1"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    # Stop any microphone stream still running on shutdown / reload so the audio is not lost.
+    tasks = []
     for session in app.state.ctx.sessions():
-        with session:
-            recorder = session.pop("recorder")
-            if recorder is not None and recorder.is_recording:
-                recorder.stop(str(session.path(during_meeting.AUDIO_FILE)))
+        realtime = session.get("realtime")
+        if realtime:
+            realtime.stop_event.set()
+            for task in (realtime.stream_task, realtime.processing_task):
+                if task is not None and not task.done():
+                    task.cancel()
+                    tasks.append(task)
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 app = FastAPI(lifespan=lifespan)

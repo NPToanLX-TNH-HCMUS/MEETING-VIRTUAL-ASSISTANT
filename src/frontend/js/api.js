@@ -35,6 +35,10 @@ export const api = {
 
   // GET /meetings/{id} -> { id, status, ... }
   getMeeting: (id) => request('GET', `/meetings/${id}`),
+  getMeetingState: (id) => request('GET', `/meetings/${id}/state`),
+  getTranscript: (id, after = null) => request('GET',
+    `/meetings/${id}/transcript${after ? `?after=${encodeURIComponent(after)}` : ''}`),
+  getSummaries: (id) => request('GET', `/meetings/${id}/summaries`),
 
   // POST /meetings/{id}/documents -> { id, filename, ... }   (file = đối tượng File của trình duyệt)
   uploadDocument: (id, file) => {
@@ -50,12 +54,6 @@ export const api = {
   saveAgenda: (id, items) => request('PUT', `/meetings/${id}/agenda`, { json: { items } }),
   getAgenda: (id) => request('GET', `/meetings/${id}/agenda`),
 
-  // POST /meetings/{id}/recording/start | stop -> Meeting (status "live" | "processing")
-  startRecording: (id) => request('POST', `/meetings/${id}/recording/start`),
-  stopRecording: (id) => request('POST', `/meetings/${id}/recording/stop`),
-
-  // POST /meetings/{id}/transcribe -> { transcript }  (ElevenLabs can take a while)
-  transcribe: (id) => request('POST', `/meetings/${id}/transcribe`, { timeoutMs: 180_000 }),
   // POST /meetings/{id}/minutes/generate -> Minutes (meeting status -> "review")
   convertToMinutes: (id) => request('POST', `/meetings/${id}/minutes/generate`, { timeoutMs: 100_000}),
 
@@ -65,4 +63,23 @@ export const api = {
   // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")
   confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`),
 
+  startMeeting: (id) =>
+    request("POST", `/meetings/${id}/start`, {
+      timeoutMs: 45_000,
+    }),
+
+  pauseMeeting: (id) =>
+    request("POST", `/meetings/${id}/pause`, {
+      timeoutMs: 25_000,
+    }),
+
+  resumeMeeting: (id) =>
+    request("POST", `/meetings/${id}/resume`, {
+      timeoutMs: 25_000,
+    }),
+
+  stopMeeting: (id) =>
+    request("POST", `/meetings/${id}/stop`, {
+      timeoutMs: 25_000,
+    }),
 };

@@ -43,3 +43,10 @@ npm run dev
 Open http://localhost:5173. The dev server proxies `/api` and `/ws` to the backend on `127.0.0.1:8000`, so start the backend first.
 
 Production build: `npm run build` (output in `src/frontend/dist/`), check it with `npm run preview`.
+
+## Realtime meeting integration
+
+See [the realtime handoff](docs/realtime-meeting-handoff.md) for REST/WebSocket contracts,
+function inputs/outputs, saved artifacts, offline tests and the manual smoke checklist.
+Run one backend worker and avoid reload during recording. The microphone is captured
+on the backend machine. Browser reconnect is supported; server-restart recovery is not.

@@ -1,311 +1,292 @@
-import { api } from './api.js';
-import { connectTranscriptTest } from "./socket.js";
+import { api } from "./api.js";
+import { connectMeetingSocket } from "./socket.js";
 
 const $ = (id) => document.getElementById(id);
-const meetingId = new URLSearchParams(location.search).get('meeting');
-const LANGUAGE = { vi: 'Vietnamese', en: 'English' };
-
-let finished = false;
-let hasTranscript = false;
+const meetingId = new URLSearchParams(location.search).get("meeting");
+const LANGUAGE = { vi: "Tiếng Việt", en: "English" };
+let meetingState = { status: "loading", minutes_ready: false };
+let controlPending = false;
+let channel = null;
+let lastSeq = null;
+let lastSegmentId = null;
+let eventChain = Promise.resolve();
 let quietSince = null;
-let realtimeTranscriptSaved = false;
-let transcriptTestSocket = null;
-let segments = [];
-let realtimeReady = false;
-let realtimePaused = false;
-let realtimeStopping = false;
-let pausePending = false;
+let timerAnchor = null;
 let agendaItems = [];
-
-function renderRealtimeControls() {
-  const connected = transcriptTestSocket?.readyState === WebSocket.OPEN;
-  $("live-badge").hidden = !realtimeReady || realtimeStopping;
-  $("live-badge").textContent = realtimePaused ? "LIVE · PAUSED" : "LIVE · RECORDING";
-  $("live-badge").classList.toggle("live-badge--paused", realtimePaused);
-  $("pause").disabled = !connected || !realtimeReady || realtimeStopping || pausePending;
-  $("pause").textContent = pausePending
-    ? "Working…"
-    : realtimePaused ? "Resume" : "Pause";
-  $("pause").setAttribute("aria-pressed", String(realtimePaused));
-  $("stop-transcript").disabled = !connected || !realtimeReady || realtimeStopping;
-  $("test-transcript").hidden = !!transcriptTestSocket;
-  $("test-transcript").disabled = !meetingId || !!transcriptTestSocket || finished || realtimeTranscriptSaved;
-}
-
-function render() {
-  $('transcript-empty').hidden = hasTranscript || !!transcriptTestSocket;
-  $('agenda-empty').hidden = $('agenda-list').children.length > 0;
-  $("go-after-box").hidden = !hasTranscript;
-  $('go-after').href = `/after_meeting.html?meeting=${encodeURIComponent(meetingId)}`;
-
-  if (!meetingId) showError('Missing meeting ID. Go back to the agenda step.');
-  renderRealtimeControls();
-}
-
-function renderSegments() {
-  $("test-transcript-final").replaceChildren(
-    ...segments.map((text) => {
-      const row = document.createElement("div");
-      row.className = "segment";
-      const time = document.createElement("span");
-      time.className = "segment__time";
-      time.textContent = "—"; // backend chưa gửi thời điểm của từng câu
-      const p = document.createElement("p");
-      p.className = "segment__text";
-      p.textContent = text;
-      row.append(time, p);
-      return row;
-    }),
-  );
-}
+let reconnectTimer = null;
+let pageClosed = false;
+const segments = new Map();
+const summaries = new Map();
 
 function showError(message) {
-  $('error').textContent = message;
-  $('error').hidden = false;
+  $("error").textContent = message;
+  $("error").hidden = false;
 }
 
-const stateLabels = {
-  not_discussed: "Not discussed",
-  in_progress: "In progress",
-  discussed: "Discussed",
-  concluded: "Concluded",
-};
-const scoreFormat = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-function renderAgenda() {
-  // Tạo bản sao rồi sắp xếp theo thứ tự agenda.
-  const sortedItems = [...agendaItems].sort((a, b) => a.order - b.order);
-
-  $("agenda-list").replaceChildren(
-    ...sortedItems.map((item, i) => {
-      const row = document.createElement("li");
-      row.className = "agenda-card" + (item.state === "in_progress" ? " agenda-card--active" : "");
-
-      const top = document.createElement("div");
-      top.className = "agenda-card__top";
-      const title = document.createElement("span");
-      title.textContent = `${i + 1}. ${item.title}`;
-      // Trạng thái luôn có chữ, không chỉ dựa vào màu.
-      const state = document.createElement("span");
-      state.className = `state-badge state-badge--${item.state}`;
-      state.textContent = stateLabels[item.state] ?? "Unknown";
-      top.append(title, state);
-
-      const meta = document.createElement("p");
-      meta.className = "agenda-card__meta";
-      meta.textContent = [
-        item.estimated_minutes != null && `Estimated ${item.estimated_minutes} min`,
-        item.priority_score != null && `Priority ${scoreFormat.format(item.priority_score)}`,
-      ].filter(Boolean).join(" · ");
-
-      row.append(top, meta);
-      return row;
-    }),
-  );
-
-  // Đoạn nào rộng theo số phút dự kiến, màu theo trạng thái; chưa có số phút thì không vẽ (không đoán).
-  $("clock-track").replaceChildren(
-    ...sortedItems.filter((it) => it.estimated_minutes > 0).map((item) => {
-      const seg = document.createElement("span");
-      seg.className = `clock__seg clock__seg--${item.state}`;
-      seg.style.flexGrow = item.estimated_minutes;
-      seg.title = `${item.title} · ${item.estimated_minutes} min`;
-      return seg;
-    }),
-  );
-
-  const concluded = agendaItems.filter((it) => it.state === "concluded").length;
-  $("agenda-count").textContent = agendaItems.length ? `${concluded}/${agendaItems.length} concluded` : "";
-  $("agenda-empty").hidden = agendaItems.length > 0;
+function renderControls() {
+  const active = ["live", "paused"].includes(meetingState.status);
+  $("start-recording").disabled =
+    controlPending || !meetingId || meetingState.status !== "ready";
+  $("pause").disabled = controlPending || !active;
+  $("stop-recording").disabled = controlPending || !active;
+  $("pause").textContent = meetingState.status === "paused" ? "Tiếp tục" : "Tạm dừng";
+  $("pause").setAttribute("aria-pressed", String(meetingState.status === "paused"));
+  $("live-badge").hidden = !active;
+  $("live-badge").textContent =
+    meetingState.status === "paused" ? "ĐÃ TẠM DỪNG" : "ĐANG GHI ÂM";
+  $("go-after-box").hidden = !meetingState.minutes_ready &&
+    !(meetingState.transcript_saved && meetingState.error?.recoverable);
+  $("go-after").href = `/after_meeting.html?meeting=${encodeURIComponent(meetingId)}`;
+  $("transcript-status").textContent = {
+    ready: "Sẵn sàng bắt đầu", live: "Đang ghi âm",
+    paused: "Đã tạm dừng", processing: "Đang xử lý sau cuộc họp",
+    review: "Biên bản đã sẵn sàng", archived: "Cuộc họp đã hoàn tất",
+  }[meetingState.status] ?? "Đang tải cuộc họp…";
 }
 
-async function loadAgenda() {
-  try {
-    const result = await api.getAgenda(meetingId);
-
-    agendaItems = result.items;
-
-    renderAgenda();
-  } catch (e) {
-    showError(`Could not load the agenda: ${e.message}`);
+function applyState(state) {
+  meetingState = { ...meetingState, ...state };
+  if (["review", "archived"].includes(meetingState.status)) {
+    meetingState.minutes_ready = true;
   }
-}
-
-// Tiêu đề và dòng thông tin của header lấy từ backend.
-async function loadMeeting() {
-  try {
-    const m = await api.getMeeting(meetingId);
-    $('meeting-title').textContent = m.topic;
-    const day = new Date(m.created_at).toLocaleDateString('en-US', { dateStyle: 'full' });
-    $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} min`, m.id].join(' · ');
-  } catch (e) {
-    showError(`${e.code ?? 'ERROR'}: ${e.message}`);
+  if (state.remaining_seconds !== undefined) {
+    timerAnchor = { remaining: state.remaining_seconds, at: performance.now() };
+  } else if (timerAnchor) {
+    // Freeze/rebase between authoritative timer.sync messages.
+    timerAnchor = { remaining: Number($("meeting-timer").dataset.remaining ?? timerAnchor.remaining),
+      at: performance.now() };
   }
+  if (meetingState.status !== "live") resetLevel();
+  renderControls();
+  tick();
 }
 
-render();
-if (meetingId) {
-  loadMeeting();
-  loadAgenda();
+function tick() {
+  if (!timerAnchor) return;
+  const delta = meetingState.status === "live"
+    ? (performance.now() - timerAnchor.at) / 1000 : 0;
+  const remaining = Math.max(0, timerAnchor.remaining - delta);
+  $("meeting-timer").dataset.remaining = String(remaining);
+  const seconds = Math.ceil(remaining);
+  $("meeting-timer").textContent =
+    `Còn lại ${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-$("pause").addEventListener("click", () => {
-  if (transcriptTestSocket?.readyState !== WebSocket.OPEN || !realtimeReady || realtimeStopping || pausePending) return;
-  pausePending = true;
-  transcriptTestSocket.send(JSON.stringify({type: realtimePaused ? "resume" : "pause"}));
-  renderRealtimeControls();
-});
-
-$("stop-transcript").addEventListener("click", () => {
-  if (transcriptTestSocket?.readyState !== WebSocket.OPEN || !realtimeReady || realtimeStopping) return;
-  realtimeStopping = true;
-  transcriptTestSocket.send(JSON.stringify({type: "stop"}));
-  $("test-transcript-status").textContent = "Stopping and processing the last part…";
-  renderRealtimeControls();
-});
-
-$("test-transcript").addEventListener("click", () => {
-  if (!meetingId || transcriptTestSocket || realtimeTranscriptSaved || finished) return;
-  realtimeReady = false;
-  realtimePaused = false;
-  realtimeStopping = false;
-  pausePending = false;
-
-  $("error").hidden = true;
-  resetRealtimeLevel("...");
-  segments = [];
-  renderSegments();
-  $("test-transcript-partial").textContent = "";
-
-  $("test-transcript").disabled = true;
-  $("test-transcript-status").textContent = "Connecting…";
-
-  let completed = false;
-  let failed = false;
-
-  transcriptTestSocket = connectTranscriptTest(meetingId, {
-    onOpen() {
-      $("test-transcript-status").textContent =
-        "Connected to the backend — opening the ElevenLabs session…";
-      renderRealtimeControls();
-    },
-
-    onMessage(message) {
-      if (message.type === "level") {
-        if (realtimeReady && !realtimePaused && !realtimeStopping) {
-          showRealtimeLevel(message);
-        }
-
-        return;
-      }
-      if (message.type === "partial") {
-        $("test-transcript-partial").textContent = message.text;
-      }
-
-      if (message.type === "committed") {
-        segments.push(message.text);
-        renderSegments();
-        $("test-transcript-partial").textContent = "";
-      }
-
-      if (message.type === "done") {
-        realtimeReady = false;
-        completed = true;
-        realtimeTranscriptSaved = message.saved === true;
-
-        if (realtimeTranscriptSaved) {
-          hasTranscript = true;
-          finished = true;
-
-          // Hiển thị đúng bản backend đã lưu.
-          segments = message.transcript.split("\n").filter(Boolean);
-          renderSegments();
-          $("test-transcript-partial").textContent = "";
-
-          $("test-transcript-status").textContent =
-            "Transcript saved. You can move on to the minutes.";
-
-          render();
-        } else {
-          $("test-transcript-status").textContent =
-            "The session ended but the transcript was not saved.";
-        }
-      }
-
-      if (message.type === "error") {
-        failed = true;
-        realtimeReady = false;
-        resetRealtimeLevel("Connection error");
-        $("test-transcript-status").textContent = message.message;
-      }
-
-      if (message.type === "ready") {
-        realtimeReady = true;
-        resetRealtimeLevel("Waiting for speech…");
-        $("test-transcript-status").textContent = message.message;
-      }
-      if (message.type === "paused" || message.type === "resumed") {
-        realtimePaused = message.type === "paused";
-        pausePending = false;
-        resetRealtimeLevel(
-          realtimePaused ? "Microphone paused" : "Waiting for speech…"
-        );
-        if (!realtimeStopping) $("test-transcript-status").textContent = message.message;
-      }
-      if (message.type === "stopping") {
-        realtimeStopping = true;
-        resetRealtimeLevel("Microphone stopped");
-        $("test-transcript-status").textContent = message.message;
-      }
-      renderRealtimeControls();
-    },
-
-    onError(message) {
-      failed = true;
-      realtimeReady = false;
-      resetRealtimeLevel("Connection error");
-      $("test-transcript-status").textContent = message;
-      renderRealtimeControls();
-    },
-
-    onClose() {
-      transcriptTestSocket = null;
-      realtimeReady = false;
-      realtimePaused = false;
-      realtimeStopping = false;
-      pausePending = false;
-      render();
-      resetRealtimeLevel("Microphone stopped");
-
-      if (!completed && !failed) {
-        $("test-transcript-status").textContent =
-          "The connection closed before the transcript was saved.";
-      }
-    },
-  });
-  render();
-});
-
-function showRealtimeLevel(message) {
-  $("audio-level").value = message.level;
-
-  if (message.dbfs < -50) {
-    quietSince ??= Date.now();
-
-    $("audio-level-text").textContent =
-      Date.now() - quietSince >= 3000
-        ? "Very weak signal. Try speaking and check the microphone."
-        : "Waiting for speech…";
-  } else {
-    quietSince = null;
-
-    $("audio-level-text").textContent =
-      `Signal level: ${message.dbfs} dBFS`;
-  }
-}
-
-function resetRealtimeLevel(text) {
+function resetLevel() {
   quietSince = null;
   $("audio-level").value = 0;
-  $("audio-level-text").textContent = text;
+  $("audio-level-text").textContent = "Chưa có tín hiệu mới";
 }
+
+function showLevel(data) {
+  if (meetingState.status !== "live") return;
+  $("audio-level").value = data.level;
+  if (data.dbfs < -50) {
+    quietSince ??= Date.now();
+    $("audio-level-text").textContent = Date.now() - quietSince >= 3000
+      ? "Tín hiệu rất nhỏ. Hãy kiểm tra microphone." : "Đang chờ tiếng nói…";
+  } else {
+    quietSince = null;
+    $("audio-level-text").textContent = `Mức tín hiệu: ${data.dbfs} dBFS`;
+  }
+}
+
+function mergeSegments(items) {
+  for (const segment of items) {
+    segments.set(segment.id, segment);
+  }
+  if (items.length) lastSegmentId = items.at(-1).id;
+  $("transcript-final").textContent = [...segments.values()].map(s => s.text).join("\n");
+  $("transcript-empty").hidden = segments.size > 0;
+}
+
+function renderAgenda(items) {
+  agendaItems = items;
+  $("agenda-list").replaceChildren();
+  const labels = {
+    not_discussed: "Chưa thảo luận", in_progress: "Đang thảo luận",
+    discussed: "Đã thảo luận", concluded: "Đã chốt",
+  };
+  for (const item of [...items].sort((a, b) => a.order - b.order)) {
+    const row = document.createElement("li");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.disabled = true;
+    checkbox.checked = ["discussed", "concluded"].includes(item.state);
+    checkbox.setAttribute("aria-label", item.title);
+    const label = document.createElement("span");
+    label.textContent = ` ${item.title} — ${labels[item.state] ?? item.state}`;
+    row.append(checkbox, label);
+    $("agenda-list").appendChild(row);
+  }
+  $("agenda-empty").hidden = items.length > 0;
+}
+
+function addSummary(item) {
+  const key = `${item.created_at}:${item.revision}`;
+  if (summaries.has(key)) return;
+  summaries.set(key, item);
+  const container = $("live-summary");
+  for (const old of container.querySelectorAll("details")) old.open = false;
+  const entry = document.createElement("details");
+  entry.open = true;
+  const heading = document.createElement("summary");
+  heading.textContent =
+    `${new Date(item.created_at).toLocaleTimeString("vi-VN")} — đến đoạn ${item.revision}`;
+  const content = document.createElement("div");
+  content.style.whiteSpace = "pre-wrap";
+  content.textContent = item.text;
+  entry.append(heading, content);
+  container.appendChild(entry);
+  $("summary-status").textContent = `Có ${summaries.size} bản tóm tắt tạm thời.`;
+}
+
+// REST snapshot is fetched after subscribing. Events arriving during these requests
+// remain queued in eventChain; replay only events newer than the snapshot seq.
+async function synchronize() {
+  const state = await api.getMeetingState(meetingId);
+  let transcript;
+  try {
+    transcript = await api.getTranscript(meetingId, lastSegmentId);
+  } catch (error) {
+    if (error.code !== "INVALID_TRANSCRIPT_CURSOR") throw error;
+    transcript = await api.getTranscript(meetingId);
+    segments.clear();
+    lastSegmentId = null;
+  }
+  const [agenda, history] = await Promise.all([
+    api.getAgenda(meetingId), api.getSummaries(meetingId),
+  ]);
+  mergeSegments(transcript.segments);
+  renderAgenda(agenda.items);
+  for (const item of history.items) addSummary(item);
+  applyState(state);
+  lastSeq = state.seq;
+  if (state.error) showError(state.error.message);
+}
+
+function enqueue(action) {
+  const next = eventChain.then(action);
+  eventChain = next.catch(error => showError(error.message));
+  return next;
+}
+
+async function handleEnvelope(message) {
+  if (lastSeq === null || message.seq > lastSeq + 1) {
+    await synchronize();
+  }
+  if (message.seq <= lastSeq) return;
+  lastSeq = message.seq;
+  const data = message.data;
+  switch (message.type) {
+    case "meeting.status":
+      applyState(data);
+      if (data.status === "review") await synchronize();
+      break;
+    case "transcript.segment":
+      // REST may already have supplied this segment while synchronization ran.
+      if (!segments.has(data.id)) mergeSegments([data]);
+      $("transcript-partial").textContent = "";
+      break;
+    case "transcript.partial":
+      $("transcript-partial").textContent = data.text;
+      break;
+    case "audio.level": showLevel(data); break;
+    case "summary.updated": addSummary(data); break;
+    case "timer.sync": applyState(data); break;
+    case "timer.warning": showError(`Cuộc họp còn ${data.remaining_seconds} giây.`); break;
+    case "minutes.ready": await synchronize(); break;
+    case "agenda.item_state": {
+      const item = agendaItems.find(item => item.id === data.agenda_item_id);
+      if (item) item.state = data.to;
+      renderAgenda(agendaItems);
+      break;
+    }
+    case "error":
+      showError(data.message);
+      await synchronize();
+      break;
+  }
+}
+
+function openChannel() {
+  if (channel || pageClosed) return;
+  channel = connectMeetingSocket(meetingId, {
+    onOpen() {
+      $("connection-status").textContent = "Đã kết nối cập nhật";
+      enqueue(synchronize).catch(retrySynchronization);
+    },
+    onMessage(message) { enqueue(() => handleEnvelope(message)).catch(retrySynchronization); },
+    onError(message) { $("connection-status").textContent = message; },
+    onClose(event) {
+      resetLevel();
+      $("connection-status").textContent = event.code === 1008
+        ? "Phiên không còn tồn tại."
+        : "Đang kết nối lại. Các nút điều khiển REST vẫn hoạt động.";
+      if (event.code === 1008) channel = null;
+      // Never mark recording stopped merely because the viewer disconnected.
+    },
+  });
+}
+
+function retrySynchronization() {
+  channel?.close();
+  channel = null;
+  clearTimeout(reconnectTimer);
+  if (!pageClosed) reconnectTimer = setTimeout(openChannel, 2000);
+}
+
+async function runControl(action) {
+  if (controlPending) return;
+  controlPending = true;
+  $("error").hidden = true;
+  renderControls();
+  try {
+    await action();
+    openChannel();
+    await enqueue(synchronize);
+  } catch (error) {
+    showError(`${error.code ?? "ERROR"}: ${error.message}`);
+    // An HTTP timeout does not mean that the server failed to execute start.
+    try {
+      await enqueue(synchronize);
+      if (["live", "paused", "processing"].includes(meetingState.status)) openChannel();
+    } catch { /* Preserve the original error. */ }
+  } finally {
+    controlPending = false;
+    renderControls();
+  }
+}
+
+$("start-recording").addEventListener("click", () => runControl(() => api.startMeeting(meetingId)));
+$("pause").addEventListener("click", () => runControl(() =>
+  meetingState.status === "paused" ? api.resumeMeeting(meetingId) : api.pauseMeeting(meetingId)
+));
+$("stop-recording").addEventListener("click", () => runControl(() => api.stopMeeting(meetingId)));
+
+const ticker = setInterval(tick, 1000);
+window.addEventListener("pagehide", () => {
+  pageClosed = true;
+  clearTimeout(reconnectTimer);
+  channel?.close();
+  clearInterval(ticker);
+});
+
+async function load() {
+  if (!meetingId) {
+    showError("Thiếu mã cuộc họp. Hãy quay lại bước agenda.");
+    return;
+  }
+  try {
+    const meeting = await api.getMeeting(meetingId);
+    $("meeting-title").textContent = meeting.topic;
+    $("meeting-meta").textContent =
+      `${LANGUAGE[meeting.language] ?? meeting.language} · ${meeting.duration_minutes} phút · ${meeting.id}`;
+    await enqueue(synchronize);
+    if (["live", "paused", "processing", "review", "archived"].includes(meetingState.status)) openChannel();
+  } catch (error) {
+    showError(error.message);
+  }
+}
+renderControls();
+load();

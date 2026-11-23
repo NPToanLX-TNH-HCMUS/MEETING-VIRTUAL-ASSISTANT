@@ -17,7 +17,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 SAMPLE_RATE = 44100
 BLOCK_SIZE = 4410
-MAX_SECONDS = 300  # Wall-clock limit, including pauses.
+MAX_SECONDS = 300  # Recording time limit, excluding pauses.
 FINAL_WAIT_SECONDS = 2
 
 URL = (
@@ -58,7 +58,7 @@ def calculate_audio_level(block):
         "dbfs": round(max(dbfs, -60), 1),
     }
 
-async def stream_transcript(send_event, language="vi", stop_event=None, pause_event=None, audio_path=None):
+async def stream_transcript(send_event, language="vi", stop_event=None, pause_event=None, audio_path=None, max_seconds=MAX_SECONDS):
     stop_event = stop_event if stop_event is not None else asyncio.Event()
     pause_event = pause_event if pause_event is not None else asyncio.Event()
     if language not in {"vi", "en"}:
@@ -174,12 +174,19 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
             ) as microphone:
                 started_at = monotonic()
                 paused = False
+                paused_at = None
+                paused_seconds = 0.0
+
+                def elapsed():
+                    current = paused_at if paused_at is not None else monotonic()
+                    return current - started_at - paused_seconds
+
                 await send_event({
                     "type": "ready",
-                    "message": "Đang nhận diện. Có thể tạm dừng hoặc dừng; giới hạn 5 phút tính cả thời gian tạm dừng.",
+                    "message": "Đang nhận diện trực tiếp.",
                 })
 
-                while not stop_event.is_set() and monotonic() - started_at < MAX_SECONDS:
+                while not stop_event.is_set() and elapsed() < max_seconds:
                     # Nếu tác vụ nhận bị lỗi hoặc kết nối đã đóng,
                     # dừng thu thay vì tiếp tục gửi âm thanh.
                     if receiver.done():
@@ -197,16 +204,14 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
                         paused = pause_event.is_set()
                         if paused:
                             microphone.stop()
+                            paused_at = monotonic()
+                            await send_event({"type": "paused"})
                             await drain_audio(connection)
                         else:
                             microphone.start()
-                        await send_event({
-                            "type": "paused" if paused else "resumed",
-                            "message": (
-                                "Đã tạm dừng microphone. Các câu trước đó vẫn được giữ."
-                                if paused else "Đã tiếp tục nhận diện."
-                            ),
-                        })
+                            paused_seconds += monotonic() - paused_at
+                            paused_at = None
+                            await send_event({"type": "resumed"})
 
                     if paused:
                         # No microphone audio is captured. Synthetic silence keeps the
