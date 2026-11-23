@@ -21,7 +21,9 @@
 [02:28.3] SPEAKER_2: Close the voting, announce results.
 [02:30.2] SPEAKER_5: See Black. Espinosa.
 [02:35.4] SPEAKER_5: Espinosa's.
-[02:36.8] SPEAKER_2: Espinosa. Oh, sorry. Yeah.
+[02:36.9] SPEAKER_2: Espinosa.
+[02:37.6] SPEAKER: Oh, sorry.
+[02:38.4] SPEAKER_2: Yeah.
 [02:40.4] SPEAKER_5: 12 ayes.
 [02:42.3] SPEAKER_2: 12 ayes. Council Bill 898 has been postponed. All right, let's see. Let me make sure we have everything.
 [02:56.8] SPEAKER_2: Okay. We're ready for the block vote. All other bills for introduction have been ordered published. Council members, please remember this is
@@ -31,4 +33,5 @@
 [03:34.2] SPEAKER_1: This is a bill that the auditor's office is bringing forward and is a change to the prevailing wage ordinance. And I just want to thank him for his work in reaching out and including both industry partners as well as labor unions. And the fact that all sides agreed and,
 [03:58.7] SPEAKER_1: you know, supported this bill moving forward. I just want to say thanks for for that work that was done on this particular ordinance that we're not going to call out and discuss tonight. Thank you so much.
 [04:09.3] SPEAKER_2: Okay. Thank you.
+[04:10.6] SPEAKER_1: Thank you. So, Mr. President
 [04:12.4] SPEAKER_2: Thanks for being here, Mr. Auditor.
