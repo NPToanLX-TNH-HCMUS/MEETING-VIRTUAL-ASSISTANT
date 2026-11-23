@@ -11,10 +11,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import ValidationError
 
-from ...api.objects import MinutesExtraction
 from ..utils.llm import LLMCallError, call_llm
+from ..utils.objects import MinutesExtraction
 
-load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 
 
 MINUTES_SCHEMA = {

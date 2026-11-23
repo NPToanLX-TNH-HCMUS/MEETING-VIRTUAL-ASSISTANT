@@ -16,12 +16,12 @@ export function connectTranscriptTest(meetingId, handlers) {
       const message = JSON.parse(event.data);
       handlers.onMessage?.(message);
     } catch {
-      handlers.onError?.("Không đọc được dữ liệu transcript.");
+      handlers.onError?.("Could not read the transcript data.");
     }
   });
 
   socket.addEventListener("error", () => {
-    handlers.onError?.("Không kết nối được WebSocket.");
+    handlers.onError?.("Could not connect to the WebSocket.");
   });
 
   socket.addEventListener("close", () => {

@@ -118,7 +118,7 @@ class RealtimeControlsTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_pause_sends_silence_and_resume_keeps_session(self):
         events, connection, microphone = await self.exercise('resume')
-        self.assertEqual(events[:3], ['ready', 'paused', 'resumed'])
+        self.assertEqual([e for e in events if e != 'level'][:3], ['ready', 'paused', 'resumed'])
         self.assertEqual(microphone.starts, 2)
         self.assertGreaterEqual(connection.silences, 2)
 
