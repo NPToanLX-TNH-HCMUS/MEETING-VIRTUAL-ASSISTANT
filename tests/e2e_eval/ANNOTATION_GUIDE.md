@@ -2,8 +2,8 @@
 
 | Field | Value |
 |---|---|
-| Version | 0.6 (draft) |
-| Date | 2026-11-20 |
+| Version | 0.7 (draft) |
+| Date | 2026-11-23 |
 | Scope | Ground truth of the end-to-end scenarios (English meetings) |
 | Related | `USE_CASES.md`, `SPECIAL_CASES.md`, `SCENARIOS.md`, `sources.csv`, `coverage.csv` |
 
@@ -43,7 +43,7 @@ One utterance per line: `[mm:ss.s] ROLE: text`. Times are seconds from the start
 
 **MeetingBank clips.** `scripts/mb_transcript.py` drafts the file from the MeetingBank transcript, which was made by a speech-to-text service (Speechmatics), not by people. It has more errors, mostly in names (`scenario.json` → `source.known_draft_errors` lists the ones already spotted), so the whole clip must be corrected by listening. Speaker labels stay `SPEAKER_n`.
 
-**Scoring normalisation** (done by the evaluator, not in the file): lower case; punctuation removed; contractions expanded; "um", "uh", "er", "hmm", "mm-hmm" removed; `[inaudible]` removed; numbers in digits and in words treated as equal; British and American spellings ("colour" / "color") and a few words written as one or two words ("kick-off" / "kickoff") treated as equal.
+**Scoring normalisation** (done by the evaluator, not in the file): lower case; punctuation removed; contractions expanded; "um", "uh", "er", "hmm", "mm-hmm" removed; `[inaudible]` removed; numbers in digits and in words treated as equal, and a decimal point ignored ("two point five" / "2.5", "twelve fifty" / "12.50"); "dunno" read as "do not know"; British and American spellings ("colour" / "color") and a few words written as one or two words ("kick-off" / "kickoff") treated as equal.
 
 ---
 
@@ -212,3 +212,4 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 0.4 | 2026-11-20 | Decision 11: synthetic meetings. |
 | 0.5 | 2026-11-20 | Decisions 12–14: inaudible words removed, AMI sentence lines, announced requirements optional. |
 | 0.6 | 2026-11-20 | Decision 15: English names in the team meetings. |
+| 0.7 | 2026-11-23 | Scoring normalisation: decimal point and "dunno"; transcripts checked a second time with `harness/stt_check.py`. |

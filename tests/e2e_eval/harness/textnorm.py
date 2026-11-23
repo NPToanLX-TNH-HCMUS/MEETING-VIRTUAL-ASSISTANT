@@ -4,8 +4,10 @@ Rules (ANNOTATION_GUIDE.md, section 1, "Scoring normalisation"):
 lower case; diacritics removed; punctuation removed; contractions expanded;
 fillers ("um", "uh", "er", "hmm", "mm-hmm") removed; [inaudible] and other
 bracket tags removed; numbers written in words and in digits treated as equal
-(both become digits); British and American spellings, and a few words written
-as one or two words ("kick-off" / "kickoff"), treated as equal.
+(both become digits); a decimal point is not a word ("two point five", "2.5"
+and "twelve fifty", "12.50" give the same tokens); British and American
+spellings, and a few words written as one or two words ("kick-off" /
+"kickoff"), treated as equal.
 """
 
 import re
@@ -13,7 +15,8 @@ import unicodedata
 
 FILLERS = {"um", "uh", "er", "erm", "uhm", "hmm", "mm", "mhm", "mmhmm", "hm"}
 
-INFORMAL = {"gonna": "going to", "wanna": "want to", "gotta": "got to", "kinda": "kind of", "ok": "okay"}
+INFORMAL = {"gonna": "going to", "wanna": "want to", "gotta": "got to", "kinda": "kind of", "ok": "okay",
+            "dunno": "do not know", "whoohoo": "woohoo"}
 
 # British spellings (AMI annotation) and American spellings (most speech-to-text output) are equal.
 SPELLING = {
@@ -35,7 +38,10 @@ SPELLING = {
 
 # Words written as one or two words depending on the writer.
 COMPOUNDS = {("kick", "off"): "kickoff", ("all", "right"): "alright", ("e", "mail"): "email",
-             ("any", "more"): "anymore", ("on", "line"): "online", ("set", "up"): "setup"}
+             ("any", "more"): "anymore", ("on", "line"): "online", ("set", "up"): "setup",
+             ("width", "wise"): "widthwise", ("height", "wise"): "heightwise",
+             ("straight", "forward"): "straightforward", ("home", "page"): "homepage",
+             ("woo", "hoo"): "woohoo"}
 
 PRONOUN_IS = {"it", "that", "what", "there", "here", "he", "she", "who", "where", "how"}
 
@@ -173,7 +179,10 @@ def tokens(text: str) -> list[str]:
             merged[-1] = COMPOUNDS[(merged[-1], w)]
         else:
             merged.append(w)
-    return _numbers_to_digits(merged)
+    digits = _numbers_to_digits(merged)
+    # "2.5" loses its dot with the punctuation; drop the spoken "point" as well.
+    return [w for k, w in enumerate(digits)
+            if not (w == "point" and k + 1 < len(digits) and digits[k + 1].isdigit())]
 
 
 def normalize(text: str) -> str:
