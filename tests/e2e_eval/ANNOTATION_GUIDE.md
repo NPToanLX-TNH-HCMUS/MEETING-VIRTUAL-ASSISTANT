@@ -132,6 +132,7 @@ Relative dates are resolved from the scenario's `meeting_date`, with the convers
 | Phrase | `due` |
 |---|---|
 | "today", "this afternoon", "the next meeting is in thirty minutes", "in the thirty minutes after lunch" | the meeting date |
+| "before Friday", "by Friday" (a day of the week) | that day, as with "by" in the UC7 table |
 | "before the next meeting" with no date or day stated | `null` |
 | "ASAP", "soon", no deadline | `null` |
 
@@ -199,6 +200,7 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 13 | 2026-11-20 | AMI transcripts have one sentence per line (scripts/ami_transcript.py splits at . ? !), so that the order of the lines follows the audio when people talk over each other. Speech that is there but cannot be made out in the clip (quiet overlap) is written `[inaudible]`, which is not scored; speech that cannot be heard at all is removed (decision 12). |
 | 14 | 2026-11-20 | Requirements handed down from outside the group and only announced (S01: price, market and cost from the brief; S02: teletext, TV only, corporate colour and slogan from the company) are optional decisions. Only what the group settles in the meeting is a required decision. |
 | 15 | 2026-11-20 | The people of the synthetic team meetings (S06–S08, S12) have English first names (Ann, Ben, Henry, Kevin, Tim, Tom); their audio was read again by the same voices. |
+| 16 | 2026-11-23 | "Before <day>" is due on that day, like "by <day>" (S07: "before Friday" is the Friday). Minutes and summary points state only what is said in the clip; facts known only from the documents (bill amounts, fund names) are left out. |
 
 ---
 
@@ -212,4 +214,4 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 0.4 | 2026-11-20 | Decision 11: synthetic meetings. |
 | 0.5 | 2026-11-20 | Decisions 12–14: inaudible words removed, AMI sentence lines, announced requirements optional. |
 | 0.6 | 2026-11-20 | Decision 15: English names in the team meetings. |
-| 0.7 | 2026-11-23 | Scoring normalisation: decimal point and "dunno"; transcripts checked a second time with `harness/stt_check.py`. |
+| 0.7 | 2026-11-23 | Scoring normalisation: decimal point and "dunno"; transcripts checked a second time with `harness/stt_check.py`; decision 16. |

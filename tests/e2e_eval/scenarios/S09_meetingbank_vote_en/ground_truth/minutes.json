@@ -2,11 +2,11 @@
   "summary_points": [
     {
       "id": "P1",
-      "text": "A councilman thanked Councilman Flynn and the task force for the work on the Code of Ethics bill, which stays in the block vote"
+      "text": "Councilman Espinosa thanked Councilman Flynn for his work with the task force on the bill, which stays in the block vote"
     },
     {
       "id": "P2",
-      "text": "Council Bill 17-0156, a $4 million supplemental appropriation for a business incentive, was on second reading"
+      "text": "Council Bill 17-0156, a contingency fund allocation for an investment with a developer, was on second reading for final consideration"
     },
     {
       "id": "P3",
@@ -14,18 +14,18 @@
     },
     {
       "id": "P4",
-      "text": "In the roll-call vote the bill passed with two votes against"
+      "text": "In the roll-call vote the bill passed with eight ayes and two nays"
     }
   ],
   "decisions": [
     {
       "id": "D1",
-      "text": "Council Bill 17-0156, the $4 million supplemental appropriation from the General Contingency Fund, passed with two votes against",
+      "text": "Council Bill 17-0156 passed on final consideration with eight ayes and two nays",
       "time": 285.0
     },
     {
       "id": "D2",
-      "text": "The ethics bill 16-1202 stays in the block vote",
+      "text": "The bill championed by Councilman Flynn stays in the block vote",
       "time": 60.2,
       "optional": true
     }

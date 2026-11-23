@@ -17,9 +17,9 @@ The project manager introduced the new remote control project: the remote has to
 |---|---|---|---|
 | [x] | Put the minutes of the kick-off meeting in the project folder | Project Manager | 2026-11-02 |
 | [x] | Send the project instructions to all team members by email | Project Manager | 2026-11-02 |
-| [ ] | Work on the working design of the remote | Industrial Designer | 2026-11-09 |
-| [ ] | Work on the technical functions of the remote | User Interface Designer | 2026-11-09 |
-| [ ] | Define the user requirements the remote has to fulfil | Marketing Expert | 2026-11-09 |
+| [ ] | Work on the working design of the remote | Industrial Designer | 2026-11-02 |
+| [ ] | Work on the technical functions of the remote | User Interface Designer | 2026-11-02 |
+| [ ] | Define the user requirements the remote has to fulfil | Marketing Expert | 2026-11-02 |
 
 ## Unresolved Issues
 
