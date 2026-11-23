@@ -13,6 +13,7 @@ Runs the scenarios in `../scenarios/` through the backend and scores the outputs
 | `data.py` | Loads scenarios, ground truth and run outputs |
 | `selftest.py` | Checks the scorer: perfect outputs score perfectly, planted mistakes are caught |
 | `validate.py` | Checks the dataset: audio length and SHA-256, transcript format, quotes, ids, aliases, key entities, agenda spans, check parameters |
+| `stt_check.py` | Sends the audio of each scenario to ElevenLabs once (cached), aligns the result with the ground-truth transcript and lists every place where they disagree, with its time; only those places need listening |
 
 ## Usage
 
@@ -25,6 +26,7 @@ python tests/e2e_eval/harness/run.py --all --name baseline
 python tests/e2e_eval/harness/run.py --scenarios S04 S07 --name baseline   # run some again; the report covers all
 python tests/e2e_eval/harness/score.py --run tests/e2e_eval/runs/baseline   # score again, no API calls
 python tests/e2e_eval/harness/run.py --scenarios S10 --app-root ../mva-fix --name fix_s10   # test a fix branch checked out elsewhere
+python tests/e2e_eval/harness/stt_check.py                          # list places where STT and the ground-truth transcript disagree
 ```
 
 S11 needs its generated documents first: `python tests/e2e_eval/scripts/make_s11_files.py`.

@@ -1,5 +1,7 @@
 [00:01.4] PM: Okay, everybody all set to start the meeting?
 [00:03.5] PM: Okay, we've got half an hour for this one um to uh discuss the um functional design.
+[00:05.6] ID: Could you plug me in?
+[00:10.4] ID: Okay. Thanks.
 [00:12.8] PM: All ready to go?
 [00:13.7] PM: Okay.
 [00:15.1] PM: Um so hopefully you've all been working away, and I've put the minutes of the last meeting in the project folder.
@@ -23,7 +25,7 @@
 [02:03.8] PM: So that's something we can discuss as well.
 [02:05.5] PM: So those are the three things, just not to worry about teletext, uh only control the TV, and um and uh incorporate the uh colour and slogan of the company.
 [02:17.7] PM: Um so is everybody okay with any of that, or do you want me to recap at all?
-[02:24.5] ID: [inaudible]
+[02:25.0] ID: No, no, all set.
 [02:26.1] PM: Right um, time for presentations then.
 [02:28.3] PM: Who would like to go first?
 [02:31.9] UI: I'll go first.
