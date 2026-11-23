@@ -18,6 +18,10 @@ class Meeting(BaseModel):
     ended_at: str | None
 
 
+class MeetingList(BaseModel):
+    items: list[Meeting]
+
+
 class Document(BaseModel):
     id: str
     meeting_id: str
@@ -71,7 +75,7 @@ class NewMeeting(BaseModel):
     planned_points: list[
         str
     ] = []  # one entry per line of the "Points you plan to present" box
-    previous_meeting_id: str | None = None  # always null for now
+    previous_meeting_id: str | None = None
 
 
 class AgendaItemEdit(BaseModel):

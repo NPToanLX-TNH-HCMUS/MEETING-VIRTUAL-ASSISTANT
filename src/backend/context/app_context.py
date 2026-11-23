@@ -15,12 +15,16 @@ class MeetingNotFoundError(KeyError): ...
 
 
 class AppContext:
-    def __init__(self, data_root: Path = Path("data")):
+    def __init__(
+        self,
+        data_root: Path = Path("data"),
+        repository: MeetingRepository | None = None,
+    ):
         # Attribute get from other modules
         self.storage = StorageManager(data_root)
         self.meeting_manager = MeetingManager(self.storage)
         self.converter = MarkDownConverter()
-        self.meeting_repository = MeetingRepository()
+        self.meeting_repository = repository or MeetingRepository()
 
         # Private attributes
         self._sessions: dict[str, MeetingSession] = {}

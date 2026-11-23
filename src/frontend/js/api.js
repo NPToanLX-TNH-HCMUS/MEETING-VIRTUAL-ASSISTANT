@@ -30,6 +30,10 @@ async function request(method, path, { json, form, timeoutMs = 30_000 } = {}) {
 }
 
 export const api = {
+  // GET /meetings?status=... -> { items: Meeting[] }
+  listMeetings: (status) =>
+    request('GET', status ? `/meetings?status=${encodeURIComponent(status)}` : '/meetings'),
+
   // POST /meetings -> { id, topic, status, ... }
   createMeeting: (body) => request('POST', '/meetings', { json: body }),
 

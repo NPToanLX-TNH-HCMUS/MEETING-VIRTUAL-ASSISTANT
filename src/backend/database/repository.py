@@ -133,6 +133,38 @@ class MeetingRepository:
 
             return session
 
+    def meeting_exists(self, meeting_id: str) -> bool:
+        """Return True if a meeting row with the given id exists in the database."""
+        with self._session() as db:
+            stmt = select(MeetingModel.id).where(MeetingModel.id == meeting_id)
+            return db.scalar(stmt) is not None
+
+    def list_meetings(
+        self, status: str | None = None, limit: int = 50
+    ) -> list[dict]:
+        """List meetings ordered newest-first, optionally filtered by lifecycle status."""
+        with self._session() as db:
+            stmt = select(MeetingModel).order_by(MeetingModel.created_at.desc())
+            if status is not None:
+                stmt = stmt.where(MeetingModel.status == status)
+            stmt = stmt.limit(limit)
+            rows = db.scalars(stmt).all()
+            return [
+                {
+                    "id": row.id,
+                    "topic": row.topic,
+                    "language": row.language,
+                    "duration_minutes": row.duration_minutes,
+                    "status": row.status,
+                    "planned_points": list(row.planned_points),
+                    "previous_meeting_id": row.previous_meeting_id,
+                    "created_at": row.created_at,
+                    "started_at": row.started_at,
+                    "ended_at": row.ended_at,
+                }
+                for row in rows
+            ]
+
     def create_meeting(self, meeting: dict, status: str = "draft") -> None:
         """Persist a newly created meeting row."""
         with self._session() as db:

@@ -15,7 +15,7 @@ import re
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, Query, UploadFile
 
 from ..agenda_extractor.agenda_extractor import extract_topics
 from ..document.markdown_converter import FileConversionError, MarkDownConverter
@@ -25,12 +25,27 @@ from ..utils.objects import (
     AgendaProposal,
     Document,
     Meeting,
+    MeetingList,
     NewMeeting,
 )
 from ..utils.utils import error, now
 from .common import CtxDep, SessionDep, meeting_response
 
 router = APIRouter(prefix="/meetings", tags=["pre-meeting"])
+
+
+# GET /meetings - list meetings (used to pick previous_meeting_id)
+
+
+@router.get("", response_model=MeetingList)
+def list_meetings(
+    ctx: CtxDep,
+    status: str | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+):
+    """List persisted meetings (newest first), optionally filtered by status."""
+    items = ctx.meeting_repository.list_meetings(status=status, limit=limit)
+    return {"items": items}
 
 
 # POST /meetings  - create the meeting
@@ -42,6 +57,18 @@ def create_meeting(body: NewMeeting, ctx: CtxDep):
     FRONT END SENDS:  NewMeeting Object
     BACK END RETURNS: Meeting, status "draft". The UI keeps meeting.id for every later call.
     """
+    # Validate before creating a session folder so invalid references leave no orphan data.
+    if body.previous_meeting_id is not None:
+        exists = ctx.has(body.previous_meeting_id) or ctx.meeting_repository.meeting_exists(
+            body.previous_meeting_id
+        )
+        if not exists:
+            return error(
+                404,
+                "MEETING_NOT_FOUND",
+                f"No previous meeting with id {body.previous_meeting_id}",
+            )
+
     session = ctx.create_session()
     meeting = {
         "id": session.id,
