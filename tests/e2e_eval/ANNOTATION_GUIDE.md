@@ -156,10 +156,13 @@ Names of people, numbers, dates and project terms whose correct transcription ma
 
 ## 6. Review and agreement
 
-1. **Second listener.** Each scenario is checked by a person other than its annotator, who listens to the whole clip against all GT files. Their name goes in `reviewed_by` in `coverage.csv`.
+1. **Second reviewer.** Each scenario is checked by a person other than its annotator. Their name goes in `reviewed_by` in `coverage.csv`. The transcript is checked by machine and the rest by reading (decision 17):
+    - Synthetic and generated clips (S06, S07, S08, S12, S13): the audio is made from the ground truth; `harness/stt_check.py` confirms that every line was read correctly. No listening.
+    - Recorded clips (S01–S05, S09–S11): `harness/stt_check.py` lists every place where an independent speech-to-text result and the transcript disagree. The annotator settles each place; the reviewer listens to the places still marked as doubtful in `notes`.
+    - All scenarios: the reviewer reads `agenda.json`, `minutes.json` and `expected_behavior.json` against `transcript.txt` and agrees with the interpretation (decisions, assignees, due dates, states).
 2. **Double annotation** (S02, S06, S09). Two people write `minutes.json` independently; the F1 between their action items, computed with the same matcher as the metrics, must be ≥ 0.8. Differences are discussed and settled; if a rule was unclear, a decision is added to §9.
 3. **Matcher decisions.** When the automatic matcher pairs a system item and a GT item wrongly, the correct decision is written in `adjudication.json` and reused in every later run.
-4. **Statuses** in `coverage.csv`: `todo` → `in_progress` → `done` (annotator finished) → `reviewed` (second listener agreed).
+4. **Statuses** in `coverage.csv`: `todo` → `in_progress` → `done` (annotator finished) → `reviewed` (second reviewer agreed).
 
 ---
 
@@ -171,7 +174,7 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 
 ## 8. Checklist before marking a scenario `done`
 
-- [ ] `transcript.txt` checked by listening from start to end
+- [ ] `transcript.txt` checked by listening from start to end, or with `harness/stt_check.py` and every flagged place settled
 - [ ] Every agenda item has a `tracking` block; spans do not overlap
 - [ ] Every action item has `assignee`, `due`, `spoken_due`, `quote`, `time`
 - [ ] Every special case of the scenario has at least one check in `expected_behavior.json`
@@ -201,6 +204,7 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 14 | 2026-11-20 | Requirements handed down from outside the group and only announced (S01: price, market and cost from the brief; S02: teletext, TV only, corporate colour and slogan from the company) are optional decisions. Only what the group settles in the meeting is a required decision. |
 | 15 | 2026-11-20 | The people of the synthetic team meetings (S06–S08, S12) have English first names (Ann, Ben, Henry, Kevin, Tim, Tom); their audio was read again by the same voices. |
 | 16 | 2026-11-23 | "Before <day>" is due on that day, like "by <day>" (S07: "before Friday" is the Friday). Minutes and summary points state only what is said in the clip; facts known only from the documents (bill amounts, fund names) are left out. |
+| 17 | 2026-11-23 | Review without listening to whole clips: the transcript is checked by machine (audio made from the ground truth, or an independent speech-to-text run with every disagreement settled), and the second reviewer listens only to the places still in doubt and reads the other ground-truth files (section 6). Double annotation of S02, S06 and S09 is unchanged. |
 
 ---
 
@@ -214,4 +218,4 @@ Every scenario has a `meeting_date` in `scenario.json`. For AMI and MeetingBank 
 | 0.4 | 2026-11-20 | Decision 11: synthetic meetings. |
 | 0.5 | 2026-11-20 | Decisions 12–14: inaudible words removed, AMI sentence lines, announced requirements optional. |
 | 0.6 | 2026-11-20 | Decision 15: English names in the team meetings. |
-| 0.7 | 2026-11-23 | Scoring normalisation: decimal point and "dunno"; transcripts checked a second time with `harness/stt_check.py`; decision 16. |
+| 0.7 | 2026-11-23 | Scoring normalisation: decimal point and "dunno"; transcripts checked a second time with `harness/stt_check.py`; decisions 16–17 (review by machine check and reading). |
