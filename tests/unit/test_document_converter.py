@@ -93,7 +93,6 @@ class TestDocumentConverter:
             converter.convert(non_existent_file, out_file)
             
         assert not out_file.exists()
-
     def test_reject_empty_file(
         self, converter: MarkDownConverter, tmp_path: Path
     ) -> None:
@@ -125,3 +124,14 @@ class TestDocumentConverter:
             converter.convert(unsupported_file, out_file)
             
         assert not out_file.exists()
+
+
+@pytest.mark.parametrize("engine_output", ["", " \t\n"])
+def test_empty_conversion_never_overwrites_an_existing_document(converter, tmp_path, engine_output):
+    source, target = tmp_path / "input.pdf", tmp_path / "existing.md"
+    source.write_bytes(b"input handled by the mocked converter")
+    target.write_text("Keep previous document", encoding="utf-8")
+    with patch.object(converter._converter, "convert", return_value=MagicMock(text_content=engine_output)):
+        with pytest.raises(EmptyFileError):
+            converter.convert(source, target)
+    assert target.read_text(encoding="utf-8") == "Keep previous document"

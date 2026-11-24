@@ -74,8 +74,8 @@ class TestAudioToSTTIntegration:
         mock_api_response = {
             "text": "Hello team, today we will discuss Segment Tree.",
             "words": [
-                {"word": "Hello", "start": 0.1, "end": 0.4, "speaker_id": "speaker_0"},
-                {"word": "team", "start": 0.5, "end": 0.8, "speaker_id": "speaker_0"},
+                {"type": "word", "text": "Hello team, today we will discuss Segment Tree.",
+                 "start": 0.1, "end": 1.8, "speaker_id": "speaker_0"},
             ],
         }
 
@@ -84,16 +84,22 @@ class TestAudioToSTTIntegration:
             mock_post.return_value.ok = True
             mock_post.return_value.json.return_value = mock_api_response
 
-            result_text = transcriber.transcribe_file(
+            segments = transcriber.transcribe_file(
                 audio_path=meeting_audio,
                 output_path=transcript_out,  # Pass Path object directly to ensure path methods
             )
 
         # Part 3: Assert integration success on both returned text and physical file
-        assert "Segment Tree" in result_text
+        assert segments == [{
+            "Timestamp": "00:00.10 - 00:01.80",
+            "Speaker": "speaker_0",
+            "Text": mock_api_response["text"],
+        }]
         mock_post.assert_called_once()
         assert transcript_out.exists(), "Transcript file was not physically created"
-        assert "Segment Tree" in transcript_out.read_text(encoding="utf-8")
+        assert transcript_out.read_text(encoding="utf-8") == (
+            "[00:00.10 - 00:01.80] speaker_0:\n" + mock_api_response["text"]
+        )
 
     def test_empty_recording_rejected_by_stt_without_api_call(
         self, transcriber: ElevenLabsTranscriber, tmp_path: Path

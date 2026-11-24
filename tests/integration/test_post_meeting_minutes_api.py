@@ -12,27 +12,10 @@ disk persistence of minutes_draft.md and minutes_final.md, and error status guar
 """
 
 import json
-from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-
-from src.api.api import app, meetings, recorders, meeting_manager
-from src.backend.meeting_manager.storage_manager import StorageManager
-
-
-@pytest.fixture
-def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    monkeypatch.chdir(tmp_path)
-    meeting_manager._storage = StorageManager(root_dir=tmp_path / "data")
-    meetings.clear()
-    recorders.clear()
-
-    yield TestClient(app)
-
-    meetings.clear()
-    recorders.clear()
 
 
 @pytest.fixture
@@ -63,20 +46,25 @@ def processing_meeting(client: TestClient) -> str:
         },
     )
     assert save_res.status_code == 200
-    assert meetings[meeting_id]["meeting"]["status"] == "ready"
+    session = client.app.state.ctx.session(meeting_id)
+    assert session.status == "ready"
 
-    # Start recording
-    res_start = client.post(f"/api/v1/meetings/{meeting_id}/recording/start")
-    assert res_start.status_code == 200
-
-    # Stop recording -> transitions meeting to 'processing'
-    res_stop = client.post(f"/api/v1/meetings/{meeting_id}/recording/stop")
-    assert res_stop.status_code == 200
-    assert meetings[meeting_id]["meeting"]["status"] == "processing"
+    # Real lifecycle routes, simulated hardware: minutes tests must never open a mic.
+    recorder = Mock()
+    recorder.is_recording = False
+    recorder.start.side_effect = lambda: setattr(recorder, "is_recording", True)
+    recorder.stop.side_effect = lambda path: setattr(recorder, "is_recording", False)
+    with patch("src.backend.api.during_meeting.Recorder", return_value=recorder):
+        res_start = client.post(f"/api/v1/meetings/{meeting_id}/recording/start")
+        assert res_start.status_code == 200
+        res_stop = client.post(f"/api/v1/meetings/{meeting_id}/recording/stop")
+        assert res_stop.status_code == 200
+    assert session.status == "processing"
+    recorder.start.assert_called_once()
+    recorder.stop.assert_called_once()
 
     # Seed transcript.txt into during_meeting directory
-    stored = meetings[meeting_id]
-    transcript_file = stored["context"].during_meeting_dir / "transcript" / "transcript.txt"
+    transcript_file = session.path("during_meeting/transcript/transcript.txt")
     transcript_file.parent.mkdir(parents=True, exist_ok=True)
     transcript_file.write_text(
         "Leader: We agreed to approve $50,000 for cloud servers.\n"
@@ -130,13 +118,11 @@ class TestPostMeetingMinutesLifecycleAPI:
             assert "## Summary" in data["markdown"]
 
             # Verify state transition to 'review'
-            assert meetings[meeting_id]["meeting"]["status"] == "review"
+            assert client.app.state.ctx.session(meeting_id).status == "review"
 
             # Verify minutes_draft.md written to disk
-            draft_path = (
-                meetings[meeting_id]["context"].post_meeting_dir
-                / "meeting_minutes"
-                / "minutes_draft.md"
+            draft_path = client.app.state.ctx.session(meeting_id).path(
+                "post_meeting/meeting_minutes/minutes_draft.md"
             )
             assert draft_path.is_file()
             assert draft_path.read_text(encoding="utf-8") == data["markdown"]
@@ -154,19 +140,17 @@ class TestPostMeetingMinutesLifecycleAPI:
         )
         assert res_put.status_code == 200
         assert res_put.json()["markdown"] == custom_md
-        assert meetings[meeting_id]["minutes"]["markdown"] == custom_md
+        assert client.app.state.ctx.session(meeting_id).at("minutes")["markdown"] == custom_md
 
         # 5. Call POST .../minutes/confirm -> transitions to 'archived'
         res_confirm = client.post(f"/api/v1/meetings/{meeting_id}/minutes/confirm")
         assert res_confirm.status_code == 200
         assert res_confirm.json()["status"] == "archived"
-        assert meetings[meeting_id]["meeting"]["status"] == "archived"
+        assert client.app.state.ctx.session(meeting_id).status == "archived"
 
         # Verify minutes_final.md saved to disk
-        final_path = (
-            meetings[meeting_id]["context"].post_meeting_dir
-            / "meeting_minutes"
-            / "minutes_final.md"
+        final_path = client.app.state.ctx.session(meeting_id).path(
+            "post_meeting/meeting_minutes/minutes_final.md"
         )
         assert final_path.is_file()
         assert final_path.read_text(encoding="utf-8") == custom_md
@@ -186,7 +170,7 @@ class TestPostMeetingMinutesLifecycleAPI:
         meeting_id = res.json()["id"]
 
         # Force state to 'processing' without creating transcript file
-        meetings[meeting_id]["meeting"]["status"] = "processing"
+        client.app.state.ctx.session(meeting_id).status = "processing"
 
         res_gen = client.post(f"/api/v1/meetings/{meeting_id}/minutes/generate")
         assert res_gen.status_code == 409

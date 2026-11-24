@@ -100,20 +100,31 @@ class TestFullPipelineE2E:
         mock_stt_json = {
             "text": "Phước Toàn đã hoàn thành Storage. Cần một bạn viết thêm E2E test trước thứ Sáu.",
             "words": [
-                {"word": "Phước", "start": 0.1, "end": 0.4, "speaker_id": "speaker_0"},
-                {"word": "Toàn", "start": 0.4, "end": 0.8, "speaker_id": "speaker_0"},
+                {"type": "word", "text": "Phước Toàn đã hoàn thành Storage.",
+                 "start": 0.1, "end": 1.2, "speaker_id": "speaker_0"},
+                {"type": "word", "text": "Cần một bạn viết thêm E2E test trước thứ Sáu.",
+                 "start": 1.3, "end": 2.8, "speaker_id": "speaker_1"},
             ],
         }
         mock_http_resp = MagicMock(ok=True)
         mock_http_resp.json.return_value = mock_stt_json
 
         with patch("backend.speech_to_text.transcriber.requests.post", return_value=mock_http_resp):
-            transcript_text = transcriber.transcribe_file(
+            segments = transcriber.transcribe_file(
                 audio_path=meeting_wav, output_path=transcript_file
             )
 
         assert transcript_file.exists()
-        assert "Phước Toàn" in transcript_text
+        assert segments == [
+            {"Timestamp": "00:00.10 - 00:01.20", "Speaker": "speaker_0",
+             "Text": "Phước Toàn đã hoàn thành Storage."},
+            {"Timestamp": "00:01.30 - 00:02.80", "Speaker": "speaker_1",
+             "Text": "Cần một bạn viết thêm E2E test trước thứ Sáu."},
+        ]
+        assert transcript_file.read_text(encoding="utf-8") == (
+            "[00:00.10 - 00:01.20] speaker_0:\nPhước Toàn đã hoàn thành Storage.\n\n"
+            "[00:01.30 - 00:02.80] speaker_1:\nCần một bạn viết thêm E2E test trước thứ Sáu."
+        )
 
         # =====================================================================
         # STAGE 3: POST-MEETING (Audit Synthesis, Human Review & Persistence)
@@ -151,4 +162,4 @@ class TestFullPipelineE2E:
         final_persisted_text = final_minutes_path.read_text(encoding="utf-8")
         assert "[CONFIRMED] Viết thêm E2E test | Phụ trách: Đoàn Khánh Hưng" in final_persisted_text
         assert "UNCONFIRMED" not in final_persisted_text
-        
+

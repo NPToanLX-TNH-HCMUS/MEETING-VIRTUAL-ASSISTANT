@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from src.api.objects import ActionItem, MinutesExtraction
+from src.backend.utils.objects import ActionItem, MinutesExtraction
 from src.backend.minutes_extractor.minutes_extractor import (
     MINUTES_SCHEMA,
     assemble_markdown,
@@ -160,4 +160,13 @@ class TestAssembleMarkdownUnit:
         assert "_No action items._" in md
         assert "## Unresolved Issues" not in md
         assert "_Meeting ID: standup-99_" in md
+
+    def test_assignee_pipe_does_not_create_an_extra_table_column(self):
+        extraction = MinutesExtraction(
+            summary="API review", decisions=[], unresolved_issues=[],
+            action_items=[ActionItem(task="Review API", assignee="Alice|Bob", due=None, quote="Alice|Bob review API")],
+        )
+        markdown = assemble_markdown(extraction, "m", "API review", "2026-11-24")
+        # Task cells are escaped already; an assignee must not break the same table.
+        assert "| Review API | Alice\\|Bob | — |" in markdown
 

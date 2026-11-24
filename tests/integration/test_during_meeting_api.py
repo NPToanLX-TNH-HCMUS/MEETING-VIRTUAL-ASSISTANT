@@ -17,24 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.api import app, meetings, recorders, meeting_manager
-from src.backend.meeting_manager.storage_manager import StorageManager
 from src.backend.speech_to_text.transcriber import AudioTranscriptionError
-
-
-@pytest.fixture
-def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    """Fixture providing an isolated TestClient with clean memory state."""
-    monkeypatch.chdir(tmp_path)
-    # Isolate storage directory
-    meeting_manager._storage = StorageManager(root_dir=tmp_path / "data")
-    meetings.clear()
-    recorders.clear()
-
-    yield TestClient(app)
-
-    meetings.clear()
-    recorders.clear()
 
 
 @pytest.fixture
@@ -64,7 +47,7 @@ def ready_meeting_id(client: TestClient) -> str:
         },
     )
     assert save_res.status_code == 200
-    assert meetings[meeting_id]["meeting"]["status"] == "ready"
+    assert client.app.state.ctx.session(meeting_id).status == "ready"
     return meeting_id
 
 
@@ -79,11 +62,11 @@ class TestDuringMeetingLifecycleAPI:
         ready -> start recording (live) -> stop recording (processing) -> transcribe
         """
         m_id = ready_meeting_id
-        context = meetings[m_id]["context"]
-        audio_target = context.during_meeting_dir / "audio" / "record.wav"
+        session = client.app.state.ctx.session(m_id)
+        audio_target = session.path("during_meeting/audio/record.wav")
 
         # Mock Recorder to simulate audio capture without hardware dependency
-        with patch("src.api.api.Recorder") as MockRecorder:
+        with patch("src.backend.api.during_meeting.Recorder") as MockRecorder:
             mock_rec_instance = MagicMock()
             MockRecorder.return_value = mock_rec_instance
 
@@ -112,15 +95,24 @@ class TestDuringMeetingLifecycleAPI:
             assert audio_target.exists()
 
         # 3. Transcribe recording
-        expected_transcript = "Speaker A: Hello team, sprint goals have been achieved."
-        with patch("src.api.api.ElevenLabsTranscriber") as MockTranscriber:
+        expected_segments = [{
+            "Timestamp": "00:00.00 - 00:02.00", "Speaker": "speaker_0",
+            "Text": "Hello team, sprint goals have been achieved.",
+        }]
+        expected_transcript = (
+            "[00:00.00 - 00:02.00] speaker_0:\n"
+            "Hello team, sprint goals have been achieved."
+        )
+        with patch("src.backend.api.during_meeting.ElevenLabsTranscriber") as MockTranscriber:
             mock_transcriber_inst = MagicMock()
             MockTranscriber.return_value = mock_transcriber_inst
-            mock_transcriber_inst.transcribe_file.return_value = expected_transcript
+            mock_transcriber_inst.transcribe_file.return_value = expected_segments
 
             tx_res = client.post(f"/api/v1/meetings/{m_id}/transcribe")
             assert tx_res.status_code == 200
             assert tx_res.json()["transcript"] == expected_transcript
+            assert session.at("transcript") == expected_segments
+            assert session.at("transcript_text") == expected_transcript
             mock_transcriber_inst.transcribe_file.assert_called_once()
 
     def test_start_recording_invalid_state_conflict(
@@ -143,7 +135,7 @@ class TestDuringMeetingLifecycleAPI:
     ) -> None:
         """Simulate microphone access permission denial / PortAudio failure."""
         m_id = ready_meeting_id
-        with patch("src.api.api.Recorder") as MockRecorder:
+        with patch("src.backend.api.during_meeting.Recorder") as MockRecorder:
             mock_inst = MagicMock()
             mock_inst.start.side_effect = RuntimeError("No input microphone device found")
             MockRecorder.return_value = mock_inst
@@ -175,12 +167,12 @@ class TestDuringMeetingLifecycleAPI:
     ) -> None:
         """When ElevenLabs returns an upstream error, return 502 TRANSCRIPTION_FAILED."""
         m_id = ready_meeting_id
-        context = meetings[m_id]["context"]
-        audio_target = context.during_meeting_dir / "audio" / "record.wav"
+        session = client.app.state.ctx.session(m_id)
+        audio_target = session.path("during_meeting/audio/record.wav")
         audio_target.parent.mkdir(parents=True, exist_ok=True)
         audio_target.write_bytes(b"RIFF dummy audio")
 
-        with patch("src.api.api.ElevenLabsTranscriber") as MockTranscriber:
+        with patch("src.backend.api.during_meeting.ElevenLabsTranscriber") as MockTranscriber:
             mock_inst = MagicMock()
             mock_inst.transcribe_file.side_effect = AudioTranscriptionError(
                 "ElevenLabs API returned HTTP 500"
@@ -216,7 +208,7 @@ class TestDocumentUploadFormatsAPI:
         doc = res.json()
         assert doc["filename"] == "architecture.md"
         assert doc["mime_type"] == "markdown"
-        assert "Architecture" in meetings[m_id]["documents"][0]["headings"]
+        assert "Architecture" in client.app.state.ctx.session(m_id).at("documents")[0]["headings"]
 
     def test_upload_unsupported_file_type_rejected(
         self, client: TestClient, ready_meeting_id: str
