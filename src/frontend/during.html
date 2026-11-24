@@ -1,59 +1,116 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Đang họp · Meeting Virtual Assistant</title>
+    <title>Live meeting · DocuMeet</title>
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
     <!-- Chữ trong header do js/during.js điền từ GET /meetings/{id}. -->
     <header class="app-header">
-      <div>
-        <h1 id="meeting-title" class="during-title">Cuộc họp</h1>
+      <div class="brand">DocuMeet</div>
+      <div class="header__titles">
+        <h1 id="meeting-title" class="during-title">Meeting</h1>
         <p id="meeting-meta" class="during-meta"></p>
       </div>
 
       <div class="during-actions">
         <!-- Chỉ báo ghi âm: có chữ, không chỉ dựa vào màu. Chỉ hiện khi đang ghi. -->
         <span id="live-badge" class="live-badge" role="status" hidden></span>
-        <button id="pause" type="button" class="btn" disabled title="Backend chưa hỗ trợ tạm dừng">Tạm dừng</button>
-        <button id="toggle" type="button" class="btn btn--primary">Bắt đầu ghi âm</button>
-        <!-- Chỉ cho bản MVP: sau này transcript sẽ chạy liên tục nên không cần nút này. -->
-        <button id="transcribe" type="button" class="btn" disabled>Chuyển thành văn bản</button>
+        <button id="test-transcript" type="button" class="btn btn--primary">Start recording</button>
+        <button id="pause" type="button" class="btn" disabled aria-pressed="false">Pause</button>
+        <button id="stop-transcript" type="button" class="btn btn--dark" disabled>Stop recording</button>
+        <span id="go-after-box" hidden>
+          <a id="go-after" class="btn btn--primary" href="/after_meeting.html">Go to review →</a>
+        </span>
       </div>
     </header>
 
     <div id="error" class="banner banner--error during-error" role="alert" hidden></div>
 
     <main class="during-layout">
-      <!-- ============ TRÁI: agenda (chưa có dữ liệu) ============ -->
+      <!-- ============ Đồng hồ: chờ cập nhật (backend chưa có timer.sync) ============ -->
+      <section class="card clock" aria-label="Time">
+        <div>
+          <p class="eyebrow">Time left</p>
+          <span class="clock__value" aria-label="No data yet">--:--</span>
+          <p class="muted">Pending update</p>
+        </div>
+        <div>
+          <p class="eyebrow">Agenda against the clock</p>
+          <!-- Độ rộng mỗi đoạn = số phút dự kiến, màu theo trạng thái mục; during.js điền. -->
+          <div id="clock-track" class="clock__track" role="img" aria-label="Agenda progress"></div>
+          <p class="muted">Time used per item: pending update.</p>
+        </div>
+        <p class="pending">Schedule warnings: pending update.</p>
+      </section>
+
+      <!-- ============ TRÁI: agenda ============ -->
       <section class="card" aria-labelledby="agenda-title">
         <div class="card__head">
           <h2 id="agenda-title" class="card__title card__title--sm">Agenda</h2>
+          <span id="agenda-count" class="card__count"></span>
         </div>
         <ul id="agenda-list" class="during-list"></ul>
         <div id="agenda-empty" class="empty">
-          <p class="empty__title">Chưa có mục agenda</p>
-          <p>Các mục agenda của cuộc họp sẽ hiện ở đây.</p>
+          <p class="empty__title">No agenda items</p>
+          <p>The meeting's agenda items will appear here.</p>
         </div>
       </section>
 
-      <!-- ============ PHẢI: live transcript (chưa có dữ liệu) ============ -->
+      <!-- ============ GIỮA: live transcript ============ -->
       <section class="card" aria-labelledby="transcript-title">
         <div class="card__head">
           <h2 id="transcript-title" class="card__title card__title--sm">Live transcript</h2>
         </div>
-        <pre id="transcript" class="transcript" hidden></pre>
-        <div id="transcript-empty" class="empty">
-          <p class="empty__title">Chưa có transcript</p>
-          <p id="status" aria-live="polite">Bấm “Bắt đầu ghi âm” để bắt đầu cuộc họp.</p>
+        <p id="test-transcript-status" class="muted" role="status">Not connected</p>
+
+        <!-- Mỗi câu backend chốt là một .segment; thời điểm của câu chưa có trong dữ liệu nên để “—”. -->
+        <div id="test-transcript-final"></div>
+        <div class="segment segment--partial" aria-live="polite">
+          <span class="segment__time"></span>
+          <p id="test-transcript-partial" class="segment__text"></p>
         </div>
-        <p id="go-after-box" hidden>
-          <a id="go-after" class="btn btn--primary" href="/after_meeting.html">Sang giai đoạn sau họp →</a>
-        </p>
+
+        <div id="transcript-empty" class="empty">
+          <p class="empty__title">No transcript yet</p>
+          <p id="status" aria-live="polite">Press “Start recording” to begin the meeting.</p>
+        </div>
+
+        <div class="listening">
+          <label class="visually-hidden" for="audio-level">Microphone level</label>
+          <progress id="audio-level" value="0" max="100"></progress>
+          <span id="audio-level-text" role="status">Not recording</span>
+        </div>
       </section>
+
+      <!-- ============ PHẢI: chờ cập nhật (backend chưa gửi các sự kiện này) ============ -->
+      <div class="during-side">
+        <section class="card card--alert" aria-labelledby="choice-title">
+          <div class="card__head"><h2 id="choice-title" class="card__title card__title--sm">Needs your choice</h2></div>
+          <p class="pending">Deadline conflicts and items needing confirmation: pending update.</p>
+        </section>
+
+        <section class="card" aria-labelledby="captured-title">
+          <div class="card__head">
+            <h2 id="captured-title" class="card__title card__title--sm">Captured so far</h2>
+            <span class="card__count">0 items</span>
+          </div>
+          <p class="pending">Decisions, action items and unresolved issues: pending update.</p>
+        </section>
+
+        <section class="card" aria-labelledby="ask-title">
+          <div class="card__head"><h2 id="ask-title" class="card__title card__title--sm">Ask the assistant</h2></div>
+          <p class="pending">In-meeting Q&amp;A: pending update.</p>
+          <form class="ask" onsubmit="return false">
+            <label class="visually-hidden" for="ask-input">Question</label>
+            <input id="ask-input" class="input" type="text" placeholder="Ask about time, progress…" disabled />
+            <button type="submit" class="btn btn--primary" disabled>Ask</button>
+          </form>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="/js/during.js"></script>

@@ -1,21 +1,21 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sau họp · Meeting Virtual Assistant</title>
+    <title>Review minutes · DocuMeet</title>
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/app.css" />
   </head>
   <body>
     <header class="app-header">
-      <div>
-        <h1 id="meeting-title" class="after-title">Sau họp</h1>
-      </div>
+      <div class="brand">DocuMeet</div>
+      <span id="meeting-meta" class="header__meta">Review minutes</span>
 
       <div class="after-actions">
-        <button id="generate" type="button" class="btn btn--primary">Tạo minute</button>
-        <button id="confirm" type="button" class="btn btn--primary" disabled>Xác nhận minute</button>
+        <span id="minutes-status" class="badge header__status" hidden></span>
+        <!-- Chờ cập nhật: backend chưa có API lưu bản nháp. -->
+        <button type="button" class="btn" disabled title="Pending update">Save draft</button>
       </div>
     </header>
 
@@ -23,16 +23,35 @@
 
     <main class="after-layout">
       <section class="card" aria-labelledby="minutes-title">
-        <div class="card__head">
-          <h2 id="minutes-title" class="card__title card__title--sm">Biên bản cuộc họp</h2>
-          <span id="minutes-status" class="badge" hidden></span>
-        </div>
+        <p class="eyebrow">Meeting minutes</p>
+        <h2 id="minutes-title" class="visually-hidden">Meeting minutes</h2>
         <div id="minutes" class="md after-minutes" hidden></div>
         <div id="minutes-empty" class="empty">
-          <p class="empty__title">Chưa có minute</p>
+          <p class="empty__title">No minutes yet</p>
           <p id="status" aria-live="polite"></p>
+          <button id="generate" type="button" class="btn btn--primary">Generate minutes</button>
         </div>
       </section>
+
+      <!-- ============ PHẢI ============ -->
+      <div class="after-side">
+        <!-- Chờ cập nhật: backend chưa trả danh sách xung đột / trường thiếu / đoạn audio độ tin cậy thấp. -->
+        <section class="card" aria-labelledby="check-title">
+          <div class="card__head"><h2 id="check-title" class="card__title card__title--sm">Before you confirm</h2></div>
+          <p class="pending">Conflicts, missing fields and low-confidence audio: pending update.</p>
+        </section>
+
+        <section class="card" aria-labelledby="next-title">
+          <div class="card__head"><h2 id="next-title" class="card__title card__title--sm">Saved for the next meeting</h2></div>
+          <p class="pending">Open tasks and carried-over agenda items: pending update.</p>
+        </section>
+
+        <section class="card" aria-labelledby="confirm-title">
+          <h2 id="confirm-title" class="visually-hidden">Confirm minutes</h2>
+          <button id="confirm" type="button" class="btn btn--primary btn--block btn--block-lg" disabled>Confirm and save minutes</button>
+          <p class="muted" style="margin-bottom: 0">Once confirmed, the minutes become read-only.</p>
+        </section>
+      </div>
     </main>
 
     <script type="module" src="/js/after.js"></script>

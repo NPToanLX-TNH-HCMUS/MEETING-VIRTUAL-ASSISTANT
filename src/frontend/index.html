@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Meeting Virtual Assistant</title>
+    <title>DocuMeet</title>
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/app.css" />
   </head>
@@ -11,61 +11,72 @@
     <!--
       File này chỉ là KHUNG. Chữ và dữ liệu từ backend được js/main.js điền vào các phần có id.
       Phần nào có thuộc tính `hidden` thì main.js sẽ bật/tắt theo trạng thái.
+      Phần có class `pending` là chỗ backend chưa có dữ liệu: để trống, chờ cập nhật.
     -->
     <header class="app-header">
-      <div class="brand">Meeting Virtual Assistant</div>
+      <div class="brand">DocuMeet</div>
+      <span id="meeting-meta" class="header__meta">New meeting</span>
+      <span class="header__spacer"></span>
+      <ol id="stepper" class="stepper" aria-label="Steps">
+        <li class="step"><span class="step__num">1</span> Details</li>
+        <li class="step"><span class="step__num">2</span> Agenda</li>
+        <li class="step"><span class="step__num">3</span> Start</li>
+      </ol>
     </header>
 
     <main class="layout">
       <!-- ============ TRÁI: thông tin cuộc họp ============ -->
       <section class="column column--details">
         <div class="card">
-          <div class="card__head"><h1 class="card__title">Thông tin cuộc họp</h1></div>
+          <div class="card__head"><h1 class="card__title">Meeting details</h1></div>
 
           <div class="field">
-            <label class="field__label" for="topic">Chủ đề</label>
-            <input id="topic" class="input" type="text" autocomplete="off" placeholder="VD: Sprint review và kế hoạch frontend" />
+            <label class="field__label" for="topic">Topic</label>
+            <input id="topic" class="input" type="text" autocomplete="off" placeholder="e.g. Sprint review and frontend plan" />
           </div>
 
           <div class="field-row">
             <div class="field">
-              <label class="field__label" for="language">Ngôn ngữ cuộc họp</label>
-              <select id="language" class="select">
-                <option value="vi">Tiếng Việt</option>
-                <option value="en">English</option>
-              </select>
+              <span id="language-label" class="field__label">Language</span>
+              <div id="language" class="segmented" role="group" aria-labelledby="language-label">
+                <button type="button" class="segmented__btn" data-value="vi" aria-pressed="true">Tiếng Việt</button>
+                <button type="button" class="segmented__btn" data-value="en" aria-pressed="false">English</button>
+              </div>
             </div>
             <div class="field">
-              <label class="field__label" for="duration">Thời lượng (phút)</label>
+              <label class="field__label" for="duration">Duration (minutes)</label>
               <input id="duration" class="input input--narrow" type="text" inputmode="numeric" value="60" />
             </div>
           </div>
 
           <div class="field">
-            <label class="field__label" for="points">Các ý bạn dự định trình bày (mỗi dòng một ý)</label>
-            <textarea id="points" class="input" rows="3"></textarea>
+            <span id="points-label" class="field__label">Points you plan to present</span>
+            <div id="points" class="chips" aria-labelledby="points-label"></div>
+          </div>
+
+          <!-- Chờ cập nhật: backend chưa liệt kê được các buổi họp trước (previous_meeting_id luôn là null). -->
+          <div class="field">
+            <label class="field__label" for="previous">Continue from</label>
+            <select id="previous" class="select" disabled>
+              <option>No data yet · pending update</option>
+            </select>
           </div>
 
           <div class="field">
-            <label class="field__label" for="files">Tài liệu bối cảnh<span id="file-count" class="file-count"></span></label>
+            <label class="field__label" for="files">Context files<span id="file-count" class="file-count"></span></label>
             <input id="files" class="visually-hidden" type="file" accept=".md,.txt,.pdf,.docx,.doc" multiple />
+            <ul id="file-list" class="file-list" aria-live="polite"></ul>
             <!-- Vùng kéo thả: bấm vào bất kỳ đâu cũng mở hộp chọn tệp. -->
             <div id="dropzone" class="dropzone">
-              <span class="dropzone__icon" aria-hidden="true">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 16V4" /><path d="m6 10 6-6 6 6" /><path d="M4 20h16" />
-                </svg>
-              </span>
-              <span>Kéo thả tệp vào đây hoặc <button id="browse" type="button" class="dropzone__browse">chọn tệp</button></span>
-              <span class="dropzone__hint">.md, .txt, .pdf, . docx · tối đa 10 MB</span>
+              <span>Drop a file here or <button id="browse" type="button" class="dropzone__browse">browse</button></span>
+              <span class="dropzone__hint">.md, .txt, .pdf, .docx · up to 10 MB</span>
             </div>
-            <ul id="file-list" class="file-list" aria-live="polite"></ul>
           </div>
 
-          <button id="generate" type="button" class="btn btn--primary btn--block">Tạo agenda</button>
+          <button id="generate" type="button" class="btn btn--primary btn--block btn--block-lg">Generate agenda</button>
           <p id="details-locked" class="field__hint" hidden>
-            Cuộc họp đã được tạo trên backend nên không đổi được thông tin. Muốn đổi, hãy
-            <button id="restart" type="button" class="btn btn--sm">làm lại từ đầu</button>.
+            The meeting is already created on the backend, so its details can't be changed. To change them,
+            <button id="restart" type="button" class="btn btn--sm">start over</button>.
           </p>
         </div>
       </section>
@@ -76,43 +87,43 @@
           <div id="error" class="banner banner--error" role="alert" hidden></div>
 
           <div class="card__head">
-            <h2 class="card__title">Agenda đề xuất</h2>
-            <span id="planned" class="planned" hidden></span>
+            <h2 class="card__title">Proposed agenda</h2>
+            <span id="planned" class="planned" hidden><strong id="planned-used"></strong><span id="planned-rest"></span></span>
           </div>
 
           <div id="agenda-empty" class="empty">
-            <p class="empty__title">Chưa có agenda</p>
-            <p>Điền thông tin, thêm tài liệu rồi nhấn “Tạo agenda”.</p>
+            <p class="empty__title">No agenda yet</p>
+            <p>Fill in the details, add documents, then press “Generate agenda”.</p>
           </div>
           <div id="agenda-loading" class="empty" aria-live="polite" hidden>
-            <p class="empty__title">Đang lập agenda…</p>
+            <p class="empty__title">Building the agenda…</p>
           </div>
 
           <div id="agenda-content" hidden>
+            <div id="planned-bar" class="progress"><div id="planned-fill" class="progress__bar"></div></div>
             <p id="agenda-note" class="muted"></p>
 
-            <table class="agenda-table">
-              <thead>
-                <tr>
-                  <th>Nội dung</th>
-                  <th>Nguồn</th>
-                  <th>Thời lượng</th>
-                  <th><span class="visually-hidden">Di chuyển</span></th>
-                </tr>
-              </thead>
-              <tbody id="agenda-rows"></tbody>
-            </table>
-            <p id="agenda-invalid" class="field__error" hidden>Mỗi mục cần có tiêu đề và thời lượng từ 1 đến 480 phút.</p>
+            <div class="agenda-table-wrap">
+              <table class="agenda-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Time</th>
+                    <th><span class="visually-hidden">Reorder</span></th>
+                  </tr>
+                </thead>
+                <tbody id="agenda-rows"></tbody>
+              </table>
+            </div>
+            <p id="agenda-invalid" class="field__error" hidden>Each item needs a title and a duration of 1 to 480 minutes.</p>
 
             <div id="dropped"></div>
 
             <div class="btn-row">
-              <button id="regenerate" type="button" class="btn">Tạo lại</button>
-              <button id="confirm" type="button" class="btn btn--primary">Xác nhận agenda</button>
+              <button id="regenerate" type="button" class="btn">Regenerate</button>
+              <button id="confirm" type="button" class="btn btn--primary">Confirm agenda</button>
+              <a id="go-during" class="btn" aria-disabled="true">Start meeting</a>
             </div>
-            <p id="go-during-box" hidden>
-              <a id="go-during" class="btn btn--primary" href="/during.html">Sang giai đoạn họp →</a>
-            </p>
           </div>
         </div>
       </section>
@@ -123,21 +134,21 @@
       <tr class="agenda-row">
         <td>
           <div class="agenda-row__title">
-            <input class="cell-input" data-field="title" type="text" aria-label="Tiêu đề" />
-            <span class="badge badge--proposed" data-field="badge" hidden>Đề xuất</span>
+            <span class="agenda-row__num" data-field="num"></span>
+            <input class="cell-input" data-field="title" type="text" aria-label="Title" />
+            <span class="badge badge--proposed" data-field="badge" hidden>Proposed</span>
           </div>
         </td>
-        <td class="muted nowrap" data-field="source"></td>
         <td>
           <div class="time-cell">
-            <input class="cell-input cell-input--time" data-field="minutes" type="text" inputmode="numeric" aria-label="Số phút" />
-            <span class="muted">phút</span>
+            <input class="cell-input cell-input--time" data-field="minutes" type="text" inputmode="numeric" aria-label="Minutes" />
+            <span class="muted">min</span>
           </div>
         </td>
         <td>
           <div class="reorder">
-            <button type="button" class="icon-btn" data-field="up" aria-label="Lên">↑</button>
-            <button type="button" class="icon-btn" data-field="down" aria-label="Xuống">↓</button>
+            <button type="button" class="icon-btn" data-field="up" aria-label="Move up">↑</button>
+            <button type="button" class="icon-btn" data-field="down" aria-label="Move down">↓</button>
           </div>
         </td>
       </tr>
