@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 
 from ..database.repository import MeetingRepository
+from ..database.storage import CloudStorage
 from ..document.markdown_converter import MarkDownConverter
 from ..meeting_manager.meeting_manager import MeetingManager
 from ..meeting_manager.storage_manager import StorageManager
@@ -19,12 +20,14 @@ class AppContext:
         self,
         data_root: Path = Path("data"),
         repository: MeetingRepository | None = None,
+        cloud_storage: CloudStorage | None = None,
     ):
         # Attribute get from other modules
         self.storage = StorageManager(data_root)
         self.meeting_manager = MeetingManager(self.storage)
         self.converter = MarkDownConverter()
         self.meeting_repository = repository or MeetingRepository()
+        self.cloud_storage = cloud_storage or CloudStorage()
 
         # Private attributes
         self._sessions: dict[str, MeetingSession] = {}

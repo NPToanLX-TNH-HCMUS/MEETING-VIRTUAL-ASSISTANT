@@ -9,8 +9,11 @@ STAGE 3 (after meeting): meeting minutes.
 Contract: docs/system_design/api-contract.md §5.8 and §6.12
 """
 
+import shutil
+
 from fastapi import APIRouter
 
+from ..database.storage import CloudStorageError
 from ..minutes_extractor.minutes_extractor import assemble_markdown, extract_minutes
 from ..utils.objects import Meeting, Minutes, MinutesEdit
 from ..utils.utils import error, now
@@ -162,7 +165,16 @@ def confirm_minutes(session: SessionDep, ctx: CtxDep):
 
         updated_at = now()
         session.path(MINUTES_FINAL_FILE).write_text(minutes["markdown"], encoding="utf-8")
+        try:
+            ctx.cloud_storage.upload_meeting_directory(session.id, session.root)
+        except CloudStorageError as exc:
+            return error(502, "STORAGE_UPLOAD_FAILED", str(exc))
+
         ctx.meeting_repository.confirm_minutes(session.id, updated_at)
+        # Only delete local files after cloud upload and DB archival succeed.
+        if session.root.exists():
+            shutil.rmtree(session.root, ignore_errors=True)
+
         minutes["status"] = "confirmed"
         minutes["updated_at"] = updated_at
         session.status = "archived"
