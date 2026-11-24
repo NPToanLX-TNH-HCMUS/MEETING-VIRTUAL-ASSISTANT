@@ -44,6 +44,7 @@ class ElevenLabsTranscriber:
         self,
         audio_path: str | Path,
         output_path: str | Path | None = "transcript.txt",
+        language: str = "en",
     ) -> list[dict[str, str]]:
         path = Path(audio_path)
 
@@ -78,7 +79,8 @@ class ElevenLabsTranscriber:
                     },
                     data={
                         "model_id": DEFAULT_MODEL_ID,
-                        "language_code": "eng",
+                        # The meeting language ("vi" / "en", ISO 639-1); it was fixed to English.
+                        "language_code": language,
                         "diarize": "true",
                         "timestamps_granularity": "word",
                         "tag_audio_events": "false",

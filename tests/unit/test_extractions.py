@@ -125,8 +125,12 @@ class TestMergeItems(unittest.TestCase):
         self.assertEqual(len(self.store), 1, "the input store is not modified")
 
     def test_repeated_item_is_not_captured_twice(self):
-        store, _, events = merge(self.store, [], raw(update_of=None))
+        store, _, events = merge(self.store, [], raw(update_of=None, deadline=None))
         self.assertEqual((len(store), events), (1, []))
+
+    def test_repeat_that_adds_the_missing_deadline_fills_it(self):
+        store, _, events = merge(self.store, [], raw(update_of=None))
+        self.assertEqual((len(store), store[0]["deadline"], events[0][0]), (1, "2026-10-20", "extraction.updated"))
 
     def test_filling_the_missing_field_clears_the_flag(self):
         segments = SEGMENTS + [make_segment("m", 4, "Hạn của Bình là ngày 30/10 nhé.", "vi")]
@@ -214,6 +218,25 @@ class TestConflicts(unittest.TestCase):
         store, conflicts, _, _ = resolve_conflict(store, conflicts, "cfl_001", "2026-11-02", self.segments)
         _, conflicts, _ = self.move(store, conflicts, "2026-11-05", "seg_005", "là ngày 05/11")
         self.assertEqual([(c["id"], c["resolved"]) for c in conflicts], [("cfl_001", True), ("cfl_002", False)])
+
+    def test_a_repeated_task_with_a_new_deadline_is_an_update(self):
+        # The model reported the moved deadline as a new item (update_of = null).
+        segments = SEGMENTS + [make_segment("m", 4, "À, kế hoạch của Bình dời sang ngày 02/11 nha.", "vi")]
+        store, conflicts, events = merge(self.store, [],
+                                         raw(update_of=None, content="finish  FRONTEND", assignee=None,
+                                             deadline="2026-11-02", segment_ids=["seg_004"], quote="dời sang ngày 02/11"),
+                                         segments=segments)
+        self.assertEqual(len(store), 1, "no second row for the same task")
+        self.assertEqual([o["value"] for o in conflicts[0]["options"]], ["2026-10-20", "2026-11-02"])
+        self.assertEqual(events[0][0], "conflict.created")
+
+    def test_same_task_text_for_another_owner_stays_separate(self):
+        segments = SEGMENTS + [make_segment("m", 4, "Khôi cũng sẽ hoàn thành frontend trước ngày 02/11.", "vi")]
+        store, conflicts, _ = merge(self.store, [],
+                                    raw(update_of=None, assignee="Khôi", deadline="2026-11-02",
+                                        segment_ids=["seg_004"], quote="Khôi cũng sẽ hoàn thành frontend"),
+                                    segments=segments)
+        self.assertEqual((len(store), conflicts), (2, []))
 
     def test_assignee_conflicts_too(self):
         segments = SEGMENTS + [make_segment("m", 4, "Thôi để Khôi làm frontend.", "vi")]

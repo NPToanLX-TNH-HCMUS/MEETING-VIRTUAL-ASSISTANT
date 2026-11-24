@@ -66,12 +66,14 @@ def generate_minutes(session: SessionDep):
         transcript=transcript_text,
         meeting_date=meeting_date,
         agenda_items=agenda_items,
+        language=meeting.get("language", "en"),
     )
     markdown = assemble_markdown(
         extraction=extraction,
         meeting_id=session.id,
         meeting_topic=meeting.get("topic", ""),
         meeting_date=meeting_date,
+        language=meeting.get("language", "en"),
     )
 
     with session:

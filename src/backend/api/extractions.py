@@ -77,7 +77,9 @@ def read_extractions(session: SessionDep, type: str | None = None):
         meeting_date = (meeting.get("ended_at") or now())[:10]
         # shortcut: two simultaneous first calls both pay for the LLM; only the first
         # answer is merged. Add a per-session lock if that ever costs real money.
-        raw_items = propose_items(segments, cursor, items, meeting_date, agenda)
+        raw_items = propose_items(
+            segments, cursor, items, meeting_date, agenda, meeting.get("language", "en")
+        )
         with session:
             merge_into_session(session, raw_items, segments, len(segments))
             items = list(session.get("extractions") or [])

@@ -96,10 +96,11 @@ def transcribe_recording(session: SessionDep):
                 409, "INVALID_MEETING_STATE", "There is no recording to transcribe yet"
             )
         transcript_path = session.path(TRANSCRIPT_FILE)
+        language = session.at("meeting")["language"]
 
     # The STT request can take a while, so it runs outside the session lock.
     try:
-        segments = ElevenLabsTranscriber().transcribe_file(audio, transcript_path)
+        segments = ElevenLabsTranscriber().transcribe_file(audio, transcript_path, language)
     except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
         return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
     except AudioTranscriptionError as exc:
@@ -172,6 +173,11 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
     stop_event = asyncio.Event()
     pause_event = asyncio.Event()
 
+<<<<<<< HEAD
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> 1f252f2 (feat: shared extractor + Vietnamese language support)
     seq = itertools.count(1)
     # agenda_cursor: how many sentences the agenda checks have covered.
     tracking = {"count": 0, "task": None, "agenda_cursor": 0}
@@ -186,9 +192,16 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
             cursor = session.get("extraction_cursor", 0)
             store = list(session.get("extractions") or [])
             agenda = [dict(item) for item in session.get("agenda", [])]
+<<<<<<< HEAD
         try:
             raw_items = await asyncio.to_thread(
                 propose_items, segments, cursor, store, now()[:10], agenda
+=======
+            language = session.at("meeting")["language"]
+        try:
+            raw_items = await asyncio.to_thread(
+                propose_items, segments, cursor, store, now()[:10], agenda, language
+>>>>>>> 1f252f2 (feat: shared extractor + Vietnamese language support)
             )
         except Exception:  # an LLM outage must not stop the transcript
             LOGGER.warning("Live extraction failed", exc_info=True)
@@ -225,6 +238,10 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
         for data in events:
             await send("agenda.item_state", data)
 
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
+>>>>>>> 1f252f2 (feat: shared extractor + Vietnamese language support)
     async def forward_event(event):
         with session:
             if event["type"] == "committed":
