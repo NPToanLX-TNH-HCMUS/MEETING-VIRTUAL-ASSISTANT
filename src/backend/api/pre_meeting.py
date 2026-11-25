@@ -205,6 +205,7 @@ def build_candidates(
         duration_minutes=meeting["duration_minutes"],
         topic=meeting.get("topic", ""),
         previous_context=previous_context,
+        language=meeting["language"],
     )
 
     for candidate in candidates:

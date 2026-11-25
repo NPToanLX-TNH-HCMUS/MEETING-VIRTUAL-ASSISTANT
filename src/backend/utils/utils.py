@@ -17,3 +17,8 @@ def error(status: int, code: str, message: str) -> JSONResponse:
 
 def meeting_not_found(meeting_id: str) -> JSONResponse:
     return error(404, "MEETING_NOT_FOUND", f"No meeting with id {meeting_id}")
+
+
+def envelope(event_type: str, meeting_id: str, seq: int, data: dict) -> dict:
+    """The common WebSocket message wrapper (contract section 7)."""
+    return {"type": event_type, "meeting_id": meeting_id, "seq": seq, "at": now(), "data": data}
