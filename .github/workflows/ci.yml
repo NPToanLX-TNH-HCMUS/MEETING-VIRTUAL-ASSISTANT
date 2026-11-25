@@ -33,15 +33,20 @@ jobs:
             pyproject.toml
             .github/workflows/ci.yml
 
-      - name: Install audio library
+      - name: Install and start audio service
         run: |
           sudo apt-get update
-          sudo apt-get install --yes libportaudio2
+          sudo apt-get install --yes libportaudio2 pulseaudio pulseaudio-utils
+          pulseaudio --start --exit-idle-time=-1
+          pactl info
 
       - name: Install project and test dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e . pytest==9.2.0 pytest-cov==7.1.0
+
+      - name: Verify audio library initialization
+        run: python -c "import sounddevice; print(sounddevice.query_hostapis())"
 
       - name: Run unit tests
         run: >-
