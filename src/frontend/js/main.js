@@ -1,4 +1,5 @@
 import { api, ApiError } from './api.js';
+import { setCrumb, setMeeting } from './shell.js';
 
 const $ = (id) => document.getElementById(id); 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -59,7 +60,9 @@ function render() {
     btn.setAttribute('aria-pressed', String(btn.dataset.value === language));
   }
   $('details-locked').hidden = !meeting;
-  $('meeting-meta').textContent = meeting ? [meeting.topic, meeting.id, meeting.status].join(' · ') : 'New meeting';
+  $('meeting-meta').textContent = meeting ? [meeting.id, meeting.status].join(' · ') : '';
+  setCrumb(meeting?.topic || 'New meeting');
+  if (meeting) setMeeting(meeting.id);
 
   // Bước 1 xong khi đã có agenda, bước 2 xong khi đã xác nhận; bước hiện tại tô đậm.
   const stage = agenda?.confirmed ? 2 : agenda ? 1 : 0;

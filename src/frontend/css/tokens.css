@@ -28,6 +28,7 @@
   --c-success: #aed4b5;
   --c-success-strong: #8fc79b;
   --c-amber: #e5bd68;
+  --c-pink: #f09ac8; /* workspace colour */
   /* AI suggestions: teal, so they never read as the violet accent */
   --c-ai: #72cece;
 
@@ -94,6 +95,7 @@
   --c-success: #2f7d4f;
   --c-success-strong: #17703a;
   --c-amber: #c9871a;
+  --c-pink: #b8407e;
   --c-ai: #157d80;
 
   --shadow-card: 0 1px 2px rgba(23, 23, 26, 0.05);

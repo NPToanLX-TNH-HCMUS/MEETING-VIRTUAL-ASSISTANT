@@ -1,9 +1,13 @@
 # API CONTRACT — Meeting Virtual Assistant
 
-> **Version:** 0.3.0 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-11-22
+> **Version:** 0.5.0 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-11-25
 > **Purpose:** The single source of truth for how `frontend/` talks to `src/server/`. If the code and this file disagree, fix one of them in the same pull request.
 
 **Why this file exists.** The frontend and backend only meet at this interface. If both sides follow it, the UI can be built against fake data (mock mode) while the real pipeline (speech-to-text → LLM → state machine) is still being written.
+
+**What changed in 0.5.0:** a confirmed (`archived`) meeting is saved on disk and is still there after the server restarts. Minutes can be edited after they are confirmed (§6.12). New: `GET /meetings` and the workspaces a confirmed meeting can be filed under (§6.16), and `Meeting.workspace_id` (§5.1). No existing field was removed or renamed.
+
+**What changed in 0.4.0:** new `GET` and `PUT /settings` (§6.15): the API keys can be entered in the UI instead of a `.env` file. The server never returns a key's value. No existing field or endpoint was changed.
 
 **What changed in 0.3.0:** `Conflict` gets `extraction_id` (the Task store does not exist yet, so `task_id` is `null`). Conflicts are detected and can be resolved (§5.7, §6.13). `Extraction.needs_confirmation` is recomputed from the current data instead of staying on. No field was removed or renamed.
 
@@ -103,7 +107,7 @@ draft ──► ready ──► live ◄──► paused
 | `paused` | Recording is paused. Paused time is **not** counted as elapsed time. | Resume, stop |
 | `processing` | The meeting ended. The backend is building the minutes. | Wait (the WebSocket sends `minutes.ready`) |
 | `review` | The minutes are drafted. The user can edit them. | Edit minutes, resolve conflicts, confirm |
-| `archived` | The minutes are confirmed and saved. Open tasks carry over to the next meeting. | Read only |
+| `archived` | The minutes are confirmed and saved to disk (they survive a restart). Open tasks carry over to the next meeting. | Edit the minutes, file the meeting in a workspace |
 
 An action called in the wrong status returns `409 INVALID_MEETING_STATE`. The UI should disable the matching button **and** still handle this error.
 
@@ -160,7 +164,8 @@ Anything the AI extracts must say where it came from.
   "previous_meeting_id": "mtg_000",
   "created_at": "2026-10-28T16:30:00+07:00",
   "started_at": null,
-  "ended_at": null
+  "ended_at": null,
+  "workspace_id": null
 }
 ```
 
@@ -171,6 +176,7 @@ Anything the AI extracts must say where it came from.
 | `planned_points` | The points the user plans to present. Optional |
 | `previous_meeting_id` | The earlier meeting this one continues from, or `null` |
 | `started_at`, `ended_at` | `null` until the meeting starts or ends |
+| `workspace_id` | The workspace (§6.16) a confirmed meeting is filed under, or `null`. Always `null` before the meeting is confirmed |
 
 ### 5.2 Document (a file uploaded before the meeting)
 
@@ -376,6 +382,14 @@ All paths are relative to the base URL in §1.
 | 18 | `POST /meetings/{id}/conflicts/{cid}/resolve` | Choose a value | P1 | NEW |
 | 19 | `GET /tasks?status=todo,in_progress` | Open tasks (carry-over) | P0 | NEW |
 | 20 | `PATCH /tasks/{id}` | Change status, assignee or deadline | P1 | NEW |
+| 21 | `GET /settings` | Which API keys are set (never their values) | P1 | NEW |
+| 22 | `PUT /settings` | Save an API key, or remove a saved one | P1 | NEW |
+| 23 | `GET /meetings?status=archived` | The meetings, newest first | P1 | NEW |
+| 24 | `GET /workspaces` | The workspaces | P1 | NEW |
+| 25 | `POST /workspaces` | Create a workspace | P1 | NEW |
+| 26 | `PATCH /workspaces/{id}` | Rename a workspace, change its icon or colour | P1 | NEW |
+| 27 | `DELETE /workspaces/{id}` | Delete a workspace (its meetings stay) | P1 | NEW |
+| 28 | `PUT /meetings/{id}/workspace` | File a confirmed meeting in a workspace, or take it out | P1 | NEW |
 
 ### 6.1 `GET /health`
 
@@ -503,7 +517,7 @@ Response `200`:
 ### 6.12 Minutes: `GET` and `PUT /meetings/{id}/minutes`, `POST .../minutes/confirm`
 
 - `GET` returns **Minutes** (§5.8).
-- `PUT` body: `{ "markdown": "..." }`.
+- `PUT` body: `{ "markdown": "..." }`. Allowed while the meeting is `review` and also after it is `archived`: editing confirmed minutes keeps them confirmed and updates the saved copy. Any other status: `409 INVALID_MEETING_STATE`.
 - `confirm` is refused with `409 UNRESOLVED_CONFLICTS` while any conflict is still `resolved: false`.
 
 ### 6.13 Conflicts
@@ -519,6 +533,46 @@ Response `200`:
 
 - `GET /tasks` returns `{ "items": Task[] }`. Filters: `status` (several values separated by commas) and `assignee`.
 - `PATCH /tasks/{id}` body: any of `status`, `assignee`, `deadline`. Response `200`: the updated **Task**.
+
+### 6.15 Settings
+
+The keys the speech-to-text and language-model calls need. They can come from the `.env` file or be saved here; a saved key wins, and removing it brings back the `.env` value.
+
+- `GET /settings` and `PUT /settings` both return `{ "keys": SettingKey[] }`, one entry per key the server knows (today `ELEVENLABS_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`).
+
+```json
+{ "name": "GROQ_API_KEY", "is_set": true, "source": "settings", "hint": "…1234" }
+```
+
+| Field | Meaning |
+|---|---|
+| `name` | The key's name |
+| `is_set` | `true` when the server has a non-empty value for it |
+| `source` | `"settings"` (saved here), `"env"` (from `.env` or the environment) or `null` (not set) |
+| `hint` | `"…"` plus the last 4 characters, to tell two keys apart; `null` when the value is short or not set |
+
+- **The value of a key is never returned**, by any endpoint, in any error message.
+- `PUT /settings` body: `{ "values": { "GROQ_API_KEY": "gsk_…", "OPENROUTER_API_KEY": null } }`. A string saves that key; `null` removes the saved one. It applies at once, without a restart. Spaces around a key are trimmed.
+- Errors: `400 VALIDATION_ERROR` for a name the server does not know, or a value that is empty, longer than 512 characters, or contains spaces or control characters. Nothing is saved when any value is refused.
+- The server stores saved keys in `settings.json` in its data folder, readable only by its owner.
+
+### 6.16 Workspaces and the meeting list
+
+A workspace is a group the user files confirmed minutes under. Only `archived` meetings can be filed. The server keeps workspaces in `workspaces.json` and a meeting's workspace in its archive, so both survive a restart.
+
+- `GET /meetings` returns `{ "items": Meeting[] }`, newest first (by `ended_at`, else `created_at`). Filter: `status`, several values separated by commas. The sidebar asks for `status=archived`.
+- `GET /workspaces` returns `{ "items": Workspace[] }`.
+- `POST /workspaces` body: `{ "name": "Standup", "icon": "calendar", "color": "violet" }` (`icon` and `color` are optional, default `folder` and `violet`). Response `201`: the **Workspace**.
+- `PATCH /workspaces/{id}` body: any of `name`, `icon`, `color`. Response `200`: the updated **Workspace**.
+- `DELETE /workspaces/{id}` response `200`: `{ "items": Workspace[] }`, the ones left. Its meetings stay and go back to `workspace_id: null`.
+- `PUT /meetings/{id}/workspace` body: `{ "workspace_id": "wsp_1a2b3c4d" }`, or `null` to take the meeting out. Response `200`: the **Meeting**.
+
+```json
+{ "id": "wsp_1a2b3c4d", "name": "Standup", "icon": "calendar", "color": "violet", "created_at": "2026-11-25T10:00:00+07:00" }
+```
+
+- `icon` and `color` are names, not pictures or hex values: the UI decides how to draw them and shows a default for one it does not know. The server accepts 1 to 32 lowercase letters, digits or dashes.
+- Errors: `400 VALIDATION_ERROR` (name empty or over 60 characters, bad `icon` or `color`), `404 WORKSPACE_NOT_FOUND`, `409 INVALID_MEETING_STATE` (the meeting is not `archived`).
 
 ---
 
@@ -609,6 +663,8 @@ When the backend closes one of these gaps, delete its row here.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.5.0 | 2026-11-25 | Confirmed meetings are saved to disk and reload after a restart; `PUT .../minutes` also allowed when `archived`; `GET /meetings`, `GET/POST /workspaces`, `PATCH/DELETE /workspaces/{id}`, `PUT /meetings/{id}/workspace` (new, §6.16); `Meeting.workspace_id` (new) |
+| 0.4.0 | 2026-11-25 | `GET /settings` and `PUT /settings` (new, §6.15): API keys entered in the UI; values are never returned |
 | 0.3.0 | 2026-11-22 | `Conflict.extraction_id` (new); conflict detection, `GET .../conflicts`, `POST .../conflicts/{cid}/resolve`; `minutes/confirm` refuses with `409 UNRESOLVED_CONFLICTS`; `needs_confirmation` recomputed, not sticky |
 | 0.2.0 | 2026-11-21 | `Extraction.is_low_confidence` (new, optional); empty `evidence` allowed; `GET .../transcript` and `GET .../extractions` implemented; `agenda.item_state`, `extraction.created` and `extraction.updated` sent by the backend during the meeting |
 | 0.1.1 | 2026-10-30 | Wording only. Added §0 overview, §4 Evidence, §8.2 mock differences, the changelog, and endpoint sections for tasks, conflicts and `GET /meetings/{id}` |

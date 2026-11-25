@@ -1,0 +1,885 @@
+/*
+ * App frame (loaded after app.css): sidebar + top bar + content, in the style of a desktop app.
+ * --titlebar-h and --traffic-w are 0 in a browser; the desktop shell sets them on macOS so the
+ * window buttons have room. Nothing here depends on Electron.
+ */
+:root {
+  --titlebar-h: 0px;
+  --traffic-w: 0px;
+  --sidebar-w: 272px;
+  --topbar-h: 52px;
+  --statusbar-h: 56px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  height: 100vh;
+}
+
+.shell[data-sidebar="hidden"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.shell__main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: var(--c-surface);
+}
+
+/* The window can be dragged by the bars; anything clickable inside them opts out. */
+.sidebar__top,
+.app-header {
+  -webkit-app-region: drag;
+}
+
+.sidebar a,
+.sidebar button,
+.app-header a,
+.app-header button,
+.app-header input,
+.app-header ol {
+  -webkit-app-region: no-drag;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  min-height: 0;
+  padding: 0 var(--s-3) var(--s-4);
+  background: var(--c-bg);
+  border-right: 1px solid var(--c-border);
+  overflow: hidden;
+}
+
+.shell[data-sidebar="hidden"] .sidebar {
+  display: none;
+}
+
+.sidebar__top {
+  display: flex;
+  align-items: center;
+  flex: none;
+  /* On macOS the window buttons sit here; elsewhere the bar is just a short strip. */
+  height: max(var(--titlebar-h), 44px);
+  padding-left: var(--traffic-w);
+}
+
+.sidebar__top .sidebar-toggle {
+  margin-left: auto;
+}
+
+.sidebar__new,
+.sidebar__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 40px;
+  padding: 0 var(--s-3);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  font-size: var(--fs-md);
+  text-decoration: none;
+}
+
+.sidebar__new {
+  margin-bottom: var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  font-weight: 500;
+}
+
+.sidebar__new:hover,
+.sidebar__link:hover {
+  background: var(--c-surface-muted);
+}
+
+.sidebar__link svg,
+.sidebar__new svg {
+  flex: none;
+  color: var(--c-text-muted);
+}
+
+.sidebar__link[aria-current="page"] {
+  background: var(--c-surface-muted);
+  font-weight: 500;
+}
+
+.sidebar__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar__nav {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sidebar__bottom {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding-top: var(--s-2);
+}
+
+.sidebar__current {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar__group {
+  margin: var(--s-4) var(--s-3) var(--s-1);
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Written out as well as coloured: a recording is never shown by colour alone. */
+.sidebar__rec {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-error-bg);
+  color: var(--c-error-text);
+  font: 600 var(--fs-xs) var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-3) 0;
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sidebar__brand .brand__logo {
+  width: 28px;
+  height: 28px;
+}
+
+/* ---------- Top bar ---------- */
+.app-header {
+  position: static;
+  flex: none;
+  min-height: var(--topbar-h);
+  padding: 0 var(--s-5);
+  background: var(--c-surface);
+  gap: var(--s-3);
+}
+
+.shell[data-sidebar="hidden"] .app-header {
+  padding-left: calc(var(--traffic-w) + var(--s-4));
+}
+
+.topnav {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+.shell:not([data-sidebar="hidden"]) .sidebar-toggle--outside {
+  display: none;
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  margin-left: var(--s-2);
+  color: var(--c-text-muted);
+  font-size: var(--fs-md);
+}
+
+.crumb__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.crumb__link:hover {
+  color: var(--c-text);
+}
+
+.crumb__current {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--c-text);
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-header .icon-btn svg,
+.sidebar .icon-btn svg {
+  display: block;
+  margin: auto;
+}
+
+/* ---------- Scrolling content of a page ---------- */
+.shell__main > main {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+  align-content: start;
+}
+
+.shell__main > .banner {
+  flex: none;
+  margin: var(--s-3) var(--s-5) 0;
+}
+
+/* ---------- Live meeting ---------- */
+.meeting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Own scrolling is per tab panel, so the transcript can follow its newest line. */
+  overflow: hidden !important;
+}
+
+.meeting__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  width: 100%;
+  max-width: 1000px;
+  min-height: 0;
+  flex: 1;
+  padding: var(--s-6) var(--s-6) 0;
+}
+
+.meeting__title {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.meeting__meta {
+  margin: calc(var(--s-3) * -1) 0 0;
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.meeting__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.meeting__toolbar .btn {
+  min-height: 40px;
+  padding: 0 var(--s-4);
+}
+
+.meeting__spacer {
+  flex: 1;
+}
+
+.meeting__clock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.meeting__clock .clock__track {
+  margin: 0;
+}
+
+.meeting__clock-note {
+  margin: 0;
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-5);
+  flex: none;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 46px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--c-text);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--c-primary);
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.tab__count {
+  color: var(--c-text-muted);
+  font-weight: 400;
+  font-size: var(--fs-sm);
+}
+
+/* "Needs your choice" count: a labelled warning, empty when there is nothing to settle. */
+.tab__alert {
+  padding: 1px 10px;
+  border-radius: var(--r-pill);
+  background: var(--c-warn-bg);
+  color: var(--c-warn-text);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+.tab__alert:empty,
+.tab__count:empty {
+  display: none;
+}
+
+.tabpanel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--s-4) 0 var(--s-5);
+}
+
+.tabpanel .scroll-panel {
+  max-height: none;
+  overflow: visible;
+}
+
+.tabpanel--transcript {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tabpanel--transcript #transcript-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.tabpanel__section + .tabpanel__section {
+  margin-top: var(--s-5);
+}
+
+.tabpanel__title {
+  margin: 0 0 var(--s-3);
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+/* Transcript sentences as soft bubbles */
+.segment {
+  margin-bottom: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--c-surface-muted);
+}
+
+.segment--partial {
+  background: none;
+  border: 1px dashed var(--c-border-strong);
+}
+
+/* The sentence being spoken has a box only while it has words. */
+.segment--partial:has(.segment__text:empty) {
+  display: none;
+}
+
+/* ---------- Bottom bar ---------- */
+.statusbar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: var(--s-5);
+  min-height: var(--statusbar-h);
+  padding: 0 var(--s-5);
+  border-top: 1px solid var(--c-border);
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.statusbar .listening {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.statusbar .live-badge {
+  padding: 4px 12px;
+}
+
+.statusbar .ask-fab {
+  position: static;
+  margin-left: auto;
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  border-radius: var(--r-md);
+  box-shadow: none;
+}
+
+.statusbar__kbd {
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+}
+
+.ask-panel {
+  right: var(--s-5);
+  bottom: calc(var(--statusbar-h) + var(--s-3));
+  max-height: calc(100vh - var(--topbar-h) - var(--statusbar-h) - 2 * var(--s-4));
+}
+
+/* ---------- Home and review pages inside the frame ---------- */
+.shell__main > .layout,
+.shell__main > .after-layout {
+  padding: var(--s-6);
+}
+
+@media (max-width: 1023px) {
+  .shell {
+    --sidebar-w: 232px;
+  }
+
+  .meeting__inner {
+    padding: var(--s-5) var(--s-4) 0;
+  }
+}
+
+/* ---------- Settings ---------- */
+.settings {
+  display: flex;
+  justify-content: center;
+  padding: var(--s-6);
+}
+
+.settings__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+  width: 100%;
+  max-width: 720px;
+}
+
+.settings__title {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.settings .card__title {
+  margin-bottom: var(--s-2);
+}
+
+.key-list {
+  display: grid;
+  gap: var(--s-3);
+  margin: var(--s-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.key {
+  padding: var(--s-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.key__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.key__label {
+  margin: 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+}
+
+.key__status {
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.key__status--set {
+  color: var(--c-success);
+}
+
+.key__use {
+  margin: var(--s-1) 0 0;
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.key__form {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-3);
+}
+
+.key__form .input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---------- Library: minutes and workspaces in the sidebar ---------- */
+.sidebar__library {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lib__section,
+.ws {
+  border-radius: var(--r-sm);
+}
+
+/* The dimmed outline a minutes item gets while it is dragged over a place it can be dropped. */
+.lib__section.is-drop,
+.ws.is-drop {
+  background: var(--c-primary-soft);
+  outline: 1.5px dashed var(--c-primary);
+}
+
+.lib__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: var(--s-1);
+}
+
+.lib__head .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+
+.lib__list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lib__item {
+  display: block;
+  min-height: 32px;
+  padding: 5px var(--s-3);
+  border-radius: var(--r-sm);
+  color: var(--c-text);
+  font-size: var(--fs-sm);
+  text-decoration: none;
+  cursor: grab;
+}
+
+.lib__item:hover {
+  background: var(--c-surface-muted);
+}
+
+.lib__item[aria-current="page"] {
+  background: var(--c-surface-muted);
+  font-weight: 500;
+}
+
+.lib__item.is-dragging {
+  opacity: 0.45;
+}
+
+.lib__title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib__empty {
+  margin: var(--s-1) var(--s-3) var(--s-2);
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+  list-style: none;
+}
+
+.lib__message {
+  color: var(--c-error-text);
+}
+
+/* A workspace: colour comes from its name, drawn on the icon only */
+.ws-color--violet { --ws-color: var(--c-primary); color: var(--ws-color); }
+.ws-color--teal { --ws-color: var(--c-ai); color: var(--ws-color); }
+.ws-color--green { --ws-color: var(--c-success); color: var(--ws-color); }
+.ws-color--amber { --ws-color: var(--c-amber); color: var(--ws-color); }
+.ws-color--red { --ws-color: var(--c-error-text); color: var(--ws-color); }
+.ws-color--blue { --ws-color: var(--c-info-text); color: var(--ws-color); }
+.ws-color--pink { --ws-color: var(--c-pink); color: var(--ws-color); }
+
+.ws__row {
+  display: flex;
+  align-items: center;
+}
+
+.ws__toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--c-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ws__toggle:hover {
+  background: var(--c-surface-muted);
+}
+
+.ws__chevron {
+  display: grid;
+  flex: none;
+  color: var(--c-text-muted);
+  transition: transform var(--dur-micro, 120ms);
+}
+
+.ws__toggle[aria-expanded="true"] .ws__chevron {
+  transform: rotate(90deg);
+}
+
+.ws__icon {
+  display: grid;
+  flex: none;
+  color: var(--ws-color);
+}
+
+.ws__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws__count {
+  flex: none;
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+}
+
+/* The pencil is there for keyboard users all the time and shows up for the mouse on hover. */
+.ws__edit {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  opacity: 0;
+}
+
+.ws__row:hover .ws__edit,
+.ws__edit:focus-visible {
+  opacity: 1;
+}
+
+.ws__items {
+  padding-left: var(--s-5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws__chevron {
+    transition: none;
+  }
+}
+
+/* ---------- New / edit workspace window ---------- */
+.dialog {
+  width: min(440px, calc(100vw - 2 * var(--s-5)));
+  padding: var(--s-5);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-lg);
+  background: var(--c-surface);
+  color: var(--c-text);
+  box-shadow: var(--shadow-float);
+}
+
+.dialog::backdrop {
+  background: var(--scrim);
+}
+
+.dialog__title {
+  margin: 0 0 var(--s-4);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.dialog__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.dialog__form .field,
+.pick {
+  margin: 0;
+}
+
+.pick {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pick legend {
+  padding: 0;
+  margin-bottom: var(--s-2);
+}
+
+.pick__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.pick__face {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.pick__face:hover {
+  background: var(--c-surface-muted);
+}
+
+/* A colour swatch is a filled dot in that colour; the chosen one has a ring, and the radio keeps the name for screen readers. */
+.pick__face.ws-color--violet::before,
+.pick__face.ws-color--teal::before,
+.pick__face.ws-color--green::before,
+.pick__face.ws-color--amber::before,
+.pick__face.ws-color--red::before,
+.pick__face.ws-color--blue::before,
+.pick__face.ws-color--pink::before {
+  content: "";
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pick__option input:checked + .pick__face {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 2px var(--c-primary);
+}
+
+.pick__option input:focus-visible + .pick__face {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.dialog__error {
+  margin: 0;
+  color: var(--c-error-text);
+  font-size: var(--fs-sm);
+}
+
+.dialog__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.dialog__spacer {
+  flex: 1;
+}
+
+.dialog__note {
+  margin: 0;
+  color: var(--c-text-muted);
+  font-size: var(--fs-xs);
+}
+
+/* ---------- Review page: editing the minutes, choosing a workspace ---------- */
+.minutes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-2);
+}
+
+.minutes-head .eyebrow {
+  margin: 0;
+}
+
+.minutes-editor__text {
+  display: block;
+  width: 100%;
+  min-height: 55vh;
+  padding: var(--s-4);
+  font: var(--fs-sm) / 1.6 var(--font-mono);
+  resize: vertical;
+}
+
+.after-workspace {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.after-workspace__label {
+  color: var(--c-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.after-workspace .select {
+  min-width: 180px;
+  max-width: 260px;
+}

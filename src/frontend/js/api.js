@@ -83,4 +83,25 @@ export const api = {
   // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")
   confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`),
 
+  // PUT /meetings/{id}/minutes { markdown } -> Minutes   (allowed in "review" and after confirming)
+  saveMinutes: (id, markdown) => request('PUT', `/meetings/${id}/minutes`, { json: { markdown } }),
+
+  // GET /meetings?status=archived -> { items: Meeting[] }, newest first
+  getMeetings: (status) => request('GET', `/meetings${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  // GET /workspaces -> { items: Workspace[] }
+  getWorkspaces: () => request('GET', '/workspaces'),
+  // POST /workspaces { name, icon, color } -> Workspace
+  createWorkspace: (body) => request('POST', '/workspaces', { json: body }),
+  // PATCH /workspaces/{id} { name?, icon?, color? } -> Workspace
+  updateWorkspace: (id, body) => request('PATCH', `/workspaces/${id}`, { json: body }),
+  // DELETE /workspaces/{id} -> { items } (its meetings stay, without a workspace)
+  deleteWorkspace: (id) => request('DELETE', `/workspaces/${id}`),
+  // PUT /meetings/{id}/workspace { workspace_id | null } -> Meeting   (confirmed meetings only)
+  assignWorkspace: (id, workspaceId) => request('PUT', `/meetings/${id}/workspace`, { json: { workspace_id: workspaceId } }),
+
+  // GET /settings -> { keys: [{ name, is_set, source, hint }] }   (a key's value is never returned)
+  getSettings: () => request('GET', '/settings'),
+  // PUT /settings { values: { NAME: "key" | null } } -> same as GET; null removes the saved key
+  saveSettings: (values) => request('PUT', '/settings', { json: { values } }),
+
 };
