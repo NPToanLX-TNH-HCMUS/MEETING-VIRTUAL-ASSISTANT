@@ -205,3 +205,15 @@ class ConflictResolve(BaseModel):
     """FRONT END SENDS: the value the user picked; it must be one of the options."""
 
     chosen_value: str
+
+
+# In-meeting Q&A (§6.11 of api-contract.md)
+class AskRequest(BaseModel):
+    question: str
+
+
+class AskAnswer(BaseModel):
+    intent: Literal["time_progress", "meeting_information", "idea_suggestion"]
+    answer: str
+    sources: list[str]  # segment ids; empty = no evidence (the UI shows the flag)
+    is_ai_suggestion: bool

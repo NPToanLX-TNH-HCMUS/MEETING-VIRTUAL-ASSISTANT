@@ -117,11 +117,15 @@
 
         <section class="card" aria-labelledby="ask-title">
           <div class="card__head"><h2 id="ask-title" class="card__title card__title--sm">Ask the assistant</h2></div>
-          <p class="pending">In-meeting Q&amp;A: pending update.</p>
-          <form class="ask" onsubmit="return false">
+          <!-- During.js điền từ POST .../ask; chỉ giữ trong bộ nhớ trang, tải lại là mất. -->
+          <div class="scroll-panel scroll-panel--short" tabindex="0" aria-label="Questions and answers">
+            <ul id="ask-list" class="capture-list" aria-live="polite"></ul>
+          </div>
+          <p id="ask-empty" class="muted">Start recording, then ask about time left or what was said.</p>
+          <form id="ask-form" class="ask">
             <label class="visually-hidden" for="ask-input">Question</label>
-            <input id="ask-input" class="input" type="text" placeholder="Ask about time, progress…" disabled />
-            <button type="submit" class="btn btn--primary" disabled>Ask</button>
+            <input id="ask-input" class="input" type="text" placeholder="Ask about time, decisions, what was said…" disabled />
+            <button id="ask-submit" type="submit" class="btn btn--primary" disabled>Ask</button>
           </form>
         </section>
       </div>

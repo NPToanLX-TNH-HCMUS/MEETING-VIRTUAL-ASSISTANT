@@ -22,6 +22,17 @@ const extractions = new Map();
 // Conflicts by id (two values said for one field); the user picks, never the UI.
 const conflicts = new Map();
 let meetingStatus = null;
+// Questions asked on this page, oldest first: { question, result } (result null while waiting).
+// Memory only, never localStorage: answers quote the transcript.
+const asks = [];
+let askPending = false;
+const ASK_STATUSES = ["live", "paused"];
+const INTENT_LABELS = {
+  time_progress: "Time & progress",
+  meeting_information: "From the meeting",
+  // Text label, not only colour: a suggestion must never read like a team decision.
+  idea_suggestion: "AI suggestion · not a team decision",
+};
 
 function renderRealtimeControls() {
   const connected = transcriptTestSocket?.readyState === WebSocket.OPEN;
@@ -36,6 +47,80 @@ function renderRealtimeControls() {
   $("stop-transcript").disabled = !connected || !realtimeReady || realtimeStopping;
   $("test-transcript").hidden = !!transcriptTestSocket;
   $("test-transcript").disabled = !meetingId || !!transcriptTestSocket || finished || realtimeTranscriptSaved;
+  renderAskControls();
+}
+
+function renderAskControls() {
+  const open = ASK_STATUSES.includes(meetingStatus);
+  $("ask-input").disabled = !open;
+  $("ask-submit").disabled = !open || askPending;
+  $("ask-submit").textContent = askPending ? "Asking…" : "Ask";
+}
+
+function sourceChip(id, byId) {
+  const segment = byId.get(id);
+  const chip = document.createElement("button");
+  chip.type = "button";
+  chip.className = "seg-tag ask__source";
+  chip.textContent = segment ? `${formatTime(segment.start_seconds)} · ${segment.text}` : id;
+  chip.title = segment ? `“${segment.text}” — show in the transcript` : "Not in the transcript on this page";
+  chip.disabled = !segment;
+  chip.addEventListener("click", () => showSegment(id));
+  return chip;
+}
+
+function renderAsks() {
+  const byId = new Map(segments.map((segment) => [segment.id, segment]));
+  $("ask-empty").hidden = asks.length > 0;
+  $("ask-list").replaceChildren(
+    ...asks.map(({ question, result }) => {
+      const card = document.createElement("li");
+      card.className = "capture" + (result?.is_ai_suggestion ? " capture--ai" : "");
+      const asked = document.createElement("p");
+      asked.className = "ask__question";
+      asked.textContent = question;
+      card.append(asked);
+      if (!result) {
+        const waiting = document.createElement("p");
+        waiting.className = "capture__meta";
+        waiting.textContent = "Thinking…";
+        card.append(waiting);
+        return card;
+      }
+
+      const type = document.createElement("p");
+      type.className = "capture__type";
+      type.textContent = INTENT_LABELS[result.intent] ?? result.intent;
+      const answer = document.createElement("p");
+      answer.className = "capture__content";
+      answer.textContent = result.answer;
+      card.append(type, answer);
+
+      if (result.sources.length) {
+        const box = document.createElement("div");
+        box.className = "seg-tags";
+        box.append(...result.sources.map((id) => sourceChip(id, byId)));
+        card.append(box);
+      } else if (result.intent === "meeting_information") {
+        // An answer about the meeting with no cited line is flagged, never shown as fact.
+        const flag = document.createElement("p");
+        flag.className = "capture__meta capture__flag";
+        flag.textContent = "No evidence in the transcript";
+        card.append(flag);
+      }
+      return card;
+    }),
+  );
+  const panel = $("ask-list").parentElement;
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function showSegment(id) {
+  const row = [...$("test-transcript-final").children].find((el) => el.dataset.segmentId === id);
+  if (!row) return;
+  row.scrollIntoView({ block: "center", behavior: "smooth" });
+  row.classList.add("segment--focus");
+  setTimeout(() => row.classList.remove("segment--focus"), 2000);
 }
 
 function render() {
@@ -61,6 +146,7 @@ function renderSegments() {
     ...segments.map((segment) => {
       const row = document.createElement("div");
       row.className = "segment" + (segment.is_low_confidence ? " segment--low" : "");
+      if (segment.id) row.dataset.segmentId = segment.id;
       const time = document.createElement("span");
       time.className = "segment__time";
       time.textContent = formatTime(segment.start_seconds);
@@ -279,6 +365,7 @@ async function loadMeeting() {
     $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} min`, m.id].join(' · ');
     // After a refresh, bring back what was already captured.
     meetingStatus = m.status;
+    renderAskControls();
     if (!["draft", "ready"].includes(m.status)) loadExtractions();
   } catch (e) {
     showError(`${e.code ?? 'ERROR'}: ${e.message}`);
@@ -301,6 +388,38 @@ if (meetingId) {
   loadMeeting();
   loadAgenda();
 }
+
+// Enter that only commits a Vietnamese IME word (Telex/VNI) must not send the question.
+$("ask-input").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && event.isComposing) event.preventDefault();
+});
+
+$("ask-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const question = $("ask-input").value.trim();
+  if (!question || askPending || !ASK_STATUSES.includes(meetingStatus)) return;
+  const entry = { question, result: null };
+  asks.push(entry);
+  askPending = true;
+  $("ask-input").value = "";
+  renderAsks();
+  renderAskControls();
+  try {
+    entry.result = await api.ask(meetingId, question);
+  } catch (e) {
+    asks.splice(asks.indexOf(entry), 1);
+    if (!$("ask-input").value) $("ask-input").value = question; // so it can be sent again
+    showError(
+      e.code === "INVALID_MEETING_STATE"
+        ? "Questions can be asked only while the meeting is recording or paused."
+        : `Could not answer: ${e.message}`,
+    );
+  } finally {
+    askPending = false;
+    renderAsks();
+    renderAskControls();
+  }
+});
 
 $("pause").addEventListener("click", () => {
   if (transcriptTestSocket?.readyState !== WebSocket.OPEN || !realtimeReady || realtimeStopping || pausePending) return;

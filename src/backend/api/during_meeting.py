@@ -6,6 +6,7 @@ STAGE 2 (during meeting): record audio and transcribe it.
     POST /api/v1/meetings/{id}/transcribe        ElevenLabs STT + diarization
     GET  /api/v1/meetings/{id}/recording/level   microphone volume of the batch recorder
     GET  /api/v1/meetings/{id}/transcript        transcript segments with ids and times (contract 6.9)
+    POST /api/v1/meetings/{id}/ask               answer a question about the meeting (contract 6.11)
     WS   /ws/meetings/{id}/transcript-test       realtime STT with pause/resume/stop  ready -> live <-> paused -> processing
 """
 
@@ -22,10 +23,11 @@ from ..agenda_tracker.tracker import propose_transitions
 from ..audio.recorder import Recorder
 from ..extraction.extractor import propose_items
 from ..context.app_context import MeetingNotFoundError
+from ..meeting_qa.qa import HISTORY_TURNS, answer_question
 from ..speech_to_text.realtime_transcriber import stream_transcript
 from ..speech_to_text.segments import from_batch, make_segment
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
-from ..utils.objects import Meeting, TranscriptList
+from ..utils.objects import AskAnswer, AskRequest, Meeting, TranscriptList
 from .extractions import merge_into_session
 from ..utils.utils import envelope, error, now
 from .common import SessionDep, meeting_response
@@ -142,6 +144,27 @@ def read_transcript(session: SessionDep, after: str | None = None):
             return error(404, "SEGMENT_NOT_FOUND", f"No segment with id {after}")
         segments = segments[ids.index(after) + 1 :]
     return {"segments": segments}
+
+
+@router.post("/ask", response_model=AskAnswer)
+def ask(session: SessionDep, body: AskRequest):
+    question = body.question.strip()
+    if not question:
+        return error(400, "VALIDATION_ERROR", "The question is empty.")
+    with session:
+        if session.status not in {"live", "paused"}:
+            return error(409, "INVALID_MEETING_STATE", f"Cannot ask while the meeting is {session.status}")
+        meeting = dict(session.at("meeting"))
+        agenda = [dict(item) for item in session.get("agenda", [])]
+        segments = list(session.get("transcript", []))
+        history = list(session.get("qa_history", []))
+    # The LLM call runs outside the lock (FastAPI runs this sync route in a worker thread);
+    # LLMCallError becomes the contract's 503/422 in main.py.
+    result = answer_question(meeting, agenda, segments, history, question)
+    with session:
+        turns = session.get("qa_history", []) + [{"question": question, "answer": result["answer"]}]
+        session.emplace("qa_history", turns[-HISTORY_TURNS:])
+    return result
 
 
 @router.get("/recording/level")
