@@ -46,6 +46,9 @@ transcript_test_lock = asyncio.Lock()
 
 AUDIO_FILE = "during_meeting/audio/record.wav"
 TRANSCRIPT_FILE = "during_meeting/transcript/transcript.txt"
+# One line per committed sentence, written as it arrives: id, start_seconds, text (tab separated).
+# Separate from transcript.txt, which post_meeting reads as plain text and which is rewritten at the end.
+LIVE_TRANSCRIPT_FILE = "during_meeting/transcript/transcript_live.tsv"
 
 
 @router.post("/recording/start", response_model=Meeting)
@@ -230,16 +233,20 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
     async def forward_event(event):
         with session:
             if event["type"] == "committed":
-                session.get("transcript").append(
-                    make_segment(
-                        session.id,
-                        int(event["id"].removeprefix("seg_")),
-                        event["text"],
-                        session.at("meeting")["language"],
-                        event["start_seconds"],
-                        event["end_seconds"],
-                    )
+                segment = make_segment(
+                    session.id,
+                    int(event["id"].removeprefix("seg_")),
+                    event["text"],
+                    session.at("meeting")["language"],
+                    event["start_seconds"],
+                    event["end_seconds"],
                 )
+                session.get("transcript").append(segment)
+                # The sentence is already in the session, so a disk error must not stop the transcript.
+                with suppress(OSError), session.path(LIVE_TRANSCRIPT_FILE).open("a", encoding="utf-8") as live:
+                    start = "" if segment["start_seconds"] is None else segment["start_seconds"]
+                    text = " ".join(segment["text"].split())  # no tab or newline inside a line
+                    live.write(f"{segment['id']}\t{start}\t{text}\n")
             elif event["type"] == "paused":
                 session.status = "paused"
             elif event["type"] in {"ready", "resumed"}:
@@ -282,6 +289,7 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
             transcript_path = session.path(TRANSCRIPT_FILE)
             language = meeting["language"]
             session.emplace("transcript", [])  # a new run replaces the old segments
+            session.path(LIVE_TRANSCRIPT_FILE).write_text("", encoding="utf-8")
             session.pop("extractions")
             session.pop("extraction_cursor")
             session.pop("conflicts")

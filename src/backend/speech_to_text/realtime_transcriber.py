@@ -19,7 +19,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 SAMPLE_RATE = 44100
 BLOCK_SIZE = 4410
-MAX_SECONDS = 300  # Wall-clock limit, including pauses.
+MAX_SECONDS = 3000
 FINAL_WAIT_SECONDS = 2
 
 URL = (
