@@ -7,6 +7,8 @@ error format of the API contract, and mounts one router per meeting stage:
     api/pre_meeting.py      STAGE 1  create meeting, documents, agenda
     api/during_meeting.py   STAGE 2  recording, transcription
     api/post_meeting.py     STAGE 3  minutes
+    api/extractions.py      STAGE 2/3  decisions, action items, deadlines, open issues
+    api/conflicts.py        STAGE 2/3  two values for one field; the user picks
 
 Run from the repo root:  uvicorn src.backend.main:app --reload --port 8000
 Contract: docs/system_design/api-contract.md
@@ -16,7 +18,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
-from .api import during_meeting, post_meeting, pre_meeting
+from .api import conflicts, during_meeting, extractions, post_meeting, pre_meeting
 from .context.app_context import AppContext, MeetingNotFoundError
 from .context.session import MissingContextError
 from .utils.llm import LLMCallError
@@ -43,6 +45,8 @@ app.include_router(pre_meeting.router, prefix=API_PREFIX)
 app.include_router(during_meeting.router, prefix=API_PREFIX)
 app.include_router(during_meeting.ws_router)
 app.include_router(post_meeting.router, prefix=API_PREFIX)
+app.include_router(extractions.router, prefix=API_PREFIX)
+app.include_router(conflicts.router, prefix=API_PREFIX)
 
 
 @app.exception_handler(MeetingNotFoundError)
