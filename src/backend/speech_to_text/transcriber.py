@@ -57,7 +57,7 @@ class ElevenLabsTranscriber:
             with wave.open(str(path), "rb") as wav:
                 if wav.getnframes() == 0:
                     raise ValueError("Audio file is empty")
-        except wave.Error as exc:
+        except (wave.Error, EOFError) as exc:
             raise ValueError("Invalid WAV file") from exc
 
         try:
@@ -100,6 +100,11 @@ class ElevenLabsTranscriber:
             raise AudioTranscriptionError(
                 "Invalid JSON response from ElevenLabs"
             ) from exc
+
+        if not isinstance(result, dict):
+            raise AudioTranscriptionError(
+                "Invalid response from ElevenLabs: expected a JSON object"
+            )
 
         transcript = result.get("text")
 
