@@ -66,6 +66,9 @@ export const api = {
   // POST /meetings/{id}/conflicts/{cid}/resolve {chosen_value} -> Conflict (resolved)
   resolveConflict: (id, cid, chosenValue) =>
     request('POST', `/meetings/${id}/conflicts/${cid}/resolve`, { json: { chosen_value: chosenValue } }),
+  // POST /meetings/{id}/ask {question} -> { intent, answer, sources: segment ids, is_ai_suggestion }
+  ask: (id, question) => request('POST', `/meetings/${id}/ask`, { json: { question }, timeoutMs: 60_000 }),
+
   // GET /meetings/{id}/transcript -> { segments: TranscriptSegment[] }
   getTranscript: (id) => request('GET', `/meetings/${id}/transcript`),
 

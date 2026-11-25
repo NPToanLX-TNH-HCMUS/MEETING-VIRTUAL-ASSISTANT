@@ -2,7 +2,8 @@ import threading
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, Request
+from fastapi import Depends
+from starlette.requests import HTTPConnection
 
 from ..database.repository import MeetingRepository
 from ..database.storage import CloudStorage
@@ -73,9 +74,9 @@ class AppContext:
             return list(self._sessions.values())
 
 
-def get_ctx(request: Request) -> AppContext:
+def get_ctx(connection: HTTPConnection) -> AppContext:
     """fastapi dependency"""
-    return request.app.state.ctx
+    return connection.app.state.ctx
 
 
 def get_session(

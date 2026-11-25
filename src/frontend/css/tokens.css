@@ -1,31 +1,47 @@
+/*
+ * Theme "Violet Night": dark first, one violet accent (palette after Yogurt's dark theme).
+ * Light is opt-in with <html data-theme="light">.
+ * Semantic colours never stand alone in the UI: each state also has a text label.
+ */
 :root {
-  /* Colour */
-  --c-bg: #f1f5f5;
-  --c-surface: #ffffff;
-  --c-surface-muted: #e7ecee;
-  --c-border: #dde3e6;
-  --c-border-strong: #c3ccd1;
-  --c-text: #14202b;
-  --c-text-muted: #56636e;
-  --c-primary: #0e7882;
-  --c-primary-hover: #0b636b;
-  --c-primary-soft: #e3f2f1;
-  --c-on-primary: #ffffff;
-  --c-ink: #14202b;
-  --c-warn-bg: #fbf0d4;
-  --c-warn-border: #f0d68f;
-  --c-warn-text: #6b4a00;
-  --c-info-bg: #e5ebf5;
-  --c-error-bg: #fbe4e4;
-  --c-error-border: #eeb4b4;
-  --c-error-text: #8a1c1c;
-  --c-success: #2f7d4f;
-  --c-success-soft: #e4f3e9;
-  --c-focus: #3a8fd9;
-  --c-info-text: #2a3f6b;
-  --c-success-strong: #17703a;
-  --c-amber: #c9871a;
-  --c-track: #d3dde2;
+  /* Surfaces and text */
+  --c-bg: #161618;
+  --c-surface: #212124;
+  --c-surface-muted: #2b2b2f;
+  --c-border: #333337;
+  --c-border-strong: #47474d;
+  --c-text: #ecebf0;
+  --c-text-muted: #a6a3ae;
+  /* Inverted surface (toast, current step, pressed segment): light on the dark theme */
+  --c-ink: #ecebf0;
+  --c-track: #333337;
+
+  /* Accent. Dark text on the light violet: white on #b780ff is too low in contrast. */
+  --c-primary: #b780ff;
+  --c-on-primary: #1a0833;
+  --c-focus: #b780ff;
+
+  /* Semantic base hues */
+  --c-warn-text: #e5bd68;
+  --c-error-text: #ff7a85;
+  --c-info-text: #87b5f4;
+  --c-success: #aed4b5;
+  --c-success-strong: #8fc79b;
+  --c-amber: #e5bd68;
+  /* AI suggestions: teal, so they never read as the violet accent */
+  --c-ai: #72cece;
+
+  /* Derived tints: mixed from the hues above, so both themes stay in step.
+     Hover mixes toward --c-text, which is lighter on dark and darker on light. */
+  --c-primary-hover: color-mix(in srgb, var(--c-primary) 85%, var(--c-text));
+  --c-primary-soft: color-mix(in srgb, var(--c-primary) 16%, var(--c-surface));
+  --c-warn-bg: color-mix(in srgb, var(--c-warn-text) 14%, var(--c-surface));
+  --c-warn-border: color-mix(in srgb, var(--c-warn-text) 40%, var(--c-border));
+  --c-error-bg: color-mix(in srgb, var(--c-error-text) 14%, var(--c-surface));
+  --c-error-border: color-mix(in srgb, var(--c-error-text) 40%, var(--c-border));
+  --c-info-bg: color-mix(in srgb, var(--c-info-text) 13%, var(--c-surface));
+  --c-success-soft: color-mix(in srgb, var(--c-success) 13%, var(--c-surface));
+  --c-ai-soft: color-mix(in srgb, var(--c-ai) 11%, var(--c-surface));
 
   /* Type: stacks chosen for full Vietnamese coverage incl. stacked tone marks */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Helvetica Neue", Arial, sans-serif;
@@ -48,6 +64,42 @@
   --r-md: 12px;
   --r-lg: 16px;
   --r-pill: 999px;
-  --shadow-card: 0 1px 2px rgba(20, 32, 43, 0.04);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-pop: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 18px 48px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --scrim: rgba(0, 0, 0, 0.55);
   --header-h: 64px;
+
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --c-bg: #f3f3f5;
+  --c-surface: #ffffff;
+  --c-surface-muted: #ececee;
+  --c-border: #e6e6e8;
+  --c-border-strong: #cfcfd4;
+  --c-text: #29292c;
+  --c-text-muted: #606066;
+  --c-ink: #29292c;
+  --c-track: #dcdce1;
+
+  --c-primary: #6f00ff;
+  --c-on-primary: #ffffff;
+  --c-focus: #6f00ff;
+
+  --c-warn-text: #8a5f00;
+  --c-error-text: #b63c4d;
+  --c-info-text: #2868ba;
+  --c-success: #2f7d4f;
+  --c-success-strong: #17703a;
+  --c-amber: #c9871a;
+  --c-ai: #157d80;
+
+  --shadow-card: 0 1px 2px rgba(23, 23, 26, 0.05);
+  --shadow-pop: 0 6px 20px rgba(23, 23, 26, 0.16);
+  --shadow-float: 0 16px 44px rgba(23, 23, 26, 0.1), 0 2px 6px rgba(23, 23, 26, 0.05);
+  --scrim: rgba(22, 22, 25, 0.22);
+
+  color-scheme: light;
 }

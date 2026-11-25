@@ -115,17 +115,30 @@
           <p id="captured-empty" class="muted">Decisions, action items and open issues appear here while people talk.</p>
         </section>
 
-        <section class="card" aria-labelledby="ask-title">
-          <div class="card__head"><h2 id="ask-title" class="card__title card__title--sm">Ask the assistant</h2></div>
-          <p class="pending">In-meeting Q&amp;A: pending update.</p>
-          <form class="ask" onsubmit="return false">
-            <label class="visually-hidden" for="ask-input">Question</label>
-            <input id="ask-input" class="input" type="text" placeholder="Ask about time, progress…" disabled />
-            <button type="submit" class="btn btn--primary" disabled>Ask</button>
-          </form>
-        </section>
       </div>
     </main>
+
+    <!-- Trợ lý: nút nổi góc phải dưới, bấm mới mở cửa sổ chat. Không modal, để vẫn bấm nguồn nhảy tới transcript. -->
+    <!-- During.js điền từ POST .../ask; chỉ giữ trong bộ nhớ trang, tải lại là mất. -->
+    <button id="ask-toggle" type="button" class="btn btn--primary ask-fab" aria-expanded="false" aria-controls="ask-panel">
+      Ask the assistant<span id="ask-unread" class="ask-fab__badge" hidden></span>
+    </button>
+    <section id="ask-panel" class="card ask-panel" role="dialog" aria-labelledby="ask-title" hidden>
+      <div class="card__head">
+        <h2 id="ask-title" class="card__title card__title--sm">Ask the assistant</h2>
+        <button id="ask-close" type="button" class="ask__close" aria-label="Close the assistant">×</button>
+      </div>
+      <div class="scroll-panel ask-panel__thread" tabindex="0" aria-label="Questions and answers">
+        <ul id="ask-list" class="capture-list" aria-live="polite"></ul>
+      </div>
+      <p id="ask-empty" class="muted">Start recording, then ask about time left or what was said.</p>
+      <div id="ask-starters" class="ask__starters" aria-label="Suggested questions" hidden></div>
+      <form id="ask-form" class="ask">
+        <label class="visually-hidden" for="ask-input">Question</label>
+        <input id="ask-input" class="input" type="text" placeholder="Ask about time, decisions, what was said…" disabled />
+        <button id="ask-submit" type="submit" class="btn btn--primary" disabled>Ask</button>
+      </form>
+    </section>
 
     <script type="module" src="/js/during.js"></script>
   </body>
