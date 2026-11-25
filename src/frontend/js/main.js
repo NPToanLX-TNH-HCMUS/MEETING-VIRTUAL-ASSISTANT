@@ -15,6 +15,7 @@ let errorMessage = '';
 let language = 'vi';
 let points = []; // các ý dự định trình bày, mỗi ý một chip
 let addingPoint = false;
+let previousMeetings = [];
 
 const REASON_LABEL = { exceeds_remaining_time: "doesn't fit in the remaining time" };
 const UPLOAD_ERROR_LABEL = {
@@ -52,6 +53,7 @@ function render() {
 
   // Đã tạo cuộc họp trên backend thì không sửa được thông tin nữa (backend chưa có API sửa).
   for (const id of ['topic', 'duration']) $(id).disabled = !!meeting;
+  $('previous').disabled = !!meeting || previousMeetings.length === 0;
   for (const btn of $('language').children) {
     btn.disabled = !!meeting;
     btn.setAttribute('aria-pressed', String(btn.dataset.value === language));
@@ -262,7 +264,7 @@ function readDetails() {
     language,
     duration_minutes: duration,
     planned_points: points,
-    previous_meeting_id: null, // backend chưa liệt kê được buổi họp trước
+    previous_meeting_id: $('previous').value || null,
   };
 }
 
@@ -477,4 +479,43 @@ dropzone.addEventListener('drop', (e) => {
 // Thả tệp lệch ra ngoài vùng thì trình duyệt sẽ mở tệp và mất trang; chặn lại.
 for (const type of ['dragover', 'drop']) window.addEventListener(type, (e) => e.preventDefault());
 
+async function loadPreviousMeetings() {
+  const select = $('previous');
+  try {
+    const res = await api.listMeetings('archived');
+    previousMeetings = res.items ?? [];
+    if (previousMeetings.length === 0) {
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = 'No archived meetings yet';
+      select.replaceChildren(empty);
+    } else {
+      const none = document.createElement('option');
+      none.value = '';
+      none.textContent = 'None (start fresh)';
+      const opts = previousMeetings.map((m) => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        const date = new Date(m.created_at).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+        opt.textContent = `${m.topic} · ${date}`;
+        return opt;
+      });
+      select.replaceChildren(none, ...opts);
+    }
+  } catch {
+    previousMeetings = [];
+    const errOpt = document.createElement('option');
+    errOpt.value = '';
+    errOpt.textContent = 'Unable to load previous meetings';
+    select.replaceChildren(errOpt);
+  } finally {
+    render();
+  }
+}
+
 render();
+loadPreviousMeetings();

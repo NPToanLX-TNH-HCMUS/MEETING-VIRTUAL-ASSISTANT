@@ -17,6 +17,7 @@ dependencies = [
     "uvicorn",
     "requests",
     "datasketch==2.0.0",
+    "sqlalchemy",
     "jsonschema>=4,<5",
     "python-multipart",
     "langchain-core==0.3.63",
@@ -26,6 +27,8 @@ dependencies = [
     "langchain-experimental==0.3.4",   # semantic chunking
     "websockets",
     "numpy",
+    "psycopg[binary]",
+    "supabase",
 ]
 # Equivalent to `REQUIREMENTS` in `setup.cfg` or `install_requires` in `setup.py`
 

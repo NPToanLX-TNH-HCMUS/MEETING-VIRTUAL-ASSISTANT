@@ -15,7 +15,7 @@ import re
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, Query, UploadFile
 
 from ..agenda_extractor.agenda_extractor import extract_topics
 from ..document.markdown_converter import FileConversionError, MarkDownConverter
@@ -25,12 +25,27 @@ from ..utils.objects import (
     AgendaProposal,
     Document,
     Meeting,
+    MeetingList,
     NewMeeting,
 )
 from ..utils.utils import error, now
 from .common import CtxDep, SessionDep, meeting_response
 
 router = APIRouter(prefix="/meetings", tags=["pre-meeting"])
+
+
+# GET /meetings - list meetings (used to pick previous_meeting_id)
+
+
+@router.get("", response_model=MeetingList)
+def list_meetings(
+    ctx: CtxDep,
+    status: str | None = None,
+    limit: int = Query(default=50, ge=1, le=200),
+):
+    """List persisted meetings (newest first), optionally filtered by status."""
+    items = ctx.meeting_repository.list_meetings(status=status, limit=limit)
+    return {"items": items}
 
 
 # POST /meetings  - create the meeting
@@ -42,6 +57,18 @@ def create_meeting(body: NewMeeting, ctx: CtxDep):
     FRONT END SENDS:  NewMeeting Object
     BACK END RETURNS: Meeting, status "draft". The UI keeps meeting.id for every later call.
     """
+    # Validate before creating a session folder so invalid references leave no orphan data.
+    if body.previous_meeting_id is not None:
+        exists = ctx.has(
+            body.previous_meeting_id
+        ) or ctx.meeting_repository.meeting_exists(body.previous_meeting_id)
+        if not exists:
+            return error(
+                404,
+                "MEETING_NOT_FOUND",
+                f"No previous meeting with id {body.previous_meeting_id}",
+            )
+
     session = ctx.create_session()
     meeting = {
         "id": session.id,
@@ -58,6 +85,13 @@ def create_meeting(body: NewMeeting, ctx: CtxDep):
         session.emplace("meeting", meeting)
         session.emplace("documents", [])
         session.emplace("agenda", [])
+        ctx.meeting_repository.create_meeting(meeting, status=session.status)
+
+        if body.previous_meeting_id is not None:
+            previous_context = ctx.meeting_repository.get_previous_context(
+                body.previous_meeting_id
+            )
+            session.emplace("previous_context", previous_context)
         return meeting_response(session)
 
 
@@ -143,7 +177,9 @@ async def upload_document(file: UploadFile, session: SessionDep, ctx: CtxDep):
             "size_bytes": len(content),
             "uploaded_at": now(),
         }
-        documents.append({**document, "text": text, "headings": headings})
+        full_doc = {**document, "text": text, "headings": headings}
+        ctx.meeting_repository.add_document(full_doc)
+        documents.append(full_doc)
 
     return document
 
@@ -158,12 +194,17 @@ PLACEHOLDER_MINUTES = 10
 AGENDA_EDITABLE = {"draft", "ready"}
 
 
-def build_candidates(meeting: dict, documents: list[dict]) -> list[dict]:
+def build_candidates(
+    meeting: dict,
+    documents: list[dict],
+    previous_context: dict | None = None,
+) -> list[dict]:
     candidates = extract_topics(
         planned_points=meeting["planned_points"],
         documents=documents,
         duration_minutes=meeting["duration_minutes"],
         topic=meeting.get("topic", ""),
+        previous_context=previous_context,
         language=meeting["language"],
     )
 
@@ -209,7 +250,7 @@ def _agenda_locked(session) -> object | None:
 
 
 @router.post("/{meeting_id}/agenda/generate", response_model=AgendaProposal)
-def generate_agenda(session: SessionDep):
+def generate_agenda(session: SessionDep, ctx: CtxDep):
     """
     BACK END RETURNS: AgendaProposal = {items, dropped, total_estimated_minutes, duration_minutes}
     The UI shows items in "order" and lists "dropped". Nothing is official until PUT /agenda.
@@ -219,9 +260,18 @@ def generate_agenda(session: SessionDep):
             return locked
         meeting = dict(session.at("meeting"))
         documents = [dict(doc) for doc in session.at("documents")]
+        previous_context = session.get("previous_context")
+
+    # Fallback if the server restarted between POST /meetings and POST /agenda/generate.
+    previous_id = meeting.get("previous_meeting_id")
+    if previous_id is not None and previous_context is None:
+        previous_context = ctx.meeting_repository.get_previous_context(previous_id)
+        if previous_context is not None:
+            with session:
+                session.emplace("previous_context", previous_context)
 
     # The LLM call can take seconds, so it runs outside the session lock.
-    candidates = build_candidates(meeting, documents)
+    candidates = build_candidates(meeting, documents, previous_context)
     chosen, dropped = select_by_time(candidates, meeting["duration_minutes"])
 
     items = [
@@ -242,6 +292,7 @@ def generate_agenda(session: SessionDep):
         # Re-check: the status may have changed while the LLM was running.
         if (locked := _agenda_locked(session)) is not None:
             return locked
+        ctx.meeting_repository.replace_agenda(session.id, items, status="draft")
         session.emplace("agenda", items)
         session.status = "draft"  # a new proposal is not confirmed yet
 
@@ -257,7 +308,7 @@ def generate_agenda(session: SessionDep):
 
 
 @router.put("/{meeting_id}/agenda", response_model=AgendaList)
-def save_agenda(body: AgendaEdit, session: SessionDep):
+def save_agenda(body: AgendaEdit, session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  AgendaEdit = {items: [{id, title, estimated_minutes, order}]}
     BACK END RETURNS: AgendaList = {items: AgendaItem[]} with full fields; meeting becomes "ready".
@@ -298,6 +349,7 @@ def save_agenda(body: AgendaEdit, session: SessionDep):
                 }
             )
 
+        ctx.meeting_repository.replace_agenda(session.id, saved, status="ready")
         session.emplace("agenda", saved)
         session.status = "ready"
         return {"items": saved}

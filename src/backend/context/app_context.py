@@ -5,6 +5,8 @@ from typing import Annotated
 from fastapi import Depends
 from starlette.requests import HTTPConnection
 
+from ..database.repository import MeetingRepository
+from ..database.storage import CloudStorage
 from ..document.markdown_converter import MarkDownConverter
 from ..meeting_manager.meeting_manager import MeetingManager
 from ..meeting_manager.storage_manager import StorageManager
@@ -15,11 +17,18 @@ class MeetingNotFoundError(KeyError): ...
 
 
 class AppContext:
-    def __init__(self, data_root: Path = Path("data")):
+    def __init__(
+        self,
+        data_root: Path = Path("data"),
+        repository: MeetingRepository | None = None,
+        cloud_storage: CloudStorage | None = None,
+    ):
         # Attribute get from other modules
         self.storage = StorageManager(data_root)
         self.meeting_manager = MeetingManager(self.storage)
         self.converter = MarkDownConverter()
+        self.meeting_repository = repository or MeetingRepository()
+        self.cloud_storage = cloud_storage or CloudStorage()
 
         # Private attributes
         self._sessions: dict[str, MeetingSession] = {}
@@ -32,12 +41,33 @@ class AppContext:
             self._sessions[session.id] = session
         return session
 
+    def has(self, key: str):
+        return key in self._sessions
+
     def session(self, meeting_id: str) -> MeetingSession:
         with self._lock:
-            try:
+            if self.has(meeting_id):
                 return self._sessions[meeting_id]
-            except KeyError:
-                raise MeetingNotFoundError(meeting_id) from None
+            else:
+                loaded = self.meeting_repository.load_session(
+                    meeting_id, self.storage.root_dir
+                )
+                if loaded is None:
+                    raise MeetingNotFoundError(meeting_id) from None
+
+                # In case server was accidentally downed while recording:
+                if loaded.status in {"live", "paused"}:
+                    has_audio = loaded.path("during_meeting/audio/record.wav").is_file()
+                    new_status = (
+                        "processing"
+                        if (has_audio or loaded.has("transcript_text"))
+                        else "ready"
+                    )
+                    loaded.status = new_status
+                    self.meeting_repository.update_status(loaded.id, new_status)
+
+            self._sessions[meeting_id] = loaded
+            return loaded
 
     def sessions(self) -> list[MeetingSession]:
         with self._lock:

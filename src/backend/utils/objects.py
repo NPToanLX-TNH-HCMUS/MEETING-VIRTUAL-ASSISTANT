@@ -18,6 +18,10 @@ class Meeting(BaseModel):
     ended_at: str | None
 
 
+class MeetingList(BaseModel):
+    items: list[Meeting]
+
+
 class Document(BaseModel):
     id: str
     meeting_id: str
@@ -71,7 +75,7 @@ class NewMeeting(BaseModel):
     planned_points: list[
         str
     ] = []  # one entry per line of the "Points you plan to present" box
-    previous_meeting_id: str | None = None  # always null for now
+    previous_meeting_id: str | None = None
 
 
 class AgendaItemEdit(BaseModel):
@@ -92,7 +96,7 @@ class AgendaEdit(BaseModel):
 # LLM Return — Agenda extraction
 class Topic(BaseModel):
     title: str
-    source: Literal["planned_point", "document"]
+    source: Literal["planned_point", "document", "carry_over"]
     minutes: int | None = None  # how long to discuss it; None if the model forgot
 
 

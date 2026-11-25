@@ -21,16 +21,16 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from ..agenda_tracker.fsm import apply_proposals
 from ..agenda_tracker.tracker import propose_transitions
 from ..audio.recorder import Recorder
-from ..extraction.extractor import propose_items
 from ..context.app_context import MeetingNotFoundError
+from ..extraction.extractor import propose_items
 from ..meeting_qa.qa import HISTORY_TURNS, answer_question
 from ..speech_to_text.realtime_transcriber import stream_transcript
 from ..speech_to_text.segments import from_batch, make_segment
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
 from ..utils.objects import AskAnswer, AskRequest, Meeting, TranscriptList
-from .extractions import merge_into_session
 from ..utils.utils import envelope, error, now
-from .common import SessionDep, meeting_response
+from .common import CtxDep, SessionDep, meeting_response
+from .extractions import merge_into_session
 
 router = APIRouter(prefix="/meetings/{meeting_id}", tags=["during-meeting"])
 # The WebSocket lives outside /api/v1 (see the contract), so it gets its own router.
@@ -54,7 +54,7 @@ LIVE_TRANSCRIPT_FILE = "during_meeting/transcript/transcript_live.tsv"
 
 
 @router.post("/recording/start", response_model=Meeting)
-def start_recording(session: SessionDep):
+def start_recording(session: SessionDep, ctx: CtxDep):
     if transcript_test_lock.locked():
         return error(
             409,
@@ -73,14 +73,16 @@ def start_recording(session: SessionDep):
             recorder.start()
         except Exception as exc:  # sounddevice raises PortAudioError when there is no microphone / no permission
             return error(500, "RECORDER_FAILED", str(exc))
+        started_at = now()
+        ctx.meeting_repository.update_status(session.id, "live", started_at=started_at)
         session.emplace("recorder", recorder)
         session.status = "live"
-        session.at("meeting")["started_at"] = now()
+        session.at("meeting")["started_at"] = started_at
         return meeting_response(session)
 
 
 @router.post("/recording/stop", response_model=Meeting)
-def stop_recording(session: SessionDep):
+def stop_recording(session: SessionDep, ctx: CtxDep):
     with session:
         recorder = session.get("recorder")
         if session.status != "live" or recorder is None:
@@ -91,13 +93,17 @@ def stop_recording(session: SessionDep):
             )
         recorder.stop(str(session.path(AUDIO_FILE)))
         session.pop("recorder")
+        ended_at = now()
+        ctx.meeting_repository.update_status(
+            session.id, "processing", ended_at=ended_at
+        )
         session.status = "processing"
-        session.at("meeting")["ended_at"] = now()
+        session.at("meeting")["ended_at"] = ended_at
         return meeting_response(session)
 
 
 @router.post("/transcribe")
-def transcribe_recording(session: SessionDep):
+def transcribe_recording(session: SessionDep, ctx: CtxDep):
     with session:
         audio = session.path(AUDIO_FILE)
         if not audio.is_file():
@@ -109,7 +115,9 @@ def transcribe_recording(session: SessionDep):
 
     # The STT request can take a while, so it runs outside the session lock.
     try:
-        segments = ElevenLabsTranscriber().transcribe_file(audio, transcript_path, language)
+        segments = ElevenLabsTranscriber().transcribe_file(
+            audio, transcript_path, language
+        )
     except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
         return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
     except AudioTranscriptionError as exc:
@@ -123,9 +131,11 @@ def transcribe_recording(session: SessionDep):
 
     with session:
         language = session.at("meeting")["language"]
-        session.emplace(
-            "transcript", from_batch(segments, session.id, language)
+        normalized_segments = from_batch(segments, session.id, language)
+        ctx.meeting_repository.save_transcript(
+            session.id, normalized_segments, text, now()
         )
+        session.emplace("transcript", normalized_segments)
         session.emplace("transcript_text", text)
         # They were built from the old transcript.
         session.pop("extractions")
@@ -157,7 +167,11 @@ def ask(session: SessionDep, body: AskRequest):
         return error(400, "VALIDATION_ERROR", "The question is empty.")
     with session:
         if session.status not in {"live", "paused"}:
-            return error(409, "INVALID_MEETING_STATE", f"Cannot ask while the meeting is {session.status}")
+            return error(
+                409,
+                "INVALID_MEETING_STATE",
+                f"Cannot ask while the meeting is {session.status}",
+            )
         meeting = dict(session.at("meeting"))
         agenda = [dict(item) for item in session.get("agenda", [])]
         segments = list(session.get("transcript", []))
@@ -166,7 +180,9 @@ def ask(session: SessionDep, body: AskRequest):
     # LLMCallError becomes the contract's 503/422 in main.py.
     result = answer_question(meeting, agenda, segments, history, question)
     with session:
-        turns = session.get("qa_history", []) + [{"question": question, "answer": result["answer"]}]
+        turns = session.get("qa_history", []) + [
+            {"question": question, "answer": result["answer"]}
+        ]
         session.emplace("qa_history", turns[-HISTORY_TURNS:])
     return result
 
@@ -261,6 +277,7 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
             await send("agenda.item_state", data)
 
     async def forward_event(event):
+        new_status = None
         with session:
             if event["type"] == "committed":
                 segment = make_segment(
@@ -273,14 +290,29 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
                 )
                 session.get("transcript").append(segment)
                 # The sentence is already in the session, so a disk error must not stop the transcript.
-                with suppress(OSError), session.path(LIVE_TRANSCRIPT_FILE).open("a", encoding="utf-8") as live:
-                    start = "" if segment["start_seconds"] is None else segment["start_seconds"]
-                    text = " ".join(segment["text"].split())  # no tab or newline inside a line
+                with (
+                    suppress(OSError),
+                    session.path(LIVE_TRANSCRIPT_FILE).open(
+                        "a", encoding="utf-8"
+                    ) as live,
+                ):
+                    start = (
+                        ""
+                        if segment["start_seconds"] is None
+                        else segment["start_seconds"]
+                    )
+                    text = " ".join(
+                        segment["text"].split()
+                    )  # no tab or newline inside a line
                     live.write(f"{segment['id']}\t{start}\t{text}\n")
             elif event["type"] == "paused":
-                session.status = "paused"
+                session.status = new_status = "paused"
             elif event["type"] in {"ready", "resumed"}:
-                session.status = "live"
+                session.status = new_status = "live"
+        if new_status is not None:
+            await asyncio.to_thread(
+                ctx.meeting_repository.update_status, session.id, new_status
+            )
         await websocket.send_json(event)
 
         if event["type"] == "committed":
@@ -310,10 +342,11 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
                         pause_event.clear()
 
     async with transcript_test_lock:
+        started_at = now()
         with session:
             meeting = session.at("meeting")
             session.status = "live"
-            meeting["started_at"] = now()
+            meeting["started_at"] = started_at
             meeting["ended_at"] = None
             audio_path = session.path(AUDIO_FILE)
             transcript_path = session.path(TRANSCRIPT_FILE)
@@ -323,6 +356,14 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
             session.pop("extractions")
             session.pop("extraction_cursor")
             session.pop("conflicts")
+
+        await asyncio.to_thread(
+            ctx.meeting_repository.update_status,
+            session.id,
+            "live",
+            started_at=started_at,
+            ended_at=None,
+        )
 
         stream_task = asyncio.create_task(
             stream_transcript(
@@ -353,12 +394,26 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
                 )
 
             transcript_path.write_text(transcript, encoding="utf-8")
+            ended_at = now()
             with session:
-                meeting["ended_at"] = now()
+                saved_segments = list(session.get("transcript") or [])
+                session.emplace("transcript_text", transcript)
+                meeting["ended_at"] = ended_at
                 session.status = "processing"
 
-            with session:
-                saved_segments = list(session.get("transcript"))
+            await asyncio.to_thread(
+                ctx.meeting_repository.save_transcript,
+                session.id,
+                saved_segments,
+                transcript,
+                ended_at,
+            )
+            await asyncio.to_thread(
+                ctx.meeting_repository.update_status,
+                session.id,
+                "processing",
+                ended_at=ended_at,
+            )
             await websocket.send_json(
                 {
                     "type": "done",
@@ -384,11 +439,22 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
 
+            reset_needed = False
             with session:
                 if session.status in {"live", "paused"}:
                     session.status = "ready"
                     meeting["started_at"] = None
                     meeting["ended_at"] = None
+                    reset_needed = True
+            if reset_needed:
+                with suppress(Exception):
+                    await asyncio.to_thread(
+                        ctx.meeting_repository.update_status,
+                        session.id,
+                        "ready",
+                        started_at=None,
+                        ended_at=None,
+                    )
 
             with suppress(Exception):
                 await websocket.close()

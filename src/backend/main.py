@@ -21,14 +21,18 @@ from fastapi import FastAPI, Request
 from .api import conflicts, during_meeting, extractions, post_meeting, pre_meeting
 from .context.app_context import AppContext, MeetingNotFoundError
 from .context.session import MissingContextError
+from .database.database import engine
+from .database.model import Base
 from .utils.llm import LLMCallError
-from .utils.utils import error, meeting_not_found
+from .utils.utils import error, meeting_not_found, now
 
 API_PREFIX = "/api/v1"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    bind = app.state.ctx.meeting_repository._session.kw.get("bind", engine)
+    Base.metadata.create_all(bind)
     yield
     # Stop any microphone stream still running on shutdown / reload so the audio is not lost.
     for session in app.state.ctx.sessions():
@@ -36,6 +40,12 @@ async def lifespan(app: FastAPI):
             recorder = session.pop("recorder")
             if recorder is not None and recorder.is_recording:
                 recorder.stop(str(session.path(during_meeting.AUDIO_FILE)))
+                ended_at = now()
+                session.status = "processing"
+                session.at("meeting")["ended_at"] = ended_at
+                app.state.ctx.meeting_repository.update_status(
+                    session.id, "processing", ended_at=ended_at
+                )
 
 
 app = FastAPI(lifespan=lifespan)
