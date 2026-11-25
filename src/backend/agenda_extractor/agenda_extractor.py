@@ -74,14 +74,9 @@ List the topics to DISCUSS in the NEXT meeting.
   headings that are not topics (title, attendees, table of contents).
 - If a document has an agenda or action-items section, list the items INSIDE it, not the section's name.
 - File names and section names such as "Action Items" are never topics themselves.
-<<<<<<< HEAD
 - A point, a document topic, or a previous-meeting item about the same subject = ONE item.
-- Answer in English only. Write every title in English.
-=======
-- A point and a document about the same topic = ONE item.
 - Write every title in {language}, the language of the meeting. Keep names and technical terms
   as they appear in the text.
->>>>>>> main
 - title: short and specific, under 100 characters.
 - source: "planned_point" for a point the user typed, "document" for a topic found in a document,
   "carry_over" for a follow-up topic from <previous_meeting>.

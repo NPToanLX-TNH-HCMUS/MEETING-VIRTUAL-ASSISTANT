@@ -7,6 +7,7 @@ Main idea: Repository Pattern.
 """
 
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import selectinload, sessionmaker
@@ -269,7 +270,7 @@ class MeetingRepository:
     def save_transcript(
         self,
         meeting_id: str,
-        segments: list[dict[str, str]],
+        segments: list[dict[str, Any]],
         full_text: str,
         updated_at: str,
     ) -> None:

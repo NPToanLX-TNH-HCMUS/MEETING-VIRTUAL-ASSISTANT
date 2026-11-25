@@ -262,13 +262,13 @@ def generate_agenda(session: SessionDep, ctx: CtxDep):
         documents = [dict(doc) for doc in session.at("documents")]
         previous_context = session.get("previous_context")
 
-        # Fallback if the server restarted between POST /meetings and POST /agenda/generate.
-        previous_id = meeting.get("previous_meeting_id")
-        if previous_id is not None and previous_context is None:
-            previous_context = ctx.meeting_repository.get_previous_context(previous_id)
-            if previous_context is not None:
-                with session:
-                    session.emplace("previous_context", previous_context)
+    # Fallback if the server restarted between POST /meetings and POST /agenda/generate.
+    previous_id = meeting.get("previous_meeting_id")
+    if previous_id is not None and previous_context is None:
+        previous_context = ctx.meeting_repository.get_previous_context(previous_id)
+        if previous_context is not None:
+            with session:
+                session.emplace("previous_context", previous_context)
 
     # The LLM call can take seconds, so it runs outside the session lock.
     candidates = build_candidates(meeting, documents, previous_context)

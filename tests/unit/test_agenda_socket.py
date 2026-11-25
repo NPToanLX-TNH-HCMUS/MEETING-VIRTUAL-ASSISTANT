@@ -4,12 +4,18 @@ import asyncio
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from src.backend.api import during_meeting
 from src.backend.context.app_context import AppContext
+from src.backend.database.model import Base
+from src.backend.database.repository import MeetingRepository
+from src.backend.database.storage import CloudStorage
 from src.backend.main import app
 
 AGENDA_ITEM = {
@@ -42,13 +48,40 @@ class TestAgendaSocket(unittest.TestCase):
     def setUp(self):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
+        self.data_root = Path(tmp.name)
+        engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        self.addCleanup(engine.dispose)
+        Base.metadata.create_all(engine)
+        self.repo = MeetingRepository(
+            sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+        )
         original = app.state.ctx
-        app.state.ctx = AppContext(Path(tmp.name))
+        app.state.ctx = AppContext(
+            self.data_root,
+            repository=self.repo,
+            cloud_storage=CloudStorage(client=MagicMock()),
+        )
         self.addCleanup(setattr, app.state, "ctx", original)
         self.session = app.state.ctx.create_session()
-        self.session.emplace("meeting", {"id": self.session.id, "language": "vi", "started_at": None, "ended_at": None})
+        meeting = {
+            "id": self.session.id,
+            "topic": "Socket Test",
+            "language": "vi",
+            "duration_minutes": 30,
+            "planned_points": [],
+            "previous_meeting_id": None,
+            "created_at": "2026-11-25T10:00:00+07:00",
+            "started_at": None,
+            "ended_at": None,
+        }
+        self.session.emplace("meeting", meeting)
         self.session.emplace("agenda", [dict(AGENDA_ITEM)])
         self.session.status = "ready"
+        self.repo.create_meeting(meeting, status="ready")
 
     def run_socket(self, proposer, extractor=no_extraction):
         with (
@@ -80,6 +113,11 @@ class TestAgendaSocket(unittest.TestCase):
         done = messages[-1]
         self.assertEqual([s["id"] for s in done["segments"]], ["seg_001", "seg_002", "seg_003"])
         self.assertEqual(done["segments"][0]["start_seconds"], 1.0)
+        reloaded = self.repo.load_session(self.session.id, self.data_root)
+        self.assertIsNotNone(reloaded)
+        self.assertEqual([s["id"] for s in reloaded.at("transcript")], ["seg_001", "seg_002", "seg_003"])
+        self.assertIsNotNone(reloaded.at("meeting")["started_at"])
+        self.assertIsNotNone(reloaded.at("meeting")["ended_at"])
 
     def test_weak_evidence_sends_nothing(self):
         def invented(agenda, segments, cursor):

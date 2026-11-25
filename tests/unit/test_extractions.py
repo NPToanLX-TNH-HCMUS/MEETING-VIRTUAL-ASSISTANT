@@ -3,11 +3,17 @@ import tempfile
 import unicodedata
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from src.backend.context.app_context import AppContext
+from src.backend.database.model import Base
+from src.backend.database.repository import MeetingRepository
+from src.backend.database.storage import CloudStorage
 from src.backend.extraction.extractor import build_extractions, merge_items, resolve_conflict
 from src.backend.main import app
 from src.backend.speech_to_text.segments import make_segment
@@ -251,14 +257,40 @@ class TestExtractionsEndpoint(unittest.TestCase):
         # A temp data root keeps the tests from creating folders under ./data.
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
+        engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        self.addCleanup(engine.dispose)
+        Base.metadata.create_all(engine)
+        repo = MeetingRepository(
+            sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+        )
         original = app.state.ctx
-        app.state.ctx = AppContext(Path(tmp.name))
+        app.state.ctx = AppContext(
+            Path(tmp.name),
+            repository=repo,
+            cloud_storage=CloudStorage(client=MagicMock()),
+        )
         self.addCleanup(setattr, app.state, "ctx", original)
         self.client = TestClient(app)
         session = app.state.ctx.create_session()
         self.session = session
         self.url = f"/api/v1/meetings/{session.id}/extractions"
-        session.emplace("meeting", {"id": session.id, "language": "vi", "ended_at": None})
+        meeting = {
+            "id": session.id,
+            "topic": "t",
+            "language": "vi",
+            "duration_minutes": 30,
+            "planned_points": [],
+            "previous_meeting_id": None,
+            "created_at": "t",
+            "started_at": None,
+            "ended_at": None,
+        }
+        session.emplace("meeting", meeting)
+        repo.create_meeting(meeting, status="draft")
 
     def test_not_available_before_the_meeting(self):
         self.session.status = "ready"

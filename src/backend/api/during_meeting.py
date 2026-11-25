@@ -125,10 +125,12 @@ def transcribe_recording(session: SessionDep, ctx: CtxDep):
     )
 
     with session:
-        ctx.meeting_repository.save_transcript(session.id, segments, text, now())
-
         language = session.at("meeting")["language"]
-        session.emplace("transcript", from_batch(segments, session.id, language))
+        normalized_segments = from_batch(segments, session.id, language)
+        ctx.meeting_repository.save_transcript(
+            session.id, normalized_segments, text, now()
+        )
+        session.emplace("transcript", normalized_segments)
         session.emplace("transcript_text", text)
         # They were built from the old transcript.
         session.pop("extractions")
@@ -258,7 +260,7 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
                     )
                 )
             elif event["type"] == "paused":
-                session.status = "paused"
+                session.status = new_status = "paused"
             elif event["type"] in {"ready", "resumed"}:
                 session.status = new_status = "live"
         if new_status is not None:
@@ -308,6 +310,14 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
             session.pop("extraction_cursor")
             session.pop("conflicts")
 
+        await asyncio.to_thread(
+            ctx.meeting_repository.update_status,
+            session.id,
+            "live",
+            started_at=started_at,
+            ended_at=None,
+        )
+
         stream_task = asyncio.create_task(
             stream_transcript(
                 send_event=forward_event,
@@ -338,10 +348,16 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
 
             transcript_path.write_text(transcript, encoding="utf-8")
             ended_at = now()
+            with session:
+                saved_segments = list(session.get("transcript") or [])
+                session.emplace("transcript_text", transcript)
+                meeting["ended_at"] = ended_at
+                session.status = "processing"
+
             await asyncio.to_thread(
                 ctx.meeting_repository.save_transcript,
                 session.id,
-                [],
+                saved_segments,
                 transcript,
                 ended_at,
             )
@@ -351,14 +367,6 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
                 "processing",
                 ended_at=ended_at,
             )
-            with session:
-                session.emplace("transcript", [])
-                session.emplace("transcript_text", transcript)
-                meeting["ended_at"] = ended_at
-                session.status = "processing"
-
-            with session:
-                saved_segments = list(session.get("transcript"))
             await websocket.send_json(
                 {
                     "type": "done",

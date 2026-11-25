@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import JSON, Boolean, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -100,7 +102,7 @@ class TranscriptModel(Base):
     meeting_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("meetings.id", ondelete="CASCADE"), primary_key=True
     )
-    segments: Mapped[list[dict[str, str]]] = mapped_column(
+    segments: Mapped[list[dict[str, Any]]] = mapped_column(
         JSON_TYPE, nullable=False, default=list
     )
     full_text: Mapped[str] = mapped_column(Text, nullable=False)

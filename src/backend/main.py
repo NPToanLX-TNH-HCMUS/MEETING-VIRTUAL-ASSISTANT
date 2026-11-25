@@ -31,7 +31,8 @@ API_PREFIX = "/api/v1"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(engine)
+    bind = app.state.ctx.meeting_repository._session.kw.get("bind", engine)
+    Base.metadata.create_all(bind)
     yield
     # Stop any microphone stream still running on shutdown / reload so the audio is not lost.
     for session in app.state.ctx.sessions():
