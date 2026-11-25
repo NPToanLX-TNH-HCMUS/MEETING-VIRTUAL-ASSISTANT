@@ -96,7 +96,7 @@ class AgendaEdit(BaseModel):
 # LLM Return — Agenda extraction
 class Topic(BaseModel):
     title: str
-    source: Literal["planned_point", "document"]
+    source: Literal["planned_point", "document", "carry_over"]
     minutes: int | None = None  # how long to discuss it; None if the model forgot
 
 

@@ -1,3 +1,11 @@
+"""
+src/backend/database/repository.py
+===============================
+
+Main idea: Repository Pattern.
+* Every kinds of database query must to be done here, not somewhere else.
+"""
+
 from pathlib import Path
 
 from sqlalchemy import delete, select, update
@@ -139,9 +147,7 @@ class MeetingRepository:
             stmt = select(MeetingModel.id).where(MeetingModel.id == meeting_id)
             return db.scalar(stmt) is not None
 
-    def list_meetings(
-        self, status: str | None = None, limit: int = 50
-    ) -> list[dict]:
+    def list_meetings(self, status: str | None = None, limit: int = 50) -> list[dict]:
         """List meetings ordered newest-first, optionally filtered by lifecycle status."""
         with self._session() as db:
             stmt = select(MeetingModel).order_by(MeetingModel.created_at.desc())
@@ -224,9 +230,7 @@ class MeetingRepository:
             )
             db.commit()
 
-    def replace_agenda(
-        self, meeting_id: str, items: list[dict], status: str
-    ) -> None:
+    def replace_agenda(self, meeting_id: str, items: list[dict], status: str) -> None:
         """Atomically replace all agenda items for a meeting and update its status."""
         with self._session() as db:
             # Replace in one transaction so regenerated/edited items never leave stale rows.
@@ -310,9 +314,7 @@ class MeetingRepository:
                         due=item.get("due"),
                         quote=item["quote"],
                     )
-                    for idx, item in enumerate(
-                        minutes.get("action_items", []), start=1
-                    )
+                    for idx, item in enumerate(minutes.get("action_items", []), start=1)
                 ]
             )
             db.execute(
@@ -348,3 +350,35 @@ class MeetingRepository:
                 .values(status="archived")
             )
             db.commit()
+
+    def get_previous_context(self, previous_meeting_id: str) -> dict | None:
+        """Fetch summary, unresolved issues, and pending action items from a previous meeting."""
+        with self._session() as db:
+            stmt = (
+                select(MeetingModel)
+                .where(MeetingModel.id == previous_meeting_id)
+                .options(
+                    selectinload(MeetingModel.minutes),
+                    selectinload(MeetingModel.action_items),
+                )
+            )
+            row = db.scalar(stmt)
+            if row is None:
+                return None
+            return {
+                "topic": row.topic,
+                "summary": row.minutes.summary if row.minutes else "",
+                "unresolved_issues": (
+                    list(row.minutes.unresolved_issues) if row.minutes else []
+                ),
+                "action_items": [
+                    {
+                        "task": item.task,
+                        "assignee": item.assignee,
+                        "due": item.due,
+                        "status": item.status,
+                    }
+                    for item in row.action_items
+                    if item.status != "done"
+                ],
+            }

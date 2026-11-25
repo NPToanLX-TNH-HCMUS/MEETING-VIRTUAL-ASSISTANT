@@ -59,9 +59,9 @@ def create_meeting(body: NewMeeting, ctx: CtxDep):
     """
     # Validate before creating a session folder so invalid references leave no orphan data.
     if body.previous_meeting_id is not None:
-        exists = ctx.has(body.previous_meeting_id) or ctx.meeting_repository.meeting_exists(
+        exists = ctx.has(
             body.previous_meeting_id
-        )
+        ) or ctx.meeting_repository.meeting_exists(body.previous_meeting_id)
         if not exists:
             return error(
                 404,
@@ -86,6 +86,12 @@ def create_meeting(body: NewMeeting, ctx: CtxDep):
         session.emplace("documents", [])
         session.emplace("agenda", [])
         ctx.meeting_repository.create_meeting(meeting, status=session.status)
+
+        if body.previous_meeting_id is not None:
+            previous_context = ctx.meeting_repository.get_previous_context(
+                body.previous_meeting_id
+            )
+            session.emplace("previous_context", previous_context)
         return meeting_response(session)
 
 
@@ -188,12 +194,17 @@ PLACEHOLDER_MINUTES = 10
 AGENDA_EDITABLE = {"draft", "ready"}
 
 
-def build_candidates(meeting: dict, documents: list[dict]) -> list[dict]:
+def build_candidates(
+    meeting: dict,
+    documents: list[dict],
+    previous_context: dict | None = None,
+) -> list[dict]:
     candidates = extract_topics(
         planned_points=meeting["planned_points"],
         documents=documents,
         duration_minutes=meeting["duration_minutes"],
         topic=meeting.get("topic", ""),
+        previous_context=previous_context,
     )
 
     for candidate in candidates:
@@ -248,9 +259,18 @@ def generate_agenda(session: SessionDep, ctx: CtxDep):
             return locked
         meeting = dict(session.at("meeting"))
         documents = [dict(doc) for doc in session.at("documents")]
+        previous_context = session.get("previous_context")
+
+        # Fallback if the server restarted between POST /meetings and POST /agenda/generate.
+        previous_id = meeting.get("previous_meeting_id")
+        if previous_id is not None and previous_context is None:
+            previous_context = ctx.meeting_repository.get_previous_context(previous_id)
+            if previous_context is not None:
+                with session:
+                    session.emplace("previous_context", previous_context)
 
     # The LLM call can take seconds, so it runs outside the session lock.
-    candidates = build_candidates(meeting, documents)
+    candidates = build_candidates(meeting, documents, previous_context)
     chosen, dropped = select_by_time(candidates, meeting["duration_minutes"])
 
     items = [
