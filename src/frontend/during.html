@@ -67,11 +67,14 @@
         </div>
         <p id="test-transcript-status" class="muted" role="status">Not connected</p>
 
-        <!-- Mỗi câu backend chốt là một .segment; thời điểm của câu chưa có trong dữ liệu nên để “—”. -->
-        <div id="test-transcript-final"></div>
-        <div class="segment segment--partial" aria-live="polite">
-          <span class="segment__time"></span>
-          <p id="test-transcript-partial" class="segment__text"></p>
+        <!-- Mỗi câu backend chốt là một .segment; thời điểm là start_seconds của backend, thiếu thì để “—”. -->
+        <!-- Khung cao cố định: câu mới nhất ở dưới cùng và tự cuộn theo, trừ khi người dùng đang cuộn lên đọc lại. -->
+        <div id="transcript-scroll" class="scroll-panel" tabindex="0" aria-label="Transcript">
+          <div id="test-transcript-final"></div>
+          <div class="segment segment--partial" aria-live="polite">
+            <span class="segment__time"></span>
+            <p id="test-transcript-partial" class="segment__text"></p>
+          </div>
         </div>
 
         <div id="transcript-empty" class="empty">
@@ -88,17 +91,28 @@
 
       <!-- ============ PHẢI: chờ cập nhật (backend chưa gửi các sự kiện này) ============ -->
       <div class="during-side">
+        <!-- Trên cùng để host thấy ngay: xung đột (chọn một giá trị) và mục thiếu trường / thiếu bằng chứng. -->
         <section class="card card--alert" aria-labelledby="choice-title">
-          <div class="card__head"><h2 id="choice-title" class="card__title card__title--sm">Needs your choice</h2></div>
-          <p class="pending">Deadline conflicts and items needing confirmation: pending update.</p>
+          <div class="card__head">
+            <h2 id="choice-title" class="card__title card__title--sm">Needs your choice</h2>
+            <span id="choice-count" class="card__count"></span>
+          </div>
+          <div class="scroll-panel scroll-panel--short" tabindex="0" aria-label="Items that need your choice">
+            <ul id="choice-list" class="capture-list" aria-live="polite"></ul>
+          </div>
+          <p id="choice-empty" class="muted">Nothing to settle. Conflicting values and missing owners or deadlines show up here.</p>
         </section>
 
         <section class="card" aria-labelledby="captured-title">
           <div class="card__head">
             <h2 id="captured-title" class="card__title card__title--sm">Captured so far</h2>
-            <span class="card__count">0 items</span>
+            <span id="captured-count" class="card__count">0 items</span>
           </div>
-          <p class="pending">Decisions, action items and unresolved issues: pending update.</p>
+          <!-- During.js điền từ extraction.created / extraction.updated và GET .../extractions. -->
+          <div class="scroll-panel scroll-panel--short" tabindex="0" aria-label="Captured items">
+            <ul id="captured-list" class="capture-list" aria-live="polite"></ul>
+          </div>
+          <p id="captured-empty" class="muted">Decisions, action items and open issues appear here while people talk.</p>
         </section>
 
         <section class="card" aria-labelledby="ask-title">
