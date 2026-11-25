@@ -2,9 +2,9 @@ name: Backend unit tests
 
 on:
   push:
-    branches: [feat/ci, feat/system-test-strategy]
+    branches: [main, feat/ci, feat/system-test-strategy]
   pull_request:
-    branches: [feat/system-test-strategy]
+    branches: [main, feat/system-test-strategy]
 
 permissions:
   contents: read
