@@ -51,7 +51,11 @@ TRANSCRIPT_FILE = "during_meeting/transcript/transcript.txt"
 @router.post("/recording/start", response_model=Meeting)
 def start_recording(session: SessionDep):
     if transcript_test_lock.locked():
-        return error(409, "MICROPHONE_BUSY", "Microphone đang được dùng cho transcript trực tiếp.")
+        return error(
+            409,
+            "MICROPHONE_BUSY",
+            "Microphone đang được dùng cho transcript trực tiếp.",
+        )
     with session:
         if session.status != "ready":
             return error(
@@ -150,23 +154,26 @@ def get_recording_level(session: SessionDep):
 
 
 @ws_router.websocket("/ws/meetings/{meeting_id}/transcript-test")
-async def transcript_socket(websocket: WebSocket, meeting_id: str):
+async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
     await websocket.accept()
-    ctx = websocket.app.state.ctx
 
     try:
         session = ctx.session(meeting_id)
     except MeetingNotFoundError:
-        await websocket.send_json({"type": "error", "message": "Không tìm thấy cuộc họp."})
+        await websocket.send_json(
+            {"type": "error", "message": "Không tìm thấy cuộc họp."}
+        )
         await websocket.close(code=1008)
         return
 
     batch_recording = any(s.get("recorder") is not None for s in ctx.sessions())
     if session.status != "ready" or batch_recording or transcript_test_lock.locked():
-        await websocket.send_json({
-            "type": "error",
-            "message": "Hãy xác nhận agenda và dừng các phiên ghi âm trước khi test transcript.",
-        })
+        await websocket.send_json(
+            {
+                "type": "error",
+                "message": "Hãy xác nhận agenda và dừng các phiên ghi âm trước khi test transcript.",
+            }
+        )
         await websocket.close(code=1008)
         return
 
@@ -298,7 +305,9 @@ async def transcript_socket(websocket: WebSocket, meeting_id: str):
         disconnect_task = asyncio.create_task(wait_for_disconnect())
 
         try:
-            await asyncio.wait({stream_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED)
+            await asyncio.wait(
+                {stream_task, disconnect_task}, return_when=asyncio.FIRST_COMPLETED
+            )
 
             # The user closed the page: stop recognition, keep nothing but the WAV.
             if disconnect_task.done():
