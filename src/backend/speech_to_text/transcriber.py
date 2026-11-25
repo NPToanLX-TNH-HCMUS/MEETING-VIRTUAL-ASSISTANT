@@ -5,6 +5,8 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from .segments import confidence_from_logprobs
+
 load_dotenv()
 
 API_URL = "https://api.elevenlabs.io/v1/speech-to-text"
@@ -42,6 +44,7 @@ class ElevenLabsTranscriber:
         self,
         audio_path: str | Path,
         output_path: str | Path | None = "transcript.txt",
+        language: str = "en",
     ) -> list[dict[str, str]]:
         path = Path(audio_path)
 
@@ -76,7 +79,8 @@ class ElevenLabsTranscriber:
                     },
                     data={
                         "model_id": DEFAULT_MODEL_ID,
-                        "language_code": "eng",
+                        # The meeting language ("vi" / "en", ISO 639-1); it was fixed to English.
+                        "language_code": language,
                         "diarize": "true",
                         "timestamps_granularity": "word",
                         "tag_audio_events": "false",
@@ -168,9 +172,12 @@ class ElevenLabsTranscriber:
                     "start": item.get("start"),
                     "end": None,
                     "parts": [],
+                    "logprobs": [],
                 })
 
             turns[-1]["parts"].append(item.get("text", ""))
+            if isinstance(item.get("logprob"), (int, float)):
+                turns[-1]["logprobs"].append(item["logprob"])
             # The last word determines when the entire turn ends.
             turns[-1]["end"] = item.get("end")
 
@@ -184,6 +191,12 @@ class ElevenLabsTranscriber:
                 "Speaker": turn["speaker"],
                 # Spaces already come from the API; only outer whitespace is unwanted.
                 "Text": "".join(turn["parts"]).strip(),
+                # Only present when the API sent word log-probabilities.
+                **(
+                    {"Confidence": confidence}
+                    if (confidence := confidence_from_logprobs(turn["logprobs"])) is not None
+                    else {}
+                ),
             }
             for turn in turns
         ]

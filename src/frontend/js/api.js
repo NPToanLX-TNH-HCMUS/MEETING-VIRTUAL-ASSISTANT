@@ -54,6 +54,17 @@ export const api = {
   startRecording: (id) => request('POST', `/meetings/${id}/recording/start`),
   stopRecording: (id) => request('POST', `/meetings/${id}/recording/stop`),
 
+  // GET /meetings/{id}/extractions -> { items: Extraction[] }  (after stop the backend may run the LLM once)
+  getExtractions: (id) => request('GET', `/meetings/${id}/extractions`, { timeoutMs: 100_000 }),
+
+  // GET /meetings/{id}/conflicts -> { items: Conflict[] }
+  getConflicts: (id) => request('GET', `/meetings/${id}/conflicts`),
+  // POST /meetings/{id}/conflicts/{cid}/resolve {chosen_value} -> Conflict (resolved)
+  resolveConflict: (id, cid, chosenValue) =>
+    request('POST', `/meetings/${id}/conflicts/${cid}/resolve`, { json: { chosen_value: chosenValue } }),
+  // GET /meetings/{id}/transcript -> { segments: TranscriptSegment[] }
+  getTranscript: (id) => request('GET', `/meetings/${id}/transcript`),
+
   // POST /meetings/{id}/transcribe -> { transcript }  (ElevenLabs can take a while)
   transcribe: (id) => request('POST', `/meetings/${id}/transcribe`, { timeoutMs: 180_000 }),
   // POST /meetings/{id}/minutes/generate -> Minutes (meeting status -> "review")

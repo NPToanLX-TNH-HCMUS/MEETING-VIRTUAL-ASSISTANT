@@ -35,10 +35,16 @@
 
       <!-- ============ PHẢI ============ -->
       <div class="after-side">
-        <!-- Chờ cập nhật: backend chưa trả danh sách xung đột / trường thiếu / đoạn audio độ tin cậy thấp. -->
+        <!-- Xung đột phải được chọn trước khi confirm (backend trả 409 UNRESOLVED_CONFLICTS); mục thiếu trường chỉ để xem lại. -->
         <section class="card" aria-labelledby="check-title">
-          <div class="card__head"><h2 id="check-title" class="card__title card__title--sm">Before you confirm</h2></div>
-          <p class="pending">Conflicts, missing fields and low-confidence audio: pending update.</p>
+          <div class="card__head">
+            <h2 id="check-title" class="card__title card__title--sm">Before you confirm</h2>
+            <span id="check-count" class="card__count"></span>
+          </div>
+          <div class="scroll-panel scroll-panel--short" tabindex="0" aria-label="Items to check before confirming">
+            <ul id="check-list" class="capture-list" aria-live="polite"></ul>
+          </div>
+          <p id="check-empty" class="muted">No conflicts, missing owners or deadlines.</p>
         </section>
 
         <section class="card" aria-labelledby="next-title">
