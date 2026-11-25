@@ -1806,3 +1806,134 @@ textarea {
   background: var(--c-warn-bg);
   box-shadow: 0 0 0 2px var(--c-warn-border);
 }
+
+.ask__starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.ask__starter {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.ask__starter:hover:not(:disabled) {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+/* Small text buttons under an answer: Copy, Try again. */
+.ask__action {
+  margin-top: var(--s-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ask__action:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.ask__starter:focus-visible,
+.ask__action:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.ask__starter:disabled,
+.ask__action:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* The assistant lives in a floating window, so a long agenda or capture list never pushes it down. */
+.ask-fab {
+  position: fixed;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 40;
+  border-radius: var(--r-pill);
+  box-shadow: 0 6px 20px rgba(20, 32, 43, 0.18);
+}
+
+.ask-fab__badge {
+  font-weight: 500;
+}
+
+.ask-panel {
+  position: fixed;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 2 * var(--s-5)));
+  max-height: min(640px, calc(100vh - var(--header-h) - 2 * var(--s-5)));
+  box-shadow: 0 12px 40px rgba(20, 32, 43, 0.22);
+}
+
+.ask-panel[hidden] {
+  display: none;
+}
+
+.ask-panel__thread {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+.ask__close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ask__close:hover {
+  background: var(--c-surface-muted);
+  color: var(--c-text);
+}
+
+.ask__close:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* Room under the last cards so the floating button never hides them. */
+.during-layout {
+  padding-bottom: calc(var(--s-6) * 2.5);
+}
+
+@media (max-width: 767px) {
+  .ask-fab {
+    right: var(--s-4);
+    bottom: var(--s-4);
+  }
+
+  .ask-panel {
+    right: var(--s-4);
+    bottom: var(--s-4);
+    left: var(--s-4);
+    width: auto;
+    max-height: calc(100vh - var(--header-h) - 2 * var(--s-4));
+  }
+}

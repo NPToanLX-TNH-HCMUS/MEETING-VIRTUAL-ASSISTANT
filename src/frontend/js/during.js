@@ -22,11 +22,18 @@ const extractions = new Map();
 // Conflicts by id (two values said for one field); the user picks, never the UI.
 const conflicts = new Map();
 let meetingStatus = null;
-// Questions asked on this page, oldest first: { question, result } (result null while waiting).
+// Questions asked on this page, oldest first: { question, result, error } (both null while waiting).
 // Memory only, never localStorage: answers quote the transcript.
 const asks = [];
 let askPending = false;
+let askUnread = 0; // answers (or failures) that came back while the chat window was closed
+let meetingLanguage = null;
 const ASK_STATUSES = ["live", "paused"];
+// Starter questions in the meeting language, since the assistant answers in the question's language.
+const STARTERS = {
+  vi: ["Vừa rồi bàn gì?", "Đã quyết định những gì?", "Còn bao lâu nữa?"],
+  en: ["What did we just discuss?", "What has been decided?", "How much time is left?"],
+};
 const INTENT_LABELS = {
   time_progress: "Time & progress",
   meeting_information: "From the meeting",
@@ -55,6 +62,38 @@ function renderAskControls() {
   $("ask-input").disabled = !open;
   $("ask-submit").disabled = !open || askPending;
   $("ask-submit").textContent = askPending ? "Asking…" : "Ask";
+  // Shown only before the first question, while asking is possible.
+  const starters = asks.length || !open ? [] : STARTERS[meetingLanguage] ?? STARTERS.en;
+  $("ask-starters").hidden = !starters.length;
+  $("ask-starters").replaceChildren(
+    ...starters.map((question) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ask__starter";
+      button.textContent = question;
+      button.disabled = askPending;
+      button.addEventListener("click", () => sendQuestion(question));
+      return button;
+    }),
+  );
+}
+
+function copyButton(text) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ask__action";
+  button.textContent = "Copy";
+  button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      button.textContent = "Copied";
+    } catch {
+      // The browser can refuse clipboard access (permission, embedded frame).
+      button.textContent = "Copy failed";
+    }
+    setTimeout(() => { button.textContent = "Copy"; }, 2000);
+  });
+  return button;
 }
 
 function sourceChip(id, byId) {
@@ -73,13 +112,28 @@ function renderAsks() {
   const byId = new Map(segments.map((segment) => [segment.id, segment]));
   $("ask-empty").hidden = asks.length > 0;
   $("ask-list").replaceChildren(
-    ...asks.map(({ question, result }) => {
+    ...asks.map((entry) => {
+      const { question, result, error } = entry;
       const card = document.createElement("li");
       card.className = "capture" + (result?.is_ai_suggestion ? " capture--ai" : "");
       const asked = document.createElement("p");
       asked.className = "ask__question";
       asked.textContent = question;
       card.append(asked);
+      if (error) {
+        // The failure stays on its own question, with a way to send it again.
+        const flag = document.createElement("p");
+        flag.className = "capture__meta capture__flag";
+        flag.textContent = error;
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "ask__action";
+        retry.textContent = "Try again";
+        retry.disabled = askPending || !ASK_STATUSES.includes(meetingStatus);
+        retry.addEventListener("click", () => sendQuestion(question, entry));
+        card.append(flag, retry);
+        return card;
+      }
       if (!result) {
         const waiting = document.createElement("p");
         waiting.className = "capture__meta";
@@ -108,6 +162,7 @@ function renderAsks() {
         flag.textContent = "No evidence in the transcript";
         card.append(flag);
       }
+      card.append(copyButton(result.answer));
       return card;
     }),
   );
@@ -115,9 +170,31 @@ function renderAsks() {
   panel.scrollTop = panel.scrollHeight;
 }
 
+function setAskOpen(open) {
+  $("ask-panel").hidden = !open;
+  $("ask-toggle").hidden = open;
+  $("ask-toggle").setAttribute("aria-expanded", String(open));
+  if (open) {
+    askUnread = 0;
+    renderAskUnread();
+    const thread = $("ask-list").parentElement;
+    thread.scrollTop = thread.scrollHeight;
+    ($("ask-input").disabled ? $("ask-close") : $("ask-input")).focus();
+  } else {
+    $("ask-toggle").focus();
+  }
+}
+
+function renderAskUnread() {
+  $("ask-unread").hidden = !askUnread;
+  $("ask-unread").textContent = ` · ${askUnread} new`;
+}
+
 function showSegment(id) {
   const row = [...$("test-transcript-final").children].find((el) => el.dataset.segmentId === id);
   if (!row) return;
+  // On a phone the chat window covers the transcript, so it steps aside.
+  if (matchMedia("(max-width: 767px)").matches) setAskOpen(false);
   row.scrollIntoView({ block: "center", behavior: "smooth" });
   row.classList.add("segment--focus");
   setTimeout(() => row.classList.remove("segment--focus"), 2000);
@@ -365,6 +442,7 @@ async function loadMeeting() {
     $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} min`, m.id].join(' · ');
     // After a refresh, bring back what was already captured.
     meetingStatus = m.status;
+    meetingLanguage = m.language;
     renderAskControls();
     if (!["draft", "ready"].includes(m.status)) loadExtractions();
   } catch (e) {
@@ -394,31 +472,43 @@ $("ask-input").addEventListener("keydown", (event) => {
   if (event.key === "Enter" && event.isComposing) event.preventDefault();
 });
 
-$("ask-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const question = $("ask-input").value.trim();
+// `entry` is given when a failed question is sent again, so it keeps its place in the list.
+async function sendQuestion(question, entry = null) {
   if (!question || askPending || !ASK_STATUSES.includes(meetingStatus)) return;
-  const entry = { question, result: null };
-  asks.push(entry);
+  if (entry) entry.error = null;
+  else asks.push((entry = { question, result: null, error: null }));
   askPending = true;
-  $("ask-input").value = "";
   renderAsks();
   renderAskControls();
   try {
     entry.result = await api.ask(meetingId, question);
   } catch (e) {
-    asks.splice(asks.indexOf(entry), 1);
-    if (!$("ask-input").value) $("ask-input").value = question; // so it can be sent again
-    showError(
-      e.code === "INVALID_MEETING_STATE"
-        ? "Questions can be asked only while the meeting is recording or paused."
-        : `Could not answer: ${e.message}`,
-    );
+    entry.error = e.code === "INVALID_MEETING_STATE"
+      ? "Questions can be asked only while the meeting is recording or paused."
+      : `Could not answer: ${e.message}`;
   } finally {
     askPending = false;
+    if ($("ask-panel").hidden) {
+      askUnread += 1;
+      renderAskUnread();
+    }
     renderAsks();
     renderAskControls();
   }
+}
+
+$("ask-toggle").addEventListener("click", () => setAskOpen(true));
+$("ask-close").addEventListener("click", () => setAskOpen(false));
+$("ask-panel").addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setAskOpen(false);
+});
+
+$("ask-form").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const question = $("ask-input").value.trim();
+  if (!question || askPending || !ASK_STATUSES.includes(meetingStatus)) return;
+  $("ask-input").value = "";
+  sendQuestion(question);
 });
 
 $("pause").addEventListener("click", () => {
