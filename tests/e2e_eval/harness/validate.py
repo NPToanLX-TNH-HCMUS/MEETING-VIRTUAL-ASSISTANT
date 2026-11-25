@@ -303,7 +303,7 @@ def main() -> None:
     for sid in ids:
         sc = Scenario(sid)
         # sources.csv "output" is relative to tests/e2e_eval; scenario.json "audio.file" to the scenario folder
-        own = {str(Path(out).relative_to("scenarios", sc.dir.name)): row for out, row in sources.items()
+        own = {Path(out).relative_to(Path("scenarios") / sc.dir.name).as_posix(): row for out, row in sources.items()
                if Path(out).parts[:2] == ("scenarios", sc.dir.name)}
         check_scenario(sc, rep, own, coverage, not args.no_audio)
     if not args.scenarios:
