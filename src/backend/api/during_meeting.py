@@ -6,6 +6,7 @@ STAGE 2 (during meeting): record audio and transcribe it.
     POST /api/v1/meetings/{id}/transcribe        ElevenLabs STT + diarization
     GET  /api/v1/meetings/{id}/recording/level   microphone volume of the batch recorder
     GET  /api/v1/meetings/{id}/transcript        transcript segments with ids and times (contract 6.9)
+    POST /api/v1/meetings/{id}/ask               answer a question about the meeting (contract 6.11)
     WS   /ws/meetings/{id}/transcript-test       realtime STT with pause/resume/stop  ready -> live <-> paused -> processing
 """
 
@@ -22,10 +23,11 @@ from ..agenda_tracker.tracker import propose_transitions
 from ..audio.recorder import Recorder
 from ..extraction.extractor import propose_items
 from ..context.app_context import MeetingNotFoundError
+from ..meeting_qa.qa import HISTORY_TURNS, answer_question
 from ..speech_to_text.realtime_transcriber import stream_transcript
 from ..speech_to_text.segments import from_batch, make_segment
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
-from ..utils.objects import Meeting, TranscriptList
+from ..utils.objects import AskAnswer, AskRequest, Meeting, TranscriptList
 from .extractions import merge_into_session
 from ..utils.utils import envelope, error, now
 from .common import SessionDep, meeting_response
@@ -46,6 +48,9 @@ transcript_test_lock = asyncio.Lock()
 
 AUDIO_FILE = "during_meeting/audio/record.wav"
 TRANSCRIPT_FILE = "during_meeting/transcript/transcript.txt"
+# One line per committed sentence, written as it arrives: id, start_seconds, text (tab separated).
+# Separate from transcript.txt, which post_meeting reads as plain text and which is rewritten at the end.
+LIVE_TRANSCRIPT_FILE = "during_meeting/transcript/transcript_live.tsv"
 
 
 @router.post("/recording/start", response_model=Meeting)
@@ -145,6 +150,27 @@ def read_transcript(session: SessionDep, after: str | None = None):
     return {"segments": segments}
 
 
+@router.post("/ask", response_model=AskAnswer)
+def ask(session: SessionDep, body: AskRequest):
+    question = body.question.strip()
+    if not question:
+        return error(400, "VALIDATION_ERROR", "The question is empty.")
+    with session:
+        if session.status not in {"live", "paused"}:
+            return error(409, "INVALID_MEETING_STATE", f"Cannot ask while the meeting is {session.status}")
+        meeting = dict(session.at("meeting"))
+        agenda = [dict(item) for item in session.get("agenda", [])]
+        segments = list(session.get("transcript", []))
+        history = list(session.get("qa_history", []))
+    # The LLM call runs outside the lock (FastAPI runs this sync route in a worker thread);
+    # LLMCallError becomes the contract's 503/422 in main.py.
+    result = answer_question(meeting, agenda, segments, history, question)
+    with session:
+        turns = session.get("qa_history", []) + [{"question": question, "answer": result["answer"]}]
+        session.emplace("qa_history", turns[-HISTORY_TURNS:])
+    return result
+
+
 @router.get("/recording/level")
 def get_recording_level(session: SessionDep):
     recorder = session.get("recorder")
@@ -237,16 +263,20 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
     async def forward_event(event):
         with session:
             if event["type"] == "committed":
-                session.get("transcript").append(
-                    make_segment(
-                        session.id,
-                        int(event["id"].removeprefix("seg_")),
-                        event["text"],
-                        session.at("meeting")["language"],
-                        event["start_seconds"],
-                        event["end_seconds"],
-                    )
+                segment = make_segment(
+                    session.id,
+                    int(event["id"].removeprefix("seg_")),
+                    event["text"],
+                    session.at("meeting")["language"],
+                    event["start_seconds"],
+                    event["end_seconds"],
                 )
+                session.get("transcript").append(segment)
+                # The sentence is already in the session, so a disk error must not stop the transcript.
+                with suppress(OSError), session.path(LIVE_TRANSCRIPT_FILE).open("a", encoding="utf-8") as live:
+                    start = "" if segment["start_seconds"] is None else segment["start_seconds"]
+                    text = " ".join(segment["text"].split())  # no tab or newline inside a line
+                    live.write(f"{segment['id']}\t{start}\t{text}\n")
             elif event["type"] == "paused":
                 session.status = "paused"
             elif event["type"] in {"ready", "resumed"}:
@@ -289,6 +319,7 @@ async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
             transcript_path = session.path(TRANSCRIPT_FILE)
             language = meeting["language"]
             session.emplace("transcript", [])  # a new run replaces the old segments
+            session.path(LIVE_TRANSCRIPT_FILE).write_text("", encoding="utf-8")
             session.pop("extractions")
             session.pop("extraction_cursor")
             session.pop("conflicts")
