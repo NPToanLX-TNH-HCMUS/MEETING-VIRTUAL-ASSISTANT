@@ -136,3 +136,72 @@ class MinutesEdit(BaseModel):
     """FRONT END SENDS when the user edits the minutes Markdown draft."""
 
     markdown: str
+
+
+# Transcript (§5.5) and Extraction (§5.4 of api-contract.md)
+class TranscriptSegment(BaseModel):
+    id: str
+    meeting_id: str
+    start_seconds: float | None  # None when the provider gave no time; never guessed
+    end_seconds: float | None
+    speaker: str | None
+    text: str
+    language: str | None
+    confidence: float | None
+    is_low_confidence: bool
+
+
+class TranscriptList(BaseModel):
+    segments: list[TranscriptSegment]
+
+
+class Evidence(BaseModel):
+    # Both empty means "no verified evidence": the UI shows a "no evidence" flag.
+    segment_ids: list[str]
+    quote: str
+
+
+class Extraction(BaseModel):
+    id: str
+    meeting_id: str
+    type: Literal["decision", "action_item", "deadline", "unresolved_issue"]
+    content: str
+    assignee: str | None
+    deadline: str | None  # YYYY-MM-DD
+    agenda_item_id: str | None
+    evidence: Evidence
+    missing_fields: list[str]
+    is_low_confidence: bool  # a cited transcript segment is low confidence
+    needs_confirmation: bool
+    task_id: str | None  # Task merge is not built yet, so always None for now
+
+
+class ExtractionList(BaseModel):
+    items: list[Extraction]
+
+
+# Conflict (§5.7 of api-contract.md)
+class ConflictOption(BaseModel):
+    value: str
+    evidence: Evidence
+
+
+class Conflict(BaseModel):
+    id: str
+    meeting_id: str
+    task_id: str | None  # None until the Task store exists; use extraction_id meanwhile
+    extraction_id: str  # the Extraction (action item) whose field got two values
+    field: Literal["assignee", "deadline"]
+    options: list[ConflictOption]  # one per stated value, each with its evidence
+    resolved: bool
+    chosen_value: str | None
+
+
+class ConflictList(BaseModel):
+    items: list[Conflict]
+
+
+class ConflictResolve(BaseModel):
+    """FRONT END SENDS: the value the user picked; it must be one of the options."""
+
+    chosen_value: str

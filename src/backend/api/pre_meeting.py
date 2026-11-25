@@ -164,6 +164,7 @@ def build_candidates(meeting: dict, documents: list[dict]) -> list[dict]:
         documents=documents,
         duration_minutes=meeting["duration_minutes"],
         topic=meeting.get("topic", ""),
+        language=meeting["language"],
     )
 
     for candidate in candidates:
