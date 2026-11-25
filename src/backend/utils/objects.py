@@ -106,7 +106,8 @@ class ActionItem(BaseModel):
 
     task: str  # what needs to be done
     assignee: str | None  # who is responsible; null when unidentifiable
-    due: str | None  # YYYY-MM-DD deadline; null when not stated
+    due_phrase: str | None = None  # deadline words as spoken, e.g. "next Monday"
+    due: str | None = None  # YYYY-MM-DD computed from due_phrase by code
     quote: str  # verbatim excerpt from the transcript that supports this item
 
 

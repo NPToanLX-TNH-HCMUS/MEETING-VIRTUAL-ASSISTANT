@@ -34,11 +34,10 @@ class TestPrompts(unittest.TestCase):
         self.assertNotIn("English only", system_prompt(30, "Họp", "vi"))
 
     def test_minutes_follow_the_meeting_language(self):
-        prompt = _system_prompt("2026-11-22", "vi")
+        prompt = _system_prompt("vi")
         self.assertIn("Write in Vietnamese", prompt)
         self.assertIn("sentence in Vietnamese", prompt)
         self.assertNotIn("English only", prompt)
-        self.assertIn('"20/10" means day 20, month 10', prompt)
 
     def test_extraction_prompt_follows_the_meeting_language(self):
         segments = [make_segment("m", 1, "Bình sẽ làm xong frontend trước thứ Sáu tuần sau.", "vi")]

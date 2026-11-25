@@ -6,6 +6,8 @@ The agenda extraction module: builds the prompt from planned points and uploaded
 calls the LLM with a strict JSON schema, and parses the proposed agenda topics.
 """
 
+import logging
+import re
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -15,6 +17,46 @@ from ..utils.language import language_name
 from ..utils.llm import call_llm
 
 load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+
+LOGGER = logging.getLogger(__name__)
+
+# Lines of a document that talk to the AI instead of describing the meeting.
+# Only clear signs count, so that ordinary sentences ("the leader will act as the
+# session monitor", "ignore the old instructions in README v1") are kept.
+INSTRUCTION_LIKE = re.compile(
+    r"\b(?:ignore|disregard|forget|override)\s+(?:all\s+|any\s+)?(?:of\s+)?(?:the\s+|your\s+)?"
+    r"(?:previous|prior|above|earlier|preceding|original)\s+(?:instructions?|prompts?|rules?|directions?)\b"
+    r"|\bact\s+as\s+(?:an?\s+|the\s+)?(?:ai|assistant|language\s+model|chatbot|llm)\b"
+    r"|\byou\s+are\s+now\s+(?:an?\s+|the\s+)?(?:ai|assistant|language\s+model|chatbot|llm)\b"
+    r"|\b(?:system|developer)\s+(?:prompt|message)\b"
+    r"|^\W*(?:(?:hey|dear|attention)\s+)?(?:assistant|ai|chatbot|llm|language\s+model)\s*[,:]",
+    re.IGNORECASE,
+)
+_STOP = {"a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "with", "item", "agenda", "add"}
+
+
+def split_instructions(text: str) -> tuple[str, list[str]]:
+    """Return the document without instruction-like lines, and those lines."""
+    kept, flagged = [], []
+    for line in text.splitlines():
+        (flagged if INSTRUCTION_LIKE.search(line) else kept).append(line)
+    return "\n".join(kept), flagged
+
+
+def _words(text: str) -> set[str]:
+    return set(re.findall(r"[a-z0-9%]+", text.lower())) - _STOP
+
+
+def drop_injected(items: list[dict], flagged: list[str]) -> list[dict]:
+    """Remove agenda items whose title comes from an instruction-like line."""
+    bad = [_words(line) for line in flagged]
+    kept = []
+    for item in items:
+        if any(len(_words(item["title"]) & b) >= 3 for b in bad):
+            LOGGER.warning("Agenda item dropped (instruction in a document): %s", item["title"])
+        else:
+            kept.append(item)
+    return kept
 
 
 INSTRUCTIONS = """\
@@ -101,7 +143,13 @@ def extract_topics(
     topic: str = "",
     language: str = "en",
 ) -> list[dict]:
-    prompt = build_prompt(planned_points, documents, topic)
+    cleaned, flagged = [], []
+    for document in documents:
+        text, bad = split_instructions(document["text"])
+        cleaned.append({**document, "text": text})
+        flagged += bad
+
+    prompt = build_prompt(planned_points, cleaned, topic)
     if not prompt and not topic:
         return []
 
@@ -110,4 +158,5 @@ def extract_topics(
         _schema=AGENDA_SCHEMA,
         _max_tokens=1536,
     )
-    return parse_topics(reply, planned_points, documents, duration_minutes)
+    items = parse_topics(reply, planned_points, cleaned, duration_minutes)
+    return drop_injected(items, flagged)
