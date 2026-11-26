@@ -80,8 +80,8 @@ export const api = {
   // GET /meetings/{id}/minutes -> Minutes  (409 MINUTES_NOT_READY khi chưa generate)
   getMinutes: (id) => request('GET', `/meetings/${id}/minutes`),
 
-  // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")
-  confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`),
+  // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")  (uploads the meeting folder to Supabase; uploaded docs can be up to 10 MB each)
+  confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`, { timeoutMs: 180_000 }),
 
   // PUT /meetings/{id}/minutes { markdown } -> Minutes   (allowed in "review" and after confirming)
   saveMinutes: (id, markdown) => request('PUT', `/meetings/${id}/minutes`, { json: { markdown } }),
