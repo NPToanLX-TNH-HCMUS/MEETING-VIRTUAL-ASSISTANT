@@ -1,0 +1,16 @@
+{
+    "remaining_points": [
+        {
+            "id": 1,
+            "topic": "Segment Tree Definition & O(log N) Complexity"
+        },
+        {
+            "id": 2,
+            "topic": "Build & Query Function Implementation"
+        },
+        {
+            "id": 3,
+            "topic": "Lazy Propagation Theory & Documentation"
+        }
+    ]
+}
