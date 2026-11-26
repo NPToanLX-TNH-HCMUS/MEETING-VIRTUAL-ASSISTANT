@@ -51,7 +51,7 @@ function button(className, label, onClick) {
 // ---------- Data ----------
 async function load() {
   try {
-    const [found, groups] = await Promise.all([api.getMeetings('archived'), api.getWorkspaces()]);
+    const [found, groups] = await Promise.all([api.listMeetings('archived'), api.getWorkspaces()]);
     meetings = found.items;
     workspaces = groups.items;
     message = '';

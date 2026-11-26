@@ -13,7 +13,6 @@ import shutil
 
 from fastapi import APIRouter
 
-from ..context.archive import save_archive
 from ..database.storage import CloudStorageError
 from ..minutes_extractor.minutes_extractor import assemble_markdown, extract_minutes
 from ..utils.objects import Meeting, Minutes, MinutesEdit
@@ -144,9 +143,6 @@ def update_minutes(body: MinutesEdit, session: SessionDep, ctx: CtxDep):
         )
         minutes["markdown"] = body.markdown
         minutes["updated_at"] = updated_at
-        if session.status == "archived":
-            # Already confirmed: confirm removed the local files, so the DB row (above) and archive.json follow the edit.
-            save_archive(session)
         return dict(minutes)
 
 
@@ -196,5 +192,4 @@ def confirm_minutes(session: SessionDep, ctx: CtxDep):
         minutes["status"] = "confirmed"
         minutes["updated_at"] = updated_at
         session.status = "archived"
-        save_archive(session)
         return meeting_response(session)

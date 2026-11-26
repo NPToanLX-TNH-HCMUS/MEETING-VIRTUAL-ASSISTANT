@@ -65,7 +65,7 @@ The backend also serves the built UI at http://127.0.0.1:8000/ once `src/fronten
 ## Your data
 Everything is kept in the `data/` folder in the repo root (set `MIA_DATA_DIR` to move it). It is not committed to git.
 
-- **Confirmed minutes** are saved when you press "Confirm and save minutes" (`data/<meeting id>/archive.json`, plus `minutes_final.md`). They are still there after you quit the app, listed under **Minutes** in the sidebar, and you can keep editing them on their page.
-- **Workspaces** (`data/workspaces.json`) group minutes. Press **+** next to Workspaces to create one with a name, icon and colour, then drag a minutes item onto it. On a minutes page, the **Workspace** menu does the same without dragging. Deleting a workspace keeps its minutes.
+- **Confirmed minutes** are saved when you press "Confirm and save minutes": the database (`DATABASE_URL`) holds the meeting, and the meeting folder is uploaded to Supabase Storage. They are still there after you quit the app, listed under **Minutes** in the sidebar, and you can keep editing them on their page.
+- **Workspaces** (in the database) group minutes. A database created before workspaces existed needs `src/backend/database/add_workspaces.sql` run once. Press **+** next to Workspaces to create one with a name, icon and colour, then drag a minutes item onto it. On a minutes page, the **Workspace** menu does the same without dragging. Deleting a workspace keeps its minutes.
 - **API keys** entered in Settings are in `data/settings.json`.
 - A meeting you never confirmed is **not** saved: it is gone when the app quits.

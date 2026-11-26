@@ -86,8 +86,6 @@ export const api = {
   // PUT /meetings/{id}/minutes { markdown } -> Minutes   (allowed in "review" and after confirming)
   saveMinutes: (id, markdown) => request('PUT', `/meetings/${id}/minutes`, { json: { markdown } }),
 
-  // GET /meetings?status=archived -> { items: Meeting[] }, newest first
-  getMeetings: (status) => request('GET', `/meetings${status ? `?status=${encodeURIComponent(status)}` : ''}`),
   // GET /workspaces -> { items: Workspace[] }
   getWorkspaces: () => request('GET', '/workspaces'),
   // POST /workspaces { name, icon, color } -> Workspace

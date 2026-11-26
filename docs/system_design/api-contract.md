@@ -107,7 +107,7 @@ draft ──► ready ──► live ◄──► paused
 | `paused` | Recording is paused. Paused time is **not** counted as elapsed time. | Resume, stop |
 | `processing` | The meeting ended. The backend is building the minutes. | Wait (the WebSocket sends `minutes.ready`) |
 | `review` | The minutes are drafted. The user can edit them. | Edit minutes, resolve conflicts, confirm |
-| `archived` | The minutes are confirmed and saved to disk (they survive a restart). Open tasks carry over to the next meeting. | Edit the minutes, file the meeting in a workspace |
+| `archived` | The minutes are confirmed and saved to the database (they survive a restart). Open tasks carry over to the next meeting. | Edit the minutes, file the meeting in a workspace |
 
 An action called in the wrong status returns `409 INVALID_MEETING_STATE`. The UI should disable the matching button **and** still handle this error.
 
@@ -558,7 +558,7 @@ The keys the speech-to-text and language-model calls need. They can come from th
 
 ### 6.16 Workspaces and the meeting list
 
-A workspace is a group the user files confirmed minutes under. Only `archived` meetings can be filed. The server keeps workspaces in `workspaces.json` and a meeting's workspace in its archive, so both survive a restart.
+A workspace is a group the user files confirmed minutes under. Only `archived` meetings can be filed. The server keeps workspaces and a meeting's workspace in the database, so both survive a restart.
 
 - `GET /meetings` returns `{ "items": Meeting[] }`, newest first (by `ended_at`, else `created_at`). Filter: `status`, several values separated by commas. The sidebar asks for `status=archived`.
 - `GET /workspaces` returns `{ "items": Workspace[] }`.

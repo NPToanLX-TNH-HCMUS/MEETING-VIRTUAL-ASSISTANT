@@ -10,7 +10,6 @@ from ..database.storage import CloudStorage
 from ..document.markdown_converter import MarkDownConverter
 from ..meeting_manager.meeting_manager import MeetingManager
 from ..meeting_manager.storage_manager import StorageManager
-from .archive import load_archives
 from .session import MeetingSession
 
 
@@ -34,10 +33,6 @@ class AppContext:
         # Private attributes
         self._sessions: dict[str, MeetingSession] = {}
         self._lock = threading.Lock()
-
-        # Confirmed meetings come back after a restart.
-        for session in load_archives(Path(data_root)):
-            self._sessions[session.id] = session
 
     def create_session(self) -> MeetingSession:
         mc = self.meeting_manager.create_meeting()
