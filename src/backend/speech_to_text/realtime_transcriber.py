@@ -12,12 +12,14 @@ import sounddevice as sd
 from dotenv import load_dotenv
 from websockets.asyncio.client import connect
 
+from .segments import ActiveClock
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 load_dotenv(PROJECT_ROOT / ".env")
 
 SAMPLE_RATE = 44100
 BLOCK_SIZE = 4410
-MAX_SECONDS = 300  # Recording time limit, excluding pauses.
+MAX_SECONDS = 3000
 FINAL_WAIT_SECONDS = 2
 
 URL = (
@@ -77,6 +79,10 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
     }
     committed_segments = []
     recorded_chunks = []
+    clock = ActiveClock()
+    # When the first partial of the current sentence arrived (its approximate start).
+    speech_start = None
+    last_end = 0.0
 
     async def send_pcm(connection, pcm_bytes, commit=False):
         await connection.send(json.dumps({
@@ -111,12 +117,15 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
             problems["queue_full"] = True
 
     async def receive_transcripts(connection):
+        nonlocal speech_start, last_end
         async for raw_message in connection:
             message = json.loads(raw_message)
             message_type = message.get("message_type")
             text = message.get("text", "")
 
             if message_type == "partial_transcript":
+                if speech_start is None:
+                    speech_start = clock.seconds()
                 await send_event({
                     "type": "partial",
                     "text": text,
@@ -126,9 +135,22 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
                 if text:
                     committed_segments.append(text)
 
+                    # shortcut: times come from our own clock when VAD commits, so the
+                    # end lags the real speech end by the silence delay. Upgrade to the
+                    # provider's word timestamps if they become available here.
+                    end = clock.seconds()
+                    start = speech_start if speech_start is not None else last_end
+                    if end is not None:
+                        start = min(start, end)
+                        last_end = end
+                    speech_start = None
+
                     await send_event({
                         "type": "committed",
                         "text": text,
+                        "id": f"seg_{len(committed_segments):03d}",
+                        "start_seconds": None if end is None else round(start, 2),
+                        "end_seconds": None if end is None else round(end, 2),
                     })
 
             elif message_type == "warning":
@@ -173,6 +195,7 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
                 callback=on_audio,
             ) as microphone:
                 started_at = monotonic()
+                clock.start()
                 paused = False
                 paused_at = None
                 paused_seconds = 0.0
@@ -203,11 +226,13 @@ async def stream_transcript(send_event, language="vi", stop_event=None, pause_ev
                     if pause_event.is_set() != paused:
                         paused = pause_event.is_set()
                         if paused:
+                            clock.pause()
                             microphone.stop()
                             paused_at = monotonic()
                             await send_event({"type": "paused"})
                             await drain_audio(connection)
                         else:
+                            clock.resume()
                             microphone.start()
                             paused_seconds += monotonic() - paused_at
                             paused_at = None

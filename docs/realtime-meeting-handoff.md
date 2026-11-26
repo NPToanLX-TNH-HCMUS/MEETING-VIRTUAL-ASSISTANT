@@ -161,3 +161,25 @@ so unusually late provider output can be missed. Real microphone/provider smoke
 testing remains necessary. Live summaries resend the full transcript and can
 reach model context/cost limits in long meetings. No new authentication or
 multi-user deployment capability is introduced.
+
+
+## Integration after main merge (2026-11-26)
+
+- Canonical REST controls and the outbound-only WebSocket remain the realtime entry
+  points. The transcript-test handler has been removed.
+- live_analysis.py runs agenda FSM and extraction on shared committed segments every
+  three new segments, catches up after slow calls, and flushes the final batch
+  before automatic minutes. LLM failure does not stop STT.
+- STT segment IDs and estimated realtime timestamps are retained. The application
+  session sees each committed segment immediately, including for Q&A.
+- The UI retains agenda evidence, extraction tags, conflict choices and Q&A.
+  Reconnect reloads agenda, extractions and conflicts as well as transcript/history.
+  conflict.updated is emitted after REST conflict resolution.
+- Automatic/manual minutes calls receive AppContext and use the repository.
+  Status and completed transcript are persisted. Repository reload after restart
+  does not resume the microphone or restore every in-memory analysis field.
+  Extractions/conflicts still need durable storage.
+- Cloud confirmation retains local artifacts for history and JSONL recovery reads.
+- Q&A time answers use the active runtime clock when available.
+- Earlier statements that agenda/Q&A are unimplemented are superseded here.
+  No live cloud/STT calls were used for merge verification.

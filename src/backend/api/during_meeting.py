@@ -1,4 +1,4 @@
-"""REST controls and the outbound-only meeting event channel."""
+"""Meeting REST controls, realtime events, agenda analysis and Q&A."""
 import asyncio
 import json
 import logging
@@ -8,39 +8,49 @@ from anyio import CancelScope
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ..context.app_context import MeetingNotFoundError
+
 from ..during_meeting.meeting_session import MeetingSession as RealtimeSession
 from ..during_meeting.meeting_service import run_recording, wait_for_ack
 from ..during_meeting.transcript_store import segments_after
+
+from ..meeting_qa.qa import HISTORY_TURNS, answer_question
+
+from ..speech_to_text.segments import from_batch
 from ..speech_to_text.transcriber import AudioTranscriptionError, ElevenLabsTranscriber
-from ..utils.objects import MeetingControlResponse, TranscriptList
+
+from ..utils.objects import AskAnswer, AskRequest, MeetingControlResponse, TranscriptList
 from ..utils.utils import error, now
-from .common import SessionDep
+from .common import CtxDep, SessionDep
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/meetings/{meeting_id}", tags=["during-meeting"])
 ws_router = APIRouter(tags=["during-meeting"])
+# One recording may own the local microphone at a time.
 microphone_lock = asyncio.Lock()
+
 AUDIO_FILE = "during_meeting/audio/record.wav"
 TRANSCRIPT_FILE = "during_meeting/transcript/transcript.txt"
 
 
-async def finish_meeting(realtime, session):
+async def finish_meeting(realtime, session, ctx):
     from .post_meeting import generate_minutes
     try:
-        await generate_minutes(session)
+        await generate_minutes(session, ctx)
     except asyncio.CancelledError:
         raise
     except Exception:
         logger.exception("Minutes processing failed for %s", session.id)
 
 
-async def run_meeting_session(realtime, session):
+async def run_meeting_session(realtime, session, ctx):
     try:
         text = await run_recording(realtime, session)
+        await asyncio.to_thread(ctx.meeting_repository.save_transcript, session.id,
+                                list(realtime.transcript_segments), text, now())
         with session:
             session.emplace("transcript_text", text)
             session.emplace("transcript", list(realtime.transcript_segments))
-        realtime.processing_task = asyncio.create_task(finish_meeting(realtime, session))
+        realtime.processing_task = asyncio.create_task(finish_meeting(realtime, session, ctx))
     except asyncio.CancelledError:
         raise
     except Exception:
@@ -66,7 +76,7 @@ def release_microphone(task):
 
 
 @router.post("/start", response_model=MeetingControlResponse)
-async def start_meeting(session: SessionDep):
+async def start_meeting(session: SessionDep, ctx: CtxDep):
     if session.status != "ready":
         return error(409, "INVALID_MEETING_STATE", f"Cannot start while {session.status}.")
     if microphone_lock.locked():
@@ -84,11 +94,13 @@ async def start_meeting(session: SessionDep):
             realtime.summary_history = previous.summary_history
         with session:
             session.emplace("realtime", realtime)
+            session.emplace("repository", ctx.meeting_repository)
+            session.emplace("transcript", realtime.transcript_segments)
             meeting = session.at("meeting")
             meeting["started_at"] = None
             meeting["ended_at"] = None
             duration = meeting["duration_minutes"] * 60
-        realtime.stream_task = asyncio.create_task(run_meeting_session(realtime, session))
+        realtime.stream_task = asyncio.create_task(run_meeting_session(realtime, session, ctx))
     except BaseException:
         microphone_lock.release()
         raise
@@ -165,8 +177,8 @@ def read_transcript(session: SessionDep, after: str | None = None):
         else:
             path = session.path("during_meeting/transcript/segments.jsonl")
             try:
-                segments = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
-                            if line.strip()] if path.exists() else []
+                segments = list(session.get("transcript", [])) or [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+                            if line.strip()] if path.exists() else list(session.get("transcript", []))
             except (ValueError, OSError):
                 return error(500, "TRANSCRIPT_READ_FAILED", "Could not read saved transcript.")
     try:
@@ -251,7 +263,7 @@ async def meeting_socket(websocket: WebSocket, meeting_id: str):
 
 
 @router.post("/transcribe")
-def transcribe_recording(session: SessionDep):
+def transcribe_recording(session: SessionDep, ctx: CtxDep):
     with session:
         if session.get("realtime") is not None or session.status not in {"ready", "processing"}:
             return error(409, "INVALID_MEETING_STATE",
@@ -262,10 +274,13 @@ def transcribe_recording(session: SessionDep):
                 409, "INVALID_MEETING_STATE", "There is no recording to transcribe yet"
             )
         transcript_path = session.path(TRANSCRIPT_FILE)
+        language = session.at("meeting")["language"]
 
     # The STT request can take a while, so it runs outside the session lock.
     try:
-        segments = ElevenLabsTranscriber().transcribe_file(audio, transcript_path)
+        segments = ElevenLabsTranscriber().transcribe_file(
+            audio, transcript_path, language
+        )
     except ValueError as exc:  # missing ELEVENLABS_API_KEY, empty or invalid wav
         return error(422, "TRANSCRIPTION_INPUT_INVALID", str(exc))
     except AudioTranscriptionError as exc:
@@ -278,6 +293,45 @@ def transcribe_recording(session: SessionDep):
     )
 
     with session:
-        session.emplace("transcript", segments)
+        language = session.at("meeting")["language"]
+        normalized_segments = from_batch(segments, session.id, language)
+        ctx.meeting_repository.save_transcript(
+            session.id, normalized_segments, text, now()
+        )
+        session.emplace("transcript", normalized_segments)
         session.emplace("transcript_text", text)
+        # They were built from the old transcript.
+        session.pop("extractions")
+        session.pop("extraction_cursor")
+        session.pop("conflicts")
     return {"transcript": text}
+
+
+@router.post("/ask", response_model=AskAnswer)
+def ask(session: SessionDep, body: AskRequest):
+    question = body.question.strip()
+    if not question:
+        return error(400, "VALIDATION_ERROR", "The question is empty.")
+    with session:
+        if session.status not in {"live", "paused"}:
+            return error(
+                409,
+                "INVALID_MEETING_STATE",
+                f"Cannot ask while the meeting is {session.status}",
+            )
+        meeting = dict(session.at("meeting"))
+        runtime = session.get("realtime")
+        if runtime:
+            meeting["elapsed_seconds"] = runtime.elapsed_seconds()
+        agenda = [dict(item) for item in session.get("agenda", [])]
+        segments = list(session.get("transcript", []))
+        history = list(session.get("qa_history", []))
+    # The LLM call runs outside the lock (FastAPI runs this sync route in a worker thread);
+    # LLMCallError becomes the contract's 503/422 in main.py.
+    result = answer_question(meeting, agenda, segments, history, question)
+    with session:
+        turns = session.get("qa_history", []) + [
+            {"question": question, "answer": result["answer"]}
+        ]
+        session.emplace("qa_history", turns[-HISTORY_TURNS:])
+    return result

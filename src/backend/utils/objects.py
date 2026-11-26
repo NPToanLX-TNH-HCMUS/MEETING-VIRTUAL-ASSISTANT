@@ -18,6 +18,10 @@ class Meeting(BaseModel):
     ended_at: str | None
 
 
+class MeetingList(BaseModel):
+    items: list[Meeting]
+
+
 class Document(BaseModel):
     id: str
     meeting_id: str
@@ -71,7 +75,7 @@ class NewMeeting(BaseModel):
     planned_points: list[
         str
     ] = []  # one entry per line of the "Points you plan to present" box
-    previous_meeting_id: str | None = None  # always null for now
+    previous_meeting_id: str | None = None
 
 
 class AgendaItemEdit(BaseModel):
@@ -92,7 +96,7 @@ class AgendaEdit(BaseModel):
 # LLM Return — Agenda extraction
 class Topic(BaseModel):
     title: str
-    source: Literal["planned_point", "document"]
+    source: Literal["planned_point", "document", "carry_over"]
     minutes: int | None = None  # how long to discuss it; None if the model forgot
 
 
@@ -138,7 +142,7 @@ class MinutesEdit(BaseModel):
     markdown: str
 
 class MeetingControlResponse(BaseModel):
-    """Response của start, pause, resume và stop."""
+    """Response for start, pause, resume and stop."""
 
     status: str
     started_at: str | None
@@ -147,7 +151,7 @@ class MeetingControlResponse(BaseModel):
 
 
 class TranscriptSegment(BaseModel):
-    """Một đoạn transcript đã chốt."""
+    """A committed transcript segment."""
 
     id: str
     meeting_id: str
@@ -155,12 +159,75 @@ class TranscriptSegment(BaseModel):
     end_seconds: float | None
     speaker: str | None
     text: str
-    language: str
+    language: str | None
     confidence: float | None
     is_low_confidence: bool
-
 
 class TranscriptList(BaseModel):
     """Response của GET /meetings/{id}/transcript."""
 
     segments: list[TranscriptSegment]
+
+
+class Evidence(BaseModel):
+    # Both empty means "no verified evidence": the UI shows a "no evidence" flag.
+    segment_ids: list[str]
+    quote: str
+
+
+class Extraction(BaseModel):
+    id: str
+    meeting_id: str
+    type: Literal["decision", "action_item", "deadline", "unresolved_issue"]
+    content: str
+    assignee: str | None
+    deadline: str | None  # YYYY-MM-DD
+    agenda_item_id: str | None
+    evidence: Evidence
+    missing_fields: list[str]
+    is_low_confidence: bool  # a cited transcript segment is low confidence
+    needs_confirmation: bool
+    task_id: str | None  # Task merge is not built yet, so always None for now
+
+
+class ExtractionList(BaseModel):
+    items: list[Extraction]
+
+
+# Conflict (§5.7 of api-contract.md)
+class ConflictOption(BaseModel):
+    value: str
+    evidence: Evidence
+
+
+class Conflict(BaseModel):
+    id: str
+    meeting_id: str
+    task_id: str | None  # None until the Task store exists; use extraction_id meanwhile
+    extraction_id: str  # the Extraction (action item) whose field got two values
+    field: Literal["assignee", "deadline"]
+    options: list[ConflictOption]  # one per stated value, each with its evidence
+    resolved: bool
+    chosen_value: str | None
+
+
+class ConflictList(BaseModel):
+    items: list[Conflict]
+
+
+class ConflictResolve(BaseModel):
+    """FRONT END SENDS: the value the user picked; it must be one of the options."""
+
+    chosen_value: str
+
+
+# In-meeting Q&A (§6.11 of api-contract.md)
+class AskRequest(BaseModel):
+    question: str
+
+
+class AskAnswer(BaseModel):
+    intent: Literal["time_progress", "meeting_information", "idea_suggestion"]
+    answer: str
+    sources: list[str]  # segment ids; empty = no evidence (the UI shows the flag)
+    is_ai_suggestion: bool

@@ -1,0 +1,16 @@
+{
+  "summary": "The team discussed design preferences for a modern TV remote, agreeing on backlit buttons that stay lit for twenty seconds, a single-level button layout, and see-through colour options. Speech recognition was rejected. Marketing will continue trendwatching research.",
+  "decisions": [
+    "no speech recognition",
+    "backlit buttons for twenty seconds in the dark",
+    "single-level button layout",
+    "see-through colour options"
+  ],
+  "action_items": [
+    {
+      "task": "continue trendwatching research",
+      "owner": "Marketing",
+      "due": null
+    }
+  ]
+}

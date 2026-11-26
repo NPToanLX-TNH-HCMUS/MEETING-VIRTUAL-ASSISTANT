@@ -5,6 +5,7 @@ from datetime import datetime
 from .live_summary import summarize_live
 from .summary_storage import append_summary_history
 from .transcript_store import append_segment
+from .live_analysis import analyse_pending, analyse_transcript
 from ..speech_to_text.realtime_transcriber import stream_transcript
 from ..utils.llm import LLMCallError
 
@@ -87,6 +88,11 @@ async def run_recording(session, meeting_session):
             segment = append_segment(session, meeting_session, event)
             if segment:
                 await session.publish("transcript.segment", segment)
+                if (len(session.transcript_segments) - session.analysis_revision >= 3
+                        and (session.analysis_task is None or session.analysis_task.done())):
+                    session.analysis_task = asyncio.create_task(
+                        analyse_pending(session, meeting_session)
+                    )
             return
         if kind == "partial":
             await session.publish("transcript.partial", {"text": event["text"]})
@@ -121,6 +127,12 @@ async def run_recording(session, meeting_session):
             "meeting.status",
             {"status": meeting_session.status},
         )
+        repository = meeting_session.get("repository")
+        if repository:
+            await asyncio.to_thread(
+                repository.update_status, meeting_session.id, meeting_session.status,
+                started_at=meeting.get("started_at"), ended_at=meeting.get("ended_at"),
+            )
 
     session.summary_task = asyncio.create_task(run_live_summary(session, meeting_session))
     session.timer_task = asyncio.create_task(run_timer(session, meeting_session))
@@ -146,11 +158,17 @@ async def run_recording(session, meeting_session):
         temporary.write_text(transcript, encoding="utf-8")
         temporary.replace(path)
         session.transcript_saved = True
+        # Finish analysis on the final, possibly smaller batch before minutes.
+        if session.analysis_task is not None:
+            await session.analysis_task
+        await analyse_transcript(session, meeting_session)
         return transcript
     finally:
         session.mark_stopped()
         session.stop_event.set()
         tasks = [session.summary_task, session.timer_task]
+        if session.analysis_task is not None:
+            tasks.append(session.analysis_task)
         for task in tasks:
             task.cancel()
         results = await asyncio.gather(*tasks, return_exceptions=True)

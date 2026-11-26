@@ -114,6 +114,7 @@ class RealtimeControlsTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(streams[0].closed)
         self.assertTrue(connection.closed)
         self.assertFalse(streams[0].active)
+        self.events = events
         return [e['type'] for e in events], connection, streams[0]
 
     async def test_pause_sends_silence_and_resume_keeps_session(self):
@@ -121,6 +122,14 @@ class RealtimeControlsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([e for e in events if e != 'level'][:3], ['ready', 'paused', 'resumed'])
         self.assertEqual(microphone.starts, 2)
         self.assertGreaterEqual(connection.silences, 2)
+
+    async def test_committed_sentence_carries_id_and_times(self):
+        await self.exercise('resume')
+        committed = [e for e in self.events if e['type'] == 'committed']
+        self.assertEqual(len(committed), 1)
+        self.assertEqual(committed[0]['id'], 'seg_001')
+        self.assertGreaterEqual(committed[0]['start_seconds'], 0)
+        self.assertGreaterEqual(committed[0]['end_seconds'], committed[0]['start_seconds'])
 
     async def test_stop_works_while_paused(self):
         events, _, microphone = await self.exercise('stop_paused')

@@ -35,8 +35,8 @@
       <section class="card clock" aria-label="Time">
         <div>
           <p class="eyebrow">Time left</p>
-          <span id="meeting-timer" class="clock__value" role="timer">--:--</span>
-          <p class="muted">Paused time is excluded.</p>
+          <span id="meeting-timer" class="clock__value" aria-label="No data yet">--:--</span>
+          <p class="muted">Pending update</p>
         </div>
         <div>
           <p class="eyebrow">Agenda against the clock</p>
@@ -66,13 +66,16 @@
           <h2 id="transcript-title" class="card__title card__title--sm">Live transcript</h2>
         </div>
         <p id="connection-status" class="muted" role="status"></p>
-        <p id="transcript-status" class="muted" role="status">Not connected</p>
+<p id="transcript-status" class="muted" role="status">Not connected</p>
 
-        <!-- Mỗi câu backend chốt là một .segment; thời điểm của câu chưa có trong dữ liệu nên để “—”. -->
-        <div id="transcript-final" style="white-space: pre-wrap;"></div>
-        <div class="segment segment--partial" aria-live="polite">
-          <span class="segment__time"></span>
-          <p id="transcript-partial" class="segment__text"></p>
+        <!-- Mỗi câu backend chốt là một .segment; thời điểm là start_seconds của backend, thiếu thì để “—”. -->
+        <!-- Khung cao cố định: câu mới nhất ở dưới cùng và tự cuộn theo, trừ khi người dùng đang cuộn lên đọc lại. -->
+        <div id="transcript-scroll" class="scroll-panel" tabindex="0" aria-label="Transcript">
+          <div id="transcript-final"></div>
+          <div class="segment segment--partial" aria-live="polite">
+            <span class="segment__time"></span>
+            <p id="transcript-partial" class="segment__text"></p>
+          </div>
         </div>
 
         <div id="transcript-empty" class="empty">
@@ -89,35 +92,55 @@
 
       <!-- ============ PHẢI: chờ cập nhật (backend chưa gửi các sự kiện này) ============ -->
       <div class="during-side">
-        <section class="card" aria-labelledby="summary-title">
-          <h2 id="summary-title" class="card__title card__title--sm">Live summaries</h2>
-          <p id="summary-status" class="muted" role="status">Waiting for committed speech.</p>
-          <div id="live-summary"></div>
-        </section>
+<section class="card"><h2>Live summaries</h2><p id="summary-status" role="status"></p><div id="live-summary"></div></section>
+        <!-- Trên cùng để host thấy ngay: xung đột (chọn một giá trị) và mục thiếu trường / thiếu bằng chứng. -->
         <section class="card card--alert" aria-labelledby="choice-title">
-          <div class="card__head"><h2 id="choice-title" class="card__title card__title--sm">Needs your choice</h2></div>
-          <p class="pending">Deadline conflicts and items needing confirmation: pending update.</p>
+          <div class="card__head">
+            <h2 id="choice-title" class="card__title card__title--sm">Needs your choice</h2>
+            <span id="choice-count" class="card__count"></span>
+          </div>
+          <div class="scroll-panel scroll-panel--short" tabindex="0" aria-label="Items that need your choice">
+            <ul id="choice-list" class="capture-list" aria-live="polite"></ul>
+          </div>
+          <p id="choice-empty" class="muted">Nothing to settle. Conflicting values and missing owners or deadlines show up here.</p>
         </section>
 
         <section class="card" aria-labelledby="captured-title">
           <div class="card__head">
             <h2 id="captured-title" class="card__title card__title--sm">Captured so far</h2>
-            <span class="card__count">0 items</span>
+            <span id="captured-count" class="card__count">0 items</span>
           </div>
-          <p class="pending">Decisions, action items and unresolved issues: pending update.</p>
+          <!-- During.js điền từ extraction.created / extraction.updated và GET .../extractions. -->
+          <div class="scroll-panel scroll-panel--short" tabindex="0" aria-label="Captured items">
+            <ul id="captured-list" class="capture-list" aria-live="polite"></ul>
+          </div>
+          <p id="captured-empty" class="muted">Decisions, action items and open issues appear here while people talk.</p>
         </section>
 
-        <section class="card" aria-labelledby="ask-title">
-          <div class="card__head"><h2 id="ask-title" class="card__title card__title--sm">Ask the assistant</h2></div>
-          <p class="pending">In-meeting Q&amp;A: pending update.</p>
-          <form class="ask" onsubmit="return false">
-            <label class="visually-hidden" for="ask-input">Question</label>
-            <input id="ask-input" class="input" type="text" placeholder="Ask about time, progress…" disabled />
-            <button type="submit" class="btn btn--primary" disabled>Ask</button>
-          </form>
-        </section>
       </div>
     </main>
+
+    <!-- Trợ lý: nút nổi góc phải dưới, bấm mới mở cửa sổ chat. Không modal, để vẫn bấm nguồn nhảy tới transcript. -->
+    <!-- During.js điền từ POST .../ask; chỉ giữ trong bộ nhớ trang, tải lại là mất. -->
+    <button id="ask-toggle" type="button" class="btn btn--primary ask-fab" aria-expanded="false" aria-controls="ask-panel">
+      Ask the assistant<span id="ask-unread" class="ask-fab__badge" hidden></span>
+    </button>
+    <section id="ask-panel" class="card ask-panel" role="dialog" aria-labelledby="ask-title" hidden>
+      <div class="card__head">
+        <h2 id="ask-title" class="card__title card__title--sm">Ask the assistant</h2>
+        <button id="ask-close" type="button" class="ask__close" aria-label="Close the assistant">×</button>
+      </div>
+      <div class="scroll-panel ask-panel__thread" tabindex="0" aria-label="Questions and answers">
+        <ul id="ask-list" class="capture-list" aria-live="polite"></ul>
+      </div>
+      <p id="ask-empty" class="muted">Start recording, then ask about time left or what was said.</p>
+      <div id="ask-starters" class="ask__starters" aria-label="Suggested questions" hidden></div>
+      <form id="ask-form" class="ask">
+        <label class="visually-hidden" for="ask-input">Question</label>
+        <input id="ask-input" class="input" type="text" placeholder="Ask about time, decisions, what was said…" disabled />
+        <button id="ask-submit" type="submit" class="btn btn--primary" disabled>Ask</button>
+      </form>
+    </section>
 
     <script type="module" src="/js/during.js"></script>
   </body>

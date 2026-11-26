@@ -13,7 +13,7 @@ function element() {
     children: [], textContent: "", dataset: {}, style: {}, hidden: false, disabled: false,
     addEventListener(name, handler) { this[name] = handler; },
     setAttribute() {},
-    replaceChildren() { this.children = []; },
+    replaceChildren(...children) { this.children = children; },
     append(...children) { this.children.push(...children); },
     appendChild(child) { this.children.push(child); },
     querySelectorAll() { return this.children; },
@@ -35,10 +35,13 @@ test("REST catch-up deduplicates live delivery; disconnected viewer can still st
     },
     getAgenda: async () => ({ items: [] }),
     getSummaries: async () => ({ items: [] }),
+    getExtractions: async () => ({ items: [] }),
+    getConflicts: async () => ({ items: [] }),
     startMeeting: async () => { starts++; return state; },
     stopMeeting: async () => { stops++; state = { ...state, status: "processing", seq: 8 }; return state; },
   };
   const context = {
+    TYPE_LABELS: {}, extractionDetails: () => [], formatTime: () => "--:--", renderReviewList: () => 0,
     api, URLSearchParams, location: { search: "?meeting=m1" }, Date, performance, console,
     document: {
       getElementById(id) { assert(elements[id], id); return elements[id]; },
@@ -53,7 +56,7 @@ test("REST catch-up deduplicates live delivery; disconnected viewer can still st
   await flush();
   handlers.onOpen();
   await flush();
-  assert.equal(elements["transcript-final"].textContent, "First");
+  assert.equal(elements["transcript-final"].children.map(row => row.children[1].children[0].textContent).join("\n"), "First");
   handlers.onClose({ code: 1006 });
   assert.equal(elements["stop-recording"].disabled, false);
   stored.push({ id: "s2", text: "Missed" });
@@ -63,12 +66,12 @@ test("REST catch-up deduplicates live delivery; disconnected viewer can still st
   assert(afterCalls.includes("s1"));
   handlers.onMessage({ type: "transcript.segment", meeting_id: "m1", seq: 6, data: stored[1] });
   await flush();
-  assert.equal(elements["transcript-final"].textContent, "First\nMissed");
+  assert.equal(elements["transcript-final"].children.map(row => row.children[1].children[0].textContent).join("\n"), "First\nMissed");
   stored.push({ id: "s3", text: "Gap recovered" });
   state.seq = 8;
   handlers.onMessage({ type: "timer.sync", meeting_id: "m1", seq: 8, data: {} });
   await flush();
-  assert.equal(elements["transcript-final"].textContent, "First\nMissed\nGap recovered");
+  assert.equal(elements["transcript-final"].children.map(row => row.children[1].children[0].textContent).join("\n"), "First\nMissed\nGap recovered");
   await elements["stop-recording"].click();
   assert.equal(stops, 1);
   assert.equal(starts, 0); // Reconnect never starts another microphone.

@@ -28,6 +28,9 @@ class MeetingSession:
         self.transcript_saved = False
         self.pipeline_error = None
         self.processing_task = None
+        self.analysis_task = None
+        self.analysis_lock = asyncio.Lock()
+        self.analysis_revision = 0
 
         # Điều phối các lệnh REST.
         self.control_lock = asyncio.Lock()

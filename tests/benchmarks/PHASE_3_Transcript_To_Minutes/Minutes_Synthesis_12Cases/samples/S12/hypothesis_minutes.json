@@ -1,0 +1,7 @@
+{
+  "summary": "The meeting concluded without reaching consensus on whether the remote should support VCR or DVD functions and on the touch-wheel layout. The Project Manager formally postponed all decisions on these topics to the next meeting.",
+  "decisions": [
+    "All decisions regarding DVD/VCR compatibility and touch-wheel navigation are formally postponed to the next meeting."
+  ],
+  "action_items": []
+}

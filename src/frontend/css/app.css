@@ -1042,7 +1042,7 @@ textarea {
   background: var(--c-ink);
   color: var(--c-on-primary);
   font-size: var(--fs-sm);
-  box-shadow: 0 6px 20px rgba(20, 32, 43, 0.2);
+  box-shadow: var(--shadow-pop);
 }
 
 /* ---------- Backend status ---------- */
@@ -1086,14 +1086,16 @@ textarea {
 /* ---------- Dialog ---------- */
 .dialog {
   border: 0;
+  background: var(--c-surface);
+  color: var(--c-text);
   border-radius: var(--r-lg);
   padding: var(--s-5);
   max-width: min(440px, calc(100vw - 2 * var(--s-4)));
-  box-shadow: 0 20px 50px rgba(20, 32, 43, 0.25);
+  box-shadow: var(--shadow-float);
 }
 
 .dialog::backdrop {
-  background: rgba(20, 32, 43, 0.35);
+  background: var(--scrim);
 }
 
 .dialog__title {
@@ -1114,7 +1116,7 @@ textarea {
 }
 
 .btn--danger:hover:not(:disabled) {
-  background: #6f1515;
+  background: color-mix(in srgb, var(--c-error-text) 85%, var(--c-text));
 }
 
 .editor__note--warn {
@@ -1168,7 +1170,7 @@ textarea {
 }
 
 .btn--dark:hover:not(:disabled) {
-  background: #243545;
+  background: color-mix(in srgb, var(--c-ink) 85%, var(--c-bg));
 }
 
 .btn--block-lg {
@@ -1426,6 +1428,23 @@ textarea {
 }
 
 /* Transcript */
+.scroll-panel {
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* Side panels stack, so each keeps a shorter box and the host sees all of them. */
+.scroll-panel--short {
+  max-height: min(40vh, 380px);
+}
+
+.scroll-panel:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
 .segment {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
@@ -1469,6 +1488,192 @@ textarea {
   width: 72px;
   height: 8px;
   accent-color: var(--c-primary);
+}
+
+.segment--low .segment__text {
+  padding: var(--s-1) var(--s-2);
+  border: 1px dashed var(--c-warn-border);
+  border-radius: var(--r-sm);
+  background: var(--c-warn-bg);
+}
+
+.segment__note {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--c-warn-text);
+}
+
+/* Extraction tags under a transcript sentence: the type is always written out, not only coloured. */
+.seg-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: var(--s-1);
+}
+
+.seg-tag {
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  background: var(--c-primary-soft);
+  color: var(--c-primary-hover);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.seg-tag--decision {
+  background: var(--c-info-bg);
+  color: var(--c-info-text);
+}
+
+.seg-tag--unresolved_issue {
+  background: var(--c-surface-muted);
+  color: var(--c-text-muted);
+}
+
+.seg-tag--confirm {
+  box-shadow: inset 0 0 0 1px var(--c-warn-border);
+}
+
+/* Captured so far */
+.capture-list {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capture {
+  padding: var(--s-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+}
+
+.capture--confirm {
+  border-color: var(--c-warn-border);
+  background: var(--c-warn-bg);
+}
+
+.capture__type {
+  margin: 0;
+  font: 600 var(--fs-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-primary);
+}
+
+.capture--confirm .capture__type {
+  color: var(--c-warn-text);
+}
+
+.capture__content {
+  margin: var(--s-1) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.capture__meta {
+  margin: var(--s-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--c-text-muted);
+}
+
+.capture__flag {
+  color: var(--c-error-text);
+  font-weight: 500;
+}
+
+/* Needs your choice (shared with the After page) */
+.review {
+  padding: var(--s-3);
+  border: 1px solid var(--c-warn-border);
+  border-radius: var(--r-md);
+  background: var(--c-warn-bg);
+}
+
+.review--conflict {
+  border-color: var(--c-error-border);
+  background: var(--c-surface);
+}
+
+.review__type {
+  margin: 0;
+  font: 600 var(--fs-xs) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--c-warn-text);
+}
+
+.review--conflict .review__type {
+  color: var(--c-error-text);
+}
+
+.review__content {
+  margin: var(--s-1) 0 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.review__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+  margin-top: var(--s-2);
+}
+
+.review__reason {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-warn-text);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+
+.review__options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.review__option {
+  display: grid;
+  gap: 2px;
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.review__option:hover:not(:disabled) {
+  border-color: var(--c-primary);
+  background: var(--c-primary-soft);
+}
+
+.review__option:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.review__option:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.review__option strong {
+  font-size: var(--fs-md);
+}
+
+.review__evidence,
+.review__quote {
+  font-size: var(--fs-xs);
+  color: var(--c-text-muted);
+  overflow-wrap: anywhere;
 }
 
 /* Assistant (not connected yet) */
@@ -1546,4 +1751,191 @@ textarea {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%2356636e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 16px center;
+}
+
+/* In-meeting Q&A */
+/* The list is a grid: without this a long one-line source chip widens the card past the panel. */
+#ask-list > li {
+  min-width: 0;
+}
+
+.ask__question {
+  margin: 0 0 var(--s-1);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* AI suggestion: dashed border + its text label, so it never looks like an official decision. */
+.capture--ai {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--c-ai) 60%, var(--c-border));
+  background: var(--c-ai-soft);
+}
+
+.capture--ai .capture__type {
+  color: var(--c-ai);
+}
+
+.ask__source {
+  max-width: 100%;
+  border: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; /* CSS cuts whole glyphs, so no diacritic is split */
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.ask__source:hover:not(:disabled) {
+  background: var(--c-primary);
+  color: var(--c-on-primary);
+}
+
+.ask__source:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.ask__source:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* The line a Q&A source points to, briefly highlighted after the jump. */
+.segment--focus {
+  border-radius: var(--r-sm);
+  background: var(--c-warn-bg);
+  box-shadow: 0 0 0 2px var(--c-warn-border);
+}
+
+.ask__starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+.ask__starter {
+  padding: var(--s-1) var(--s-3);
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--r-pill);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.ask__starter:hover:not(:disabled) {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+/* Small text buttons under an answer: Copy, Try again. */
+.ask__action {
+  margin-top: var(--s-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--c-primary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ask__action:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.ask__starter:focus-visible,
+.ask__action:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.ask__starter:disabled,
+.ask__action:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* The assistant lives in a floating window, so a long agenda or capture list never pushes it down. */
+.ask-fab {
+  position: fixed;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 40;
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow-pop);
+}
+
+.ask-fab__badge {
+  font-weight: 500;
+}
+
+.ask-panel {
+  position: fixed;
+  right: var(--s-5);
+  bottom: var(--s-5);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 2 * var(--s-5)));
+  max-height: min(640px, calc(100vh - var(--header-h) - 2 * var(--s-5)));
+  box-shadow: var(--shadow-float);
+}
+
+.ask-panel[hidden] {
+  display: none;
+}
+
+.ask-panel__thread {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+}
+
+.ask__close {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--c-text-muted);
+  font-size: var(--fs-lg);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ask__close:hover {
+  background: var(--c-surface-muted);
+  color: var(--c-text);
+}
+
+.ask__close:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* Room under the last cards so the floating button never hides them. */
+.during-layout {
+  padding-bottom: calc(var(--s-6) * 2.5);
+}
+
+@media (max-width: 767px) {
+  .ask-fab {
+    right: var(--s-4);
+    bottom: var(--s-4);
+  }
+
+  .ask-panel {
+    right: var(--s-4);
+    bottom: var(--s-4);
+    left: var(--s-4);
+    width: auto;
+    max-height: calc(100vh - var(--header-h) - 2 * var(--s-4));
+  }
 }

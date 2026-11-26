@@ -30,6 +30,12 @@ async function request(method, path, { json, form, timeoutMs = 30_000 } = {}) {
 }
 
 export const api = {
+  listMeetings: (status) => request('GET', status ? `/meetings?status=${encodeURIComponent(status)}` : '/meetings'),
+  ask: (id, question) => request('POST', `/meetings/${id}/ask`, {json: {question}, timeoutMs: 60000}),
+  getExtractions: (id) => request('GET', `/meetings/${id}/extractions`),
+  getConflicts: (id) => request('GET', `/meetings/${id}/conflicts`),
+  resolveConflict: (id, cid, value) => request('POST', `/meetings/${id}/conflicts/${cid}/resolve`, {json: {chosen_value: value}}),
+
   // POST /meetings -> { id, topic, status, ... }
   createMeeting: (body) => request('POST', '/meetings', { json: body }),
 

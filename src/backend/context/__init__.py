@@ -14,7 +14,7 @@ FastAPI orchestrator (`src/backend/main.py`):
 Classes
 -------
 - ``AppContext`` (``app_context.py``) — Shared resource container & session registry.
-  - Attributes: ``storage``, ``meeting_manager``, ``converter``.
+  - Attributes: ``storage``, ``meeting_manager``, ``converter``, ``meeting_repository``, ``cloud_storage``.
   - Methods: ``create_session()``, ``session(meeting_id)``, ``sessions()``.
   - FastAPI deps: ``get_ctx(request)``, ``get_session(meeting_id, ctx)``.
 - ``MeetingSession`` (``session.py``) — Per-meeting state, file paths & lock.

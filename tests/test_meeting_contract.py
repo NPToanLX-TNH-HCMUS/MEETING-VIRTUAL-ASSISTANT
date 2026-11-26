@@ -4,14 +4,18 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+from src.backend.database.repository import MeetingRepository
 
 from fastapi.testclient import TestClient
 from src.backend import main as backend
 from src.backend.api import during_meeting, post_meeting
 from src.backend.context.app_context import AppContext
 from src.backend.utils.objects import MinutesExtraction
-from src.backend.during_meeting import meeting_service
+from src.backend.during_meeting import meeting_service, live_analysis
 from src.backend.during_meeting.meeting_session import MeetingSession
 from src.backend.meeting_manager.meeting_manager import MeetingManager
 from src.backend.meeting_manager.storage_manager import StorageManager
@@ -21,7 +25,10 @@ class MeetingContractTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.old_ctx = backend.app.state.ctx
-        backend.app.state.ctx = AppContext(Path(self.directory.name))
+        self.engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+        backend.app.state.ctx = AppContext(Path(self.directory.name),
+            repository=MeetingRepository(sessionmaker(bind=self.engine, expire_on_commit=False)),
+            cloud_storage=MagicMock())
         during_meeting.microphone_lock = asyncio.Lock()
         self.emit = None
         self.capture_closed = False
@@ -48,6 +55,8 @@ class MeetingContractTests(unittest.TestCase):
         self.capture = patch.object(meeting_service, "stream_transcript", capture)
         self.extraction = patch.object(post_meeting, "extract_minutes", return_value=MinutesExtraction(
             summary="Meeting summary.", decisions=[], action_items=[], unresolved_issues=[]))
+        self.analysis_mock = patch.object(live_analysis, "propose_items", return_value=[])
+        self.analysis_mock.start()
         self.capture.start()
         self.extract_mock = self.extraction.start()
         self.client = TestClient(backend.app)
@@ -66,6 +75,8 @@ class MeetingContractTests(unittest.TestCase):
         self.capture.stop()
         backend.app.state.ctx = self.old_ctx
         self.extraction.stop()
+        self.analysis_mock.stop()
+        self.engine.dispose()
         self.directory.cleanup()
 
     def command(self, action):

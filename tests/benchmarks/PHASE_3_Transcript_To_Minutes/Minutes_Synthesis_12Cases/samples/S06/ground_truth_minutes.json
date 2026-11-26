@@ -1,0 +1,19 @@
+{
+    "summary": "In the third design meeting, the team finalized the physical styling, power source, and interface controls for the remote control. The team selected a single-curved form factor with colorful rubber material and corporate yellow and grey branding. Power will be supplied via standard batteries paired with solar cells. Interface controls will feature a side scroll-wheel integrated with buttons, while an LCD display was excluded to allow using a low-cost standard chip. Industrial Designer and User Interface Designer were tasked with completing the prototype drawing on the SMARTboard within thirty minutes.",
+    "decisions": [
+        "Selected a single-curved casing design over flat or double-curved options",
+        "Chose soft-touch colorful rubber as the exterior casing material",
+        "Decided to incorporate corporate brand colors of grey and yellow into the design",
+        "Approved hybrid energy architecture combining standard batteries with solar cells",
+        "Integrated a side scroll-wheel with buttons for muting and volume control",
+        "Excluded an LCD display in order to utilize a standard low-cost microchip"
+    ],
+    "action_items": [
+        {
+            "task": "Collaborate to produce the remote control prototype drawing on the SMARTboard",
+            "owner": "Industrial Designer, User Interface Designer",
+            "due": "Within 30 minutes"
+        }
+    ]
+}
+

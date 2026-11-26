@@ -12,7 +12,7 @@ def append_segment(realtime, meeting_session, event):
         meeting = meeting_session.at("meeting")
 
         segment = {
-            "id": f"seg_{uuid4().hex}",
+            "id": event.get("id") or f"seg_{uuid4().hex}",
             "meeting_id": meeting_session.id,
             "start_seconds": event.get("start_seconds"),
             "end_seconds": event.get("end_seconds"),
@@ -23,6 +23,8 @@ def append_segment(realtime, meeting_session, event):
             "is_low_confidence": event.get("is_low_confidence", False),
         }
 
+        if any(old["id"] == segment["id"] for old in realtime.transcript_segments):
+            segment["id"] = f"seg_{uuid4().hex}"
         path = meeting_session.path(
             "during_meeting/transcript/segments.jsonl"
         )
@@ -34,6 +36,7 @@ def append_segment(realtime, meeting_session, event):
 
         realtime.transcript_segments.append(segment)
         realtime.temp_transcript.append(text)
+        meeting_session.emplace("transcript", realtime.transcript_segments)
 
     return segment
 

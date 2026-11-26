@@ -29,7 +29,11 @@ def parse_json_list_to_list_of_string(text: str) -> list[str]:
 
 
 def parse_topics(
-    reply: str, planned_points: list[str], documents: list[dict], duration_minutes: int
+    reply: str,
+    planned_points: list[str],
+    documents: list[dict],
+    duration_minutes: int,
+    has_previous: bool = False,
 ) -> list[dict]:
     """Model reply (JSON text) -> [{"title", "description", "source", "estimated_minutes"}, ...]."""
     reply = reply.strip()
@@ -60,10 +64,17 @@ def parse_topics(
             f"The model did not return the expected JSON: {reply[:200]!r}",
         ) from e
 
-    # A small model often mislabels `source`; with only one kind of input there is nothing to decide.
-    only_source = (
-        "document" if not planned_points else "planned_point" if not documents else None
-    )
+    active_sources = [
+        name
+        for name, present in (
+            ("planned_point", bool(planned_points)),
+            ("document", bool(documents)),
+            ("carry_over", has_previous),
+        )
+        if present
+    ]
+    only_source = active_sources[0] if len(active_sources) == 1 else None
+
     items = [
         {
             "title": t.title.strip(),

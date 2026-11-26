@@ -9,17 +9,19 @@ STAGE 3 (after meeting): meeting minutes.
 Contract: docs/system_design/api-contract.md §5.8 and §6.12
 """
 
+import shutil
 import asyncio
 import logging
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
+from ..database.storage import CloudStorageError
 from ..minutes_extractor.minutes_extractor import assemble_markdown, extract_minutes
 from ..utils.objects import Meeting, Minutes, MinutesEdit
 from ..utils.utils import error, now
 from ..utils.llm import LLMCallError
-from .common import SessionDep, meeting_response
+from .common import CtxDep, SessionDep, meeting_response
 
 router = APIRouter(prefix="/meetings/{meeting_id}/minutes", tags=["post-meeting"])
 
@@ -37,7 +39,7 @@ def _not_processing(session):
     )
 
 
-def _generate_minutes(session):
+def _generate_minutes(session, ctx):
     """
     FRONT END SENDS:  nothing (POST with empty body)
     BACK END RETURNS: Minutes object (status="draft") with summary, decisions,
@@ -70,12 +72,14 @@ def _generate_minutes(session):
         transcript=transcript_text,
         meeting_date=meeting_date,
         agenda_items=agenda_items,
+        language=meeting.get("language", "en"),
     )
     markdown = assemble_markdown(
         extraction=extraction,
         meeting_id=session.id,
         meeting_topic=meeting.get("topic", ""),
         meeting_date=meeting_date,
+        language=meeting.get("language", "en"),
     )
 
     with session:
@@ -98,13 +102,14 @@ def _generate_minutes(session):
             "markdown": markdown,
             "updated_at": now(),
         }
+        ctx.meeting_repository.save_minutes(session.id, minutes, status="review")
         session.emplace("minutes", minutes)
         session.status = "review"
         return dict(minutes)
 
 
 @router.post("/generate", response_model=Minutes)
-async def generate_minutes(session: SessionDep):
+async def generate_minutes(session: SessionDep, ctx: CtxDep):
     # This function and the automatic post-recording task share one lock.
     lock = session.get("minutes_lock")
     if lock is None:
@@ -117,7 +122,7 @@ async def generate_minutes(session: SessionDep):
         if realtime and not realtime.transcript_saved:
             return error(409, "TRANSCRIPT_NOT_READY", "Transcript has not finished saving.")
         try:
-            result = await asyncio.to_thread(_generate_minutes, session)
+            result = await asyncio.to_thread(_generate_minutes, session, ctx)
         except LLMCallError as exc:
             result = error(exc.status, exc.code, str(exc))
         except Exception:
@@ -157,7 +162,7 @@ def read_minutes(session: SessionDep):
 
 
 @router.put("", response_model=Minutes)
-def update_minutes(body: MinutesEdit, session: SessionDep):
+def update_minutes(body: MinutesEdit, session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  { "markdown": "..." }
     BACK END RETURNS: Updated Minutes object. Only allowed while meeting status is "review".
@@ -175,13 +180,17 @@ def update_minutes(body: MinutesEdit, session: SessionDep):
         if minutes is None:
             return error(409, "MINUTES_NOT_READY", "No minutes to edit yet.")
 
+        updated_at = now()
+        ctx.meeting_repository.update_minutes_markdown(
+            session.id, body.markdown, updated_at
+        )
         minutes["markdown"] = body.markdown
-        minutes["updated_at"] = now()
+        minutes["updated_at"] = updated_at
         return dict(minutes)
 
 
 @router.post("/confirm", response_model=Meeting)
-def confirm_minutes(session: SessionDep):
+def confirm_minutes(session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  nothing (POST with empty body)
     BACK END RETURNS: Meeting with status "archived".
@@ -199,8 +208,29 @@ def confirm_minutes(session: SessionDep):
         if minutes is None:
             return error(409, "MINUTES_NOT_READY", "No minutes to confirm yet.")
 
-        session.path(MINUTES_FINAL_FILE).write_text(minutes["markdown"], encoding="utf-8")
+        updated_at = now()
+        open_conflicts = [
+            c["id"] for c in session.get("conflicts", []) if not c["resolved"]
+        ]
+        if open_conflicts:
+            return error(
+                409,
+                "UNRESOLVED_CONFLICTS",
+                f"Choose a value for every conflict first: {', '.join(open_conflicts)}.",
+            )
+
+        session.path(MINUTES_FINAL_FILE).write_text(
+            minutes["markdown"], encoding="utf-8"
+        )
+        try:
+            ctx.cloud_storage.upload_meeting_directory(session.id, session.root)
+        except CloudStorageError as exc:
+            return error(502, "STORAGE_UPLOAD_FAILED", str(exc))
+
+        ctx.meeting_repository.confirm_minutes(session.id, updated_at)
+        # Keep the local recovery artifacts after cloud archival.
+
         minutes["status"] = "confirmed"
-        minutes["updated_at"] = now()
+        minutes["updated_at"] = updated_at
         session.status = "archived"
         return meeting_response(session)
