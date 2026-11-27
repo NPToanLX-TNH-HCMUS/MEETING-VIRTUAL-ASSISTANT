@@ -1,0 +1,15 @@
+{
+  "name": "mia-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Electron shell for the Meeting Virtual Assistant: starts the Python backend and opens the UI it serves.",
+  "main": "main.js",
+  "scripts": {
+    "build:ui": "npm --prefix ../frontend run build",
+    "start": "npm run build:ui && electron .",
+    "dev": "MIA_DEV_URL=http://localhost:5173 electron ."
+  },
+  "devDependencies": {
+    "electron": "45.5.0"
+  }
+}

@@ -6,15 +6,18 @@
     <title>DocuMeet</title>
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/shell.css" />
   </head>
-  <body>
+  <body data-page="home">
+    <div class="shell">
+      <aside id="sidebar" class="sidebar" aria-label="Main navigation"></aside>
+      <div class="shell__main">
     <!--
       File này chỉ là KHUNG. Chữ và dữ liệu từ backend được js/main.js điền vào các phần có id.
       Phần nào có thuộc tính `hidden` thì main.js sẽ bật/tắt theo trạng thái.
       Phần có class `pending` là chỗ backend chưa có dữ liệu: để trống, chờ cập nhật.
     -->
-    <header class="app-header">
-      <div class="brand">DocuMeet</div>
+    <header class="app-header" data-crumb="New meeting">
       <span id="meeting-meta" class="header__meta">New meeting</span>
       <span class="header__spacer"></span>
       <ol id="stepper" class="stepper" aria-label="Steps">
@@ -127,6 +130,8 @@
         </div>
       </section>
     </main>
+      </div>
+    </div>
 
     <!-- Mẫu cho MỖI hàng agenda. main.js sao chép mẫu này cho từng mục backend trả về. -->
     <template id="tpl-row">

@@ -49,7 +49,10 @@ class CloudStorage:
         if not meeting_dir.exists():
             return []
 
-        files = sorted(p for p in meeting_dir.rglob("*") if p.is_file())
+        # Skip recordings: ~2 MB per minute is minutes of upload on a slow uplink and blocks confirm.
+        files = sorted(
+            p for p in meeting_dir.rglob("*") if p.is_file() and p.suffix.lower() != ".wav"
+        )
         empty_dirs = sorted(
             d
             for d in (meeting_dir, *meeting_dir.rglob("*"))

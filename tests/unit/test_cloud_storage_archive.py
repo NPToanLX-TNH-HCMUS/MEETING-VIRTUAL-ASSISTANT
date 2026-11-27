@@ -99,7 +99,6 @@ class TestCloudStorageArchive(unittest.TestCase):
         expected_keys = {
             f"{mid}/pre_meeting/uploaded/.keep",
             f"{mid}/pre_meeting/processed/.keep",
-            f"{mid}/during_meeting/audio/record.wav",
             f"{mid}/during_meeting/transcript/transcript.txt",
             f"{mid}/post_meeting/meeting_minutes/minutes_draft.md",
             f"{mid}/post_meeting/meeting_minutes/minutes_final.md",
@@ -107,10 +106,6 @@ class TestCloudStorageArchive(unittest.TestCase):
             f"{mid}/post_meeting/action_items/.keep",
         }
         self.assertEqual(set(uploaded.keys()), expected_keys)
-        self.assertEqual(
-            uploaded[f"{mid}/during_meeting/audio/record.wav"],
-            (b"RIFFwave", {"content-type": "audio/wav", "upsert": "true"}),
-        )
         self.assertEqual(
             uploaded[f"{mid}/post_meeting/meeting_minutes/minutes_final.md"],
             (b"# Final Minutes", {"content-type": "text/markdown", "upsert": "true"}),

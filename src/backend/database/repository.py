@@ -21,6 +21,7 @@ from .model import (
     MeetingModel,
     MinutesModel,
     TranscriptModel,
+    WorkspaceModel,
 )
 
 # Distinguishes an omitted optional argument from an explicit None (e.g. clearing started_at).
@@ -69,6 +70,7 @@ class MeetingRepository:
                     "created_at": row.created_at,
                     "started_at": row.started_at,
                     "ended_at": row.ended_at,
+                    "workspace_id": row.workspace_id,
                 },
             )
 
@@ -168,6 +170,7 @@ class MeetingRepository:
                     "created_at": row.created_at,
                     "started_at": row.started_at,
                     "ended_at": row.ended_at,
+                    "workspace_id": row.workspace_id,
                 }
                 for row in rows
             ]
@@ -383,3 +386,61 @@ class MeetingRepository:
                     if item.status != "done"
                 ],
             }
+
+    def set_meeting_workspace(self, meeting_id: str, workspace_id: str | None) -> None:
+        with self._session() as db:
+            db.execute(
+                update(MeetingModel)
+                .where(MeetingModel.id == meeting_id)
+                .values(workspace_id=workspace_id)
+            )
+            db.commit()
+
+    def list_workspaces(self) -> list[dict]:
+        with self._session() as db:
+            rows = db.scalars(
+                select(WorkspaceModel).order_by(WorkspaceModel.created_at)
+            ).all()
+            return [_workspace_dict(row) for row in rows]
+
+    def create_workspace(self, workspace: dict) -> None:
+        with self._session() as db:
+            db.add(WorkspaceModel(**workspace))
+            db.commit()
+
+    def update_workspace(self, workspace_id: str, values: dict) -> dict | None:
+        """Apply the given fields; None if there is no such workspace."""
+        with self._session() as db:
+            row = db.get(WorkspaceModel, workspace_id)
+            if row is None:
+                return None
+            for field, value in values.items():
+                setattr(row, field, value)
+            db.commit()
+            return _workspace_dict(row)
+
+    def delete_workspace(self, workspace_id: str) -> bool:
+        """The meetings stay, they just leave the workspace. False if there is no such workspace."""
+        with self._session() as db:
+            row = db.get(WorkspaceModel, workspace_id)
+            if row is None:
+                return False
+            # Explicit, not only ON DELETE SET NULL: SQLite does not enforce foreign keys by default.
+            db.execute(
+                update(MeetingModel)
+                .where(MeetingModel.workspace_id == workspace_id)
+                .values(workspace_id=None)
+            )
+            db.delete(row)
+            db.commit()
+            return True
+
+
+def _workspace_dict(row: WorkspaceModel) -> dict:
+    return {
+        "id": row.id,
+        "name": row.name,
+        "icon": row.icon,
+        "color": row.color,
+        "created_at": row.created_at,
+    }

@@ -16,6 +16,7 @@ class Meeting(BaseModel):
     created_at: str
     started_at: str | None
     ended_at: str | None
+    workspace_id: str | None = None  # the workspace a confirmed meeting was filed under (§6.15)
 
 
 class MeetingList(BaseModel):
@@ -221,3 +222,52 @@ class AskAnswer(BaseModel):
     answer: str
     sources: list[str]  # segment ids; empty = no evidence (the UI shows the flag)
     is_ai_suggestion: bool
+
+
+# Settings: the API keys (§6.15 of api-contract.md). A value is never returned.
+class SettingKey(BaseModel):
+    name: str
+    is_set: bool
+    source: Literal["settings", "env"] | None  # "settings" = saved in the app, "env" = .env or the shell
+    hint: str | None  # "…" and the last 4 characters, to tell two keys apart
+
+
+class SettingsView(BaseModel):
+    keys: list[SettingKey]
+
+
+class SettingsEdit(BaseModel):
+    values: dict[str, str | None]  # a string saves the key, null removes the saved one
+
+
+# Workspaces and the meeting list (§6.15 of api-contract.md)
+class Workspace(BaseModel):
+    id: str  # wsp_...
+    name: str
+    icon: str  # a short name the UI turns into a drawing; an unknown one gets a default
+    color: str  # same: a name, not a hex value
+    created_at: str
+
+
+class WorkspaceList(BaseModel):
+    items: list[Workspace]
+
+
+class WorkspaceNew(BaseModel):
+    name: str
+    icon: str = "folder"
+    color: str = "violet"
+
+
+class WorkspaceEdit(BaseModel):
+    name: str | None = None
+    icon: str | None = None
+    color: str | None = None
+
+
+class MeetingList(BaseModel):
+    items: list[Meeting]
+
+
+class MeetingWorkspace(BaseModel):
+    workspace_id: str | None  # null takes the meeting out of its workspace

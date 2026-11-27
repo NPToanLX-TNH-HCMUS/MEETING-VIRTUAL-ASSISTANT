@@ -11,6 +11,16 @@ class Base(DeclarativeBase):
     pass
 
 
+class WorkspaceModel(Base):
+    __tablename__ = "workspaces"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    name: Mapped[str] = mapped_column(String(60), nullable=False)
+    icon: Mapped[str] = mapped_column(String(32), nullable=False)
+    color: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class MeetingModel(Base):
     __tablename__ = "meetings"
 
@@ -28,6 +38,9 @@ class MeetingModel(Base):
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
     started_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ended_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    workspace_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("workspaces.id", ondelete="SET NULL"), nullable=True
+    )
 
     documents: Mapped[list["DocumentModel"]] = relationship(
         back_populates="meeting", cascade="all, delete-orphan"

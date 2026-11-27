@@ -1,4 +1,5 @@
 import { api } from './api.js';
+import { setCrumb, setRecording } from './shell.js';
 import { connectTranscriptTest } from "./socket.js";
 import { TYPE_LABELS, extractionDetails, formatTime, renderReviewList } from "./review.js";
 
@@ -44,6 +45,7 @@ const INTENT_LABELS = {
 function renderRealtimeControls() {
   const connected = transcriptTestSocket?.readyState === WebSocket.OPEN;
   $("live-badge").hidden = !realtimeReady || realtimeStopping;
+  setRecording(realtimeReady && !realtimeStopping);
   $("live-badge").textContent = realtimePaused ? "LIVE · PAUSED" : "LIVE · RECORDING";
   $("live-badge").classList.toggle("live-badge--paused", realtimePaused);
   $("pause").disabled = !connected || !realtimeReady || realtimeStopping || pausePending;
@@ -172,7 +174,6 @@ function renderAsks() {
 
 function setAskOpen(open) {
   $("ask-panel").hidden = !open;
-  $("ask-toggle").hidden = open;
   $("ask-toggle").setAttribute("aria-expanded", String(open));
   if (open) {
     askUnread = 0;
@@ -438,6 +439,7 @@ async function loadMeeting() {
   try {
     const m = await api.getMeeting(meetingId);
     $('meeting-title').textContent = m.topic;
+    setCrumb(m.topic);
     const day = new Date(m.created_at).toLocaleDateString('en-US', { dateStyle: 'full' });
     $('meeting-meta').textContent = [day, LANGUAGE[m.language] ?? m.language, `${m.duration_minutes} min`, m.id].join(' · ');
     // After a refresh, bring back what was already captured.
@@ -497,7 +499,33 @@ async function sendQuestion(question, entry = null) {
   }
 }
 
-$("ask-toggle").addEventListener("click", () => setAskOpen(true));
+$("ask-toggle").addEventListener("click", () => setAskOpen($("ask-panel").hidden));
+// Cmd+J / Ctrl+J opens and closes the assistant from anywhere on the page.
+document.addEventListener("keydown", (event) => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
+    event.preventDefault();
+    setAskOpen($("ask-panel").hidden);
+  }
+});
+
+// Tabs: Transcript / Agenda / Captured. Every panel is rendered all the time; this only shows one.
+const TABS = ["transcript", "agenda", "captured"];
+function selectTab(name, focus = false) {
+  for (const tab of TABS) {
+    const selected = tab === name;
+    $(`tab-${tab}`).setAttribute("aria-selected", String(selected));
+    $(`tab-${tab}`).tabIndex = selected ? 0 : -1;
+    $(`panel-${tab}`).hidden = !selected;
+  }
+  if (focus) $(`tab-${name}`).focus();
+}
+for (const [index, tab] of TABS.entries()) {
+  $(`tab-${tab}`).addEventListener("click", () => selectTab(tab));
+  $(`tab-${tab}`).addEventListener("keydown", (event) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+    if (step) selectTab(TABS[(index + step + TABS.length) % TABS.length], true);
+  });
+}
 $("ask-close").addEventListener("click", () => setAskOpen(false));
 $("ask-panel").addEventListener("keydown", (event) => {
   if (event.key === "Escape") setAskOpen(false);

@@ -80,7 +80,26 @@ export const api = {
   // GET /meetings/{id}/minutes -> Minutes  (409 MINUTES_NOT_READY khi chưa generate)
   getMinutes: (id) => request('GET', `/meetings/${id}/minutes`),
 
-  // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")
-  confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`),
+  // POST /meetings/{id}/minutes/confirm -> Meeting (status "archived")  (uploads the meeting folder to Supabase; uploaded docs can be up to 10 MB each)
+  confirmMinutes: (id) => request('POST', `/meetings/${id}/minutes/confirm`, { timeoutMs: 180_000 }),
+
+  // PUT /meetings/{id}/minutes { markdown } -> Minutes   (allowed in "review" and after confirming)
+  saveMinutes: (id, markdown) => request('PUT', `/meetings/${id}/minutes`, { json: { markdown } }),
+
+  // GET /workspaces -> { items: Workspace[] }
+  getWorkspaces: () => request('GET', '/workspaces'),
+  // POST /workspaces { name, icon, color } -> Workspace
+  createWorkspace: (body) => request('POST', '/workspaces', { json: body }),
+  // PATCH /workspaces/{id} { name?, icon?, color? } -> Workspace
+  updateWorkspace: (id, body) => request('PATCH', `/workspaces/${id}`, { json: body }),
+  // DELETE /workspaces/{id} -> { items } (its meetings stay, without a workspace)
+  deleteWorkspace: (id) => request('DELETE', `/workspaces/${id}`),
+  // PUT /meetings/{id}/workspace { workspace_id | null } -> Meeting   (confirmed meetings only)
+  assignWorkspace: (id, workspaceId) => request('PUT', `/meetings/${id}/workspace`, { json: { workspace_id: workspaceId } }),
+
+  // GET /settings -> { keys: [{ name, is_set, source, hint }] }   (a key's value is never returned)
+  getSettings: () => request('GET', '/settings'),
+  // PUT /settings { values: { NAME: "key" | null } } -> same as GET; null removes the saved key
+  saveSettings: (values) => request('PUT', '/settings', { json: { values } }),
 
 };
