@@ -3,7 +3,7 @@ STAGE 3 (after meeting): meeting minutes.
 
     POST /api/v1/meetings/{id}/minutes/generate  LLM extracts & drafts the minutes   processing -> review
     GET  /api/v1/meetings/{id}/minutes           read the current minutes
-    PUT  /api/v1/meetings/{id}/minutes           the user edits the markdown
+    PUT  /api/v1/meetings/{id}/minutes           the user edits the markdown (also after confirming)
     POST /api/v1/meetings/{id}/minutes/confirm   the user confirms                  review -> archived
 
 Contract: docs/system_design/api-contract.md §5.8 and §6.12
@@ -122,14 +122,14 @@ def read_minutes(session: SessionDep):
 def update_minutes(body: MinutesEdit, session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  { "markdown": "..." }
-    BACK END RETURNS: Updated Minutes object. Only allowed while meeting status is "review".
+    BACK END RETURNS: Updated Minutes object. Allowed in "review" and, after confirming, in "archived".
     """
     with session:
-        if session.status != "review":
+        if session.status not in {"review", "archived"}:
             return error(
                 409,
                 "INVALID_MEETING_STATE",
-                f"Minutes can only be edited while the meeting is in 'review' status "
+                f"Minutes can only be edited while the meeting is in 'review' or 'archived' status "
                 f"(current: '{session.status}').",
             )
 

@@ -6,16 +6,23 @@
     <title>Review minutes · DocuMeet</title>
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/shell.css" />
   </head>
-  <body>
-    <header class="app-header">
-      <div class="brand">DocuMeet</div>
-      <span id="meeting-meta" class="header__meta">Review minutes</span>
+  <body data-page="after">
+    <div class="shell">
+      <aside id="sidebar" class="sidebar" aria-label="Main navigation"></aside>
+      <div class="shell__main">
+    <header class="app-header" data-crumb="Review minutes">
+      <span id="meeting-meta" class="header__meta"></span>
+      <span class="header__spacer"></span>
 
       <div class="after-actions">
+        <!-- Chỉ hiện khi biên bản đã chốt: chọn workspace bằng bàn phím hoặc chuột, thay cho kéo thả ở sidebar. -->
+        <div id="workspace-box" class="after-workspace" hidden>
+          <label class="after-workspace__label" for="workspace-select">Workspace</label>
+          <select id="workspace-select" class="select"></select>
+        </div>
         <span id="minutes-status" class="badge header__status" hidden></span>
-        <!-- Chờ cập nhật: backend chưa có API lưu bản nháp. -->
-        <button type="button" class="btn" disabled title="Pending update">Save draft</button>
       </div>
     </header>
 
@@ -23,9 +30,21 @@
 
     <main class="after-layout">
       <section class="card" aria-labelledby="minutes-title">
-        <p class="eyebrow">Meeting minutes</p>
+        <div class="minutes-head">
+          <p class="eyebrow">Meeting minutes</p>
+          <button id="edit-minutes" type="button" class="btn btn--sm" hidden>Edit</button>
+        </div>
         <h2 id="minutes-title" class="visually-hidden">Meeting minutes</h2>
         <div id="minutes" class="md after-minutes" hidden></div>
+        <!-- Soạn thảo Markdown: lưu bằng PUT .../minutes, cả khi biên bản đã chốt. -->
+        <div id="minutes-editor" class="minutes-editor" hidden>
+          <label class="visually-hidden" for="minutes-text">Minutes (Markdown)</label>
+          <textarea id="minutes-text" class="input minutes-editor__text" spellcheck="false"></textarea>
+          <div class="btn-row">
+            <button id="save-minutes" type="button" class="btn btn--primary">Save changes</button>
+            <button id="cancel-edit" type="button" class="btn">Cancel</button>
+          </div>
+        </div>
         <div id="minutes-empty" class="empty">
           <p class="empty__title">No minutes yet</p>
           <p id="status" aria-live="polite"></p>
@@ -55,10 +74,12 @@
         <section class="card" aria-labelledby="confirm-title">
           <h2 id="confirm-title" class="visually-hidden">Confirm minutes</h2>
           <button id="confirm" type="button" class="btn btn--primary btn--block btn--block-lg" disabled>Confirm and save minutes</button>
-          <p class="muted" style="margin-bottom: 0">Once confirmed, the minutes become read-only.</p>
+          <p class="muted" style="margin-bottom: 0">You can still edit the minutes after you confirm them.</p>
         </section>
       </div>
     </main>
+      </div>
+    </div>
 
     <script type="module" src="/js/after.js"></script>
   </body>

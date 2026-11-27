@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>DocuMeet</title>
+    <style>
+      html, body { margin: 0; background: #161618; color: #ecebf0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      body { padding: 72px 48px 48px; max-width: 720px; margin: 0 auto; }
+      h1 { margin: 0 0 8px; font-size: 22px; font-weight: 600; }
+      p { margin: 0 0 16px; color: #a6a3ae; }
+      pre { margin: 0; padding: 14px 16px; max-height: 320px; overflow: auto; border: 1px solid #333337; border-radius: 12px; background: #212124; color: #ecebf0; font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    </style>
+  </head>
+  <body>
+    <h1>DocuMeet couldn't start</h1>
+    <p id="message"></p>
+    <p>Check that the backend's Python packages are installed (<code>pip install -e ".[dev]"</code> in the repo's virtual environment), then reopen the app. The last lines of the backend's output:</p>
+    <pre id="log"></pre>
+    <script>
+      // The text arrives in the query string; textContent keeps it from being read as markup.
+      const query = new URLSearchParams(location.search);
+      document.getElementById('message').textContent = query.get('message') ?? '';
+      document.getElementById('log').textContent = query.get('log') || '(no output)';
+    </script>
+  </body>
+</html>

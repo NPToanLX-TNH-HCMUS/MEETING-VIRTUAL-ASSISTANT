@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings · DocuMeet</title>
+    <link rel="stylesheet" href="/css/tokens.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/shell.css" />
+  </head>
+  <body data-page="settings">
+    <div class="shell">
+      <aside id="sidebar" class="sidebar" aria-label="Main navigation"></aside>
+
+      <div class="shell__main">
+        <header class="app-header" data-crumb="Settings"></header>
+
+        <div id="error" class="banner banner--error" role="alert" hidden></div>
+
+        <main class="settings">
+          <div class="settings__inner">
+            <h1 class="settings__title">Settings</h1>
+
+            <section class="card" aria-labelledby="keys-title">
+              <h2 id="keys-title" class="card__title">API keys</h2>
+              <p class="muted">
+                Paste a key to use it right away. Keys are saved on this computer, in the app's data folder, where only
+                you can read them, and are sent only to the service each one belongs to. A saved key is never shown
+                again, only its last four characters. A key you save here replaces the same key in the <code>.env</code> file.
+              </p>
+
+              <!-- Mỗi hàng là một bản sao của #tpl-key; js/settings.js điền từ GET /settings. -->
+              <ul id="key-list" class="key-list"></ul>
+              <p id="keys-status" class="muted" role="status"></p>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <template id="tpl-key">
+      <li class="key">
+        <div class="key__head">
+          <h3 class="key__label" data-field="label"></h3>
+          <span class="key__status" data-field="status"></span>
+        </div>
+        <p class="key__use" data-field="use"></p>
+        <form class="key__form">
+          <input class="input" data-field="input" type="password" autocomplete="new-password" spellcheck="false" placeholder="Paste a key" />
+          <button class="btn btn--primary" data-field="save" type="submit" disabled>Save</button>
+          <button class="btn" data-field="remove" type="button" hidden>Remove</button>
+        </form>
+      </li>
+    </template>
+
+    <script type="module" src="/js/settings.js"></script>
+  </body>
+</html>
