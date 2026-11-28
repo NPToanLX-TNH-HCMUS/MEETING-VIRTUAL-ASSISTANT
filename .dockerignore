@@ -1,0 +1,39 @@
+# Git & Dev tooling
+.git/
+.github/
+.devcontainer/
+.gitignore
+.gitattributes
+
+# Python caches & local venv
+__pycache__/
+*.py[codz]
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+pip-log.txt
+reports/
+
+# Frontend & Desktop local builds/deps
+node_modules/
+src/frontend/node_modules/
+src/frontend/dist/
+src/desktop/
+
+# Tests, Docs, Tools & Runtime Data
+tests/
+docs/
+tools/
+data/*
+
+# Secrets & OS junk
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db

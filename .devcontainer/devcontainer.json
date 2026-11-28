@@ -1,0 +1,41 @@
+{
+    "name": "Meeting Virtual Assistant - DocuMeet",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22"
+        }
+    },
+    "forwardPorts": [
+        8000,
+        5173
+    ],
+    "portsAttributes": {
+        "8000": {
+            "label": "FastAPI Backend"
+        },
+        "5173": {
+            "label": "Vite Frontend Dev Server"
+        }
+    },
+    "postCreateCommand": "python -m pip install --upgrade pip && python -m pip install -e \".[dev]\" && npm --prefix src/frontend ci",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "charliermarsh.ruff"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.testing.pytestEnabled": true,
+                "python.testing.pytestArgs": [
+                    "tests/unit"
+                ]
+            }
+        }
+    },
+    "remoteUser": "vscode"
+}

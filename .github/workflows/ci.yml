@@ -1,15 +1,36 @@
-name: Backend unit tests
+name: CI
 
 on:
   push:
-    branches: [main, feat/ci, feat/system-test-strategy]
+    branches: [main, feat/deployment]
   pull_request:
-    branches: [main, feat/system-test-strategy]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
+  backend-lint:
+    name: Backend lint (Ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install Ruff
+        run: python -m pip install --upgrade pip ruff
+      - name: Run fatal lint checks
+        run: ruff check --select E9,F63,F7,F82 src/backend tests
+
   unit-tests:
     name: Unit tests (Ubuntu)
     runs-on: ubuntu-latest
@@ -27,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.14"
+          python-version: "3.13"
           cache: pip
           cache-dependency-path: |
             pyproject.toml
@@ -40,10 +61,10 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl info
 
-      - name: Install project and test dependencies
+      - name: Install project and dev dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -e . pytest==9.2.0 pytest-cov==7.1.0
+          python -m pip install -e ".[dev]"
 
       - name: Verify audio library initialization
         run: python -c "import sounddevice; print(sounddevice.query_hostapis())"
@@ -65,3 +86,83 @@ jobs:
           path: reports/ci-unit/
           retention-days: 14
           if-no-files-found: warn
+
+  frontend-build:
+    name: Frontend build (Vite)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+      - name: Verify built HTML entrypoints
+        run: |
+          for page in index.html during.html after_meeting.html settings.html; do
+            test -f "dist/$page" || { echo "Missing dist/$page"; exit 1; }
+          done
+
+  docker-build-smoke:
+    name: Docker build & smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          cleanup: false
+      - name: Build production Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          load: true
+          tags: meeting-virtual-assistant:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test container (/api/v1/health & static UI)
+        run: |
+          docker run -d --name mia-smoke -p 8000:8000 \
+            -e DATABASE_URL="sqlite:////tmp/smoke.db" \
+            -e SUPABASE_URL="https://example.supabase.co" \
+            -e SUPABASE_API_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJvbGUiOiJhbm9uIn0.dummy" \
+            meeting-virtual-assistant:ci
+          ready=0
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/api/v1/health; then
+              echo ""
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then
+            echo "Container failed healthcheck. Logs:"
+            docker logs mia-smoke
+            exit 1
+          fi
+          for path in "/" "/during.html" "/after_meeting.html" "/settings.html"; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" "http://127.0.0.1:8000${path}")
+            echo "GET ${path} -> HTTP ${code}"
+            test "$code" -eq 200
+          done
+      - name: Clean up smoke test container
+        if: ${{ always() }}
+        run: docker rm -f mia-smoke || true
