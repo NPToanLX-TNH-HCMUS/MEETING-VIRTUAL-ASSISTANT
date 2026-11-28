@@ -12,26 +12,31 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "sounddevice>=0.5.6",
     "scipy>=1.18.1",
-    "markitdown[pdf,docx,doc]",
+    "markitdown[pdf,docx]",
     "fastapi",
-    "uvicorn",
-    "requests",
+    "pydantic",
+    "uvicorn[standard]",
     "datasketch==2.0.0",
     "sqlalchemy",
     "jsonschema>=4,<5",
-    "fpdf2>=2.8.0",
     "python-multipart",
     "langchain-core==0.3.63",
     "langchain-text-splitters==0.3.8",
     "langchain-community==0.3.24",
-    "langchain-ollama",
     "langchain-experimental==0.3.4",   # semantic chunking
     "websockets",
     "numpy",
     "psycopg[binary]",
     "supabase",
 ]
-# Equivalent to `REQUIREMENTS` in `setup.cfg` or `install_requires` in `setup.py`
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=7.0",
+    "httpx>=0.27",
+    "ruff>=0.4.0",
+]
 
 
 [tool.hatch.build.targets.wheel]
