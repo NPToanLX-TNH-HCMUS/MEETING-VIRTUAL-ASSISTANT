@@ -3,10 +3,11 @@ Computational Thinking Project
 
 ## Requirements
 - Python >= 3.13
-- Node.js (for the front end dev server)
+- Node.js >= 22 (for the front end dev server / build)
+- Docker Desktop *(optional — for running in Docker or VS Code Dev Container)*
 
 ## Quick Start
-Use the web UI (steps 1 and 2: backend and front end in two terminals, both from the repo root) or the desktop app (steps 1 and 3).
+Use the web UI (steps 1 and 2: backend and front end in two terminals, both from the repo root), the desktop app (steps 1 and 3), Docker (step 4), or VS Code Dev Container (step 5).
 
 ### 1. Backend (FastAPI, port 8000)
 Create and activate a virtual environment, then install:
@@ -61,6 +62,55 @@ npm start                        # builds the UI, starts the backend, opens the 
 - If the window shows "DocuMeet couldn't start", the lines under it are the backend's last output; the usual cause is that `pip install -e .` was not run in `.venv`.
 
 The backend also serves the built UI at http://127.0.0.1:8000/ once `src/frontend/dist/` exists, so `uvicorn` alone is enough to use the app in a browser after `npm run build`.
+
+### 4. Docker (single container, port 8000)
+Runs the FastAPI backend and the built Vite UI together in one container, connected to your external Supabase database and storage.
+
+1. Create `.env` from the template and fill in `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_API_KEY` (and your AI keys, or enter them later in **Settings**):
+   ```bash
+   cp .env.example .env             # Windows: copy .env.example .env
+   ```
+2. Build and start the container from the repo root:
+   ```bash
+   docker compose up --build -d
+   ```
+3. Open http://localhost:8000/ (health check: http://localhost:8000/api/v1/health).
+
+Common commands:
+```bash
+docker compose ps                  # check container status (healthy)
+docker compose logs -f app         # follow backend logs
+docker compose down                # stop container (keeps the meeting_data volume)
+```
+
+- Persistent files (`/app/data`, including `settings.json` and active meeting artifacts) are stored in the Docker volume `meeting_data`. Pass `-v` to `docker compose down -v` only if you want to wipe that volume.
+- Because the backend records audio via `sounddevice` (PortAudio), live host microphone capture is not available inside standard Windows/macOS Docker Desktop containers; use the local/Electron setup above for live recording.
+
+### 5. VS Code Dev Container (development)
+Provides a reproducible Linux development environment with Python 3.13, Node.js 22, PortAudio/PulseAudio, `pytest`, and `ruff` pre-installed (`.devcontainer/`).
+
+Prerequisites: **Docker Desktop** and the VS Code **Dev Containers** extension (`ms-vscode-remote.remote-containers`).
+
+1. Open the repository in VS Code, press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS), and run **`Dev Containers: Reopen in Container`**.
+2. Wait for the image to build and `postCreateCommand` to finish (`pip install -e ".[dev]"` and `npm --prefix src/frontend ci`).
+3. Ensure `.env` exists in the repo root (`cp .env.example .env`).
+4. Start the app inside the container (ports `8000` and `5173` are forwarded automatically):
+   ```bash
+   # Terminal 1 — Backend (port 8000)
+   uvicorn src.backend.main:app --reload --host 0.0.0.0 --port 8000
+
+   # Terminal 2 — Front end with hot reload (port 5173)
+   npm --prefix src/frontend run dev -- --host
+   ```
+   Or build the UI once (`npm --prefix src/frontend run build`) and open http://localhost:8000/ directly.
+5. Run the unit test suite inside the container:
+   ```bash
+   pulseaudio --start --exit-idle-time=-1
+   pytest tests/unit
+   ```
+6. To leave the Dev Container and return to your local machine, run **`Dev Containers: Reopen Folder Locally`** from the Command Palette.
+
+- *Windows troubleshooting:* If opening the Dev Container fails with `stat .../ubuntu.sock: no such file or directory`, disable **`Dev > Containers: Mount Wayland Socket`** (`"dev.containers.mountWaylandSocket": false`) in VS Code Settings, or enable Ubuntu WSL integration in Docker Desktop.
 
 ## Your data
 Everything is kept in the `data/` folder in the repo root (set `MIA_DATA_DIR` to move it). It is not committed to git.
