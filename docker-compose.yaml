@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: meeting-virtual-assistant:local
+    container_name: mia-app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      MIA_DATA_DIR: /app/data
+      SQLALCHEMY_ECHO: "${SQLALCHEMY_ECHO:-false}"
+    volumes:
+      - meeting_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  meeting_data:
