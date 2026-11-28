@@ -195,6 +195,22 @@ def get_recording_level(session: SessionDep):
     return recorder.get_audio_level()
 
 
+@router.get("/debug/session")
+def debug_session(session: SessionDep):
+    """Debug only, not in the contract: dump everything stored in the session."""
+    with session:
+        # default=repr: values like the Recorder are not JSON serialisable.
+        dump = json.loads(
+            json.dumps(
+                {"id": session.id, "status": session.status, "root": str(session.root), "data": session._data},
+                default=repr,
+                ensure_ascii=False,
+            )
+        )
+    LOGGER.info("session %s: %s", session.id, json.dumps(dump, ensure_ascii=False, indent=2))
+    return dump
+
+
 @ws_router.websocket("/ws/meetings/{meeting_id}/transcript-test")
 async def transcript_socket(websocket: WebSocket, ctx: CtxDep, meeting_id: str):
     await websocket.accept()
