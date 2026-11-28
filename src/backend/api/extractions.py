@@ -44,6 +44,24 @@ def merge_into_session(session, raw_items: list[dict], segments: list[dict], cov
     return events
 
 
+def catch_up_extractions(session) -> None:
+    with session:
+        items = list(session.get("extractions") or [])
+        cursor = session.get("extraction_cursor", 0)
+        segments = list(session.get("transcript", []))
+        meeting = dict(session.at("meeting"))
+        agenda = [dict(item) for item in session.get("agenda", [])]
+    if cursor >= len(segments):
+        return
+
+    meeting_date = (meeting.get("ended_at") or now())[:10]
+    raw_items = propose_items(
+        segments, cursor, items, meeting_date, agenda, meeting.get("language", "en")
+    )
+    with session:
+        merge_into_session(session, raw_items, segments, len(segments))
+
+
 @router.get("", response_model=ExtractionList)
 def read_extractions(session: SessionDep, type: str | None = None):
     """
@@ -66,30 +84,19 @@ def read_extractions(session: SessionDep, type: str | None = None):
                 "INVALID_MEETING_STATE",
                 f"Extractions exist once the meeting has started (current: '{status}').",
             )
+        has_segments = bool(session.get("transcript"))
+
+    if status in DONE_STATUSES:
+        if not has_segments:
+            return error(
+                409,
+                "TRANSCRIPT_NOT_FOUND",
+                "There are no transcript segments yet. Finish transcribing first.",
+            )
+        catch_up_extractions(session)
+
+    with session:
         items = list(session.get("extractions") or [])
-        cursor = session.get("extraction_cursor", 0)
-        segments = list(session.get("transcript", []))
-        meeting = dict(session.at("meeting"))
-        agenda = [dict(item) for item in session.get("agenda", [])]
-
-    if status in DONE_STATUSES and cursor < len(segments):
-        # The LLM call can take seconds, so it runs outside the session lock.
-        meeting_date = (meeting.get("ended_at") or now())[:10]
-        # shortcut: two simultaneous first calls both pay for the LLM; only the first
-        # answer is merged. Add a per-session lock if that ever costs real money.
-        raw_items = propose_items(
-            segments, cursor, items, meeting_date, agenda, meeting.get("language", "en")
-        )
-        with session:
-            merge_into_session(session, raw_items, segments, len(segments))
-            items = list(session.get("extractions") or [])
-    elif status in DONE_STATUSES and not segments:
-        return error(
-            409,
-            "TRANSCRIPT_NOT_FOUND",
-            "There are no transcript segments yet. Finish transcribing first.",
-        )
-
     if wanted is not None:
         items = [item for item in items if item["type"] in wanted]
     return {"items": items}

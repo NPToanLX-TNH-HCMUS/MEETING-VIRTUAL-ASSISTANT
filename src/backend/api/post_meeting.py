@@ -1,7 +1,7 @@
 """
 STAGE 3 (after meeting): meeting minutes.
 
-    POST /api/v1/meetings/{id}/minutes/generate  LLM extracts & drafts the minutes   processing -> review
+    POST /api/v1/meetings/{id}/minutes/generate  drafts (or redrafts) the minutes     processing|review -> review
     GET  /api/v1/meetings/{id}/minutes           read the current minutes
     PUT  /api/v1/meetings/{id}/minutes           the user edits the markdown (also after confirming)
     POST /api/v1/meetings/{id}/minutes/confirm   the user confirms                  review -> archived
@@ -14,10 +14,11 @@ import shutil
 from fastapi import APIRouter
 
 from ..database.storage import CloudStorageError
-from ..minutes_extractor.minutes_extractor import assemble_markdown, extract_minutes
+from ..minutes_extractor.minutes_extractor import assemble_markdown, build_minutes, extract_summary
 from ..utils.objects import Meeting, Minutes, MinutesEdit
 from ..utils.utils import error, now
 from .common import CtxDep, SessionDep, meeting_response
+from .extractions import catch_up_extractions
 
 router = APIRouter(prefix="/meetings/{meeting_id}/minutes", tags=["post-meeting"])
 
@@ -26,12 +27,27 @@ MINUTES_DRAFT_FILE = "post_meeting/meeting_minutes/minutes_draft.md"
 MINUTES_FINAL_FILE = "post_meeting/meeting_minutes/minutes_final.md"
 
 
+# "review" too: after resolving a conflict the user regenerates so the minutes use the choice.
+GENERATE_STATUSES = {"processing", "review"}
+
+
 def _not_processing(session):
     return error(
         409,
         "INVALID_MEETING_STATE",
-        f"Cannot generate minutes while the meeting is '{session.status}'. "
-        "Stop the recording first.",
+        f"Cannot generate minutes while the meeting is '{session.status}'.",
+    )
+
+
+def _unresolved_conflicts(session):
+    """The 409 to return while a conflict is open, else None. Call with the lock held."""
+    open_ids = [c["id"] for c in session.get("conflicts") or [] if not c["resolved"]]
+    if not open_ids:
+        return None
+    return error(
+        409,
+        "UNRESOLVED_CONFLICTS",
+        f"Choose a value for every conflict first: {', '.join(open_ids)}.",
     )
 
 
@@ -39,14 +55,15 @@ def _not_processing(session):
 def generate_minutes(session: SessionDep, ctx: CtxDep):
     """
     FRONT END SENDS:  nothing (POST with empty body)
-    BACK END RETURNS: Minutes object (status="draft") with summary, decisions,
-                      action_items and unresolved_issues extracted by the LLM.
+    BACK END RETURNS: Minutes object (status="draft"). decisions, action_items and
+                      unresolved_issues come from the extractions as the user reviewed
+                      them; the LLM only writes the summary.
 
-    Allowed while meeting status is "processing".
-    Reads the transcript stored in the session (or transcript.txt on disk as fallback).
+    Allowed in "processing" and "review" (regenerate; replaces any edited markdown).
+    Refused with 409 UNRESOLVED_CONFLICTS while a conflict is open.
     """
     with session:
-        if session.status != "processing":
+        if session.status not in GENERATE_STATUSES:
             return _not_processing(session)
 
         transcript_text = session.get("transcript_text")
@@ -64,25 +81,36 @@ def generate_minutes(session: SessionDep, ctx: CtxDep):
         meeting_date = (meeting.get("ended_at") or now())[:10]  # "YYYY-MM-DD"
         agenda_items = list(session.get("agenda", []))
 
+    # The minutes must see every item, including sentences the live passes missed.
+    catch_up_extractions(session)
+    with session:
+        blocked = _unresolved_conflicts(session)
+        if blocked:
+            return blocked
+        extractions = [dict(item) for item in session.get("extractions") or []]
+
     # The LLM call can take seconds, so it runs outside the session lock.
-    extraction = extract_minutes(
+    summary = extract_summary(
         transcript=transcript_text,
         meeting_date=meeting_date,
         agenda_items=agenda_items,
         language=meeting.get("language", "en"),
-    )
-    markdown = assemble_markdown(
-        extraction=extraction,
-        meeting_id=session.id,
-        meeting_topic=meeting.get("topic", ""),
-        meeting_date=meeting_date,
-        language=meeting.get("language", "en"),
+        extractions=extractions,
     )
 
     with session:
         # Re-check: the status may have changed while the LLM was running.
-        if session.status != "processing":
+        if session.status not in GENERATE_STATUSES:
             return _not_processing(session)
+        # Re-read: a value chosen for a conflict while the LLM ran still counts.
+        extraction = build_minutes(summary, session.get("extractions") or [])
+        markdown = assemble_markdown(
+            extraction=extraction,
+            meeting_id=session.id,
+            meeting_topic=meeting.get("topic", ""),
+            meeting_date=meeting_date,
+            language=meeting.get("language", "en"),
+        )
 
         session.path(MINUTES_DRAFT_FILE).write_text(markdown, encoding="utf-8")
         minutes = {
@@ -166,15 +194,9 @@ def confirm_minutes(session: SessionDep, ctx: CtxDep):
             return error(409, "MINUTES_NOT_READY", "No minutes to confirm yet.")
 
         updated_at = now()
-        open_conflicts = [
-            c["id"] for c in session.get("conflicts", []) if not c["resolved"]
-        ]
-        if open_conflicts:
-            return error(
-                409,
-                "UNRESOLVED_CONFLICTS",
-                f"Choose a value for every conflict first: {', '.join(open_conflicts)}.",
-            )
+        blocked = _unresolved_conflicts(session)
+        if blocked:
+            return blocked
 
         session.path(MINUTES_FINAL_FILE).write_text(
             minutes["markdown"], encoding="utf-8"

@@ -1,9 +1,11 @@
 # API CONTRACT — Meeting Virtual Assistant
 
-> **Version:** 0.5.0 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-11-25
+> **Version:** 0.6.0 (draft) · **Owner:** Võ Lê Nam Khánh Ann (backend + frontend) · **Last updated:** 2026-11-28
 > **Purpose:** The single source of truth for how `frontend/` talks to `src/server/`. If the code and this file disagree, fix one of them in the same pull request.
 
 **Why this file exists.** The frontend and backend only meet at this interface. If both sides follow it, the UI can be built against fake data (mock mode) while the real pipeline (speech-to-text → LLM → state machine) is still being written.
+
+**What changed in 0.6.0:** `POST .../minutes/generate` builds decisions, action items and unresolved issues from the Extractions as the user reviewed them (a value chosen for a Conflict is the one used); only the summary is written by the LLM. Generate is also allowed in `review` (regenerate), and is refused with `409 UNRESOLVED_CONFLICTS` while a conflict is open. No field was removed or renamed.
 
 **What changed in 0.5.0:** a confirmed (`archived`) meeting is saved on disk and is still there after the server restarts. Minutes can be edited after they are confirmed (§6.12). New: `GET /meetings` and the workspaces a confirmed meeting can be filed under (§6.16), and `Meeting.workspace_id` (§5.1). No existing field was removed or renamed.
 
@@ -519,6 +521,7 @@ Response `200`:
 - `GET` returns **Minutes** (§5.8).
 - `PUT` body: `{ "markdown": "..." }`. Allowed while the meeting is `review` and also after it is `archived`: editing confirmed minutes keeps them confirmed and updates the saved copy. Any other status: `409 INVALID_MEETING_STATE`.
 - `confirm` is refused with `409 UNRESOLVED_CONFLICTS` while any conflict is still `resolved: false`.
+- `POST .../minutes/generate` (empty body) returns **Minutes** with `status: "draft"` and moves the meeting to `review`. Allowed while `processing` or `review` (regenerating replaces the markdown, edits included). It first extracts any transcript lines not covered yet, then is refused with `409 UNRESOLVED_CONFLICTS` while any conflict is open. `decisions`, `action_items` and `unresolved_issues` are copied from the Extractions (with chosen conflict values); a missing assignee or deadline stays `null`.
 
 ### 6.13 Conflicts
 
@@ -663,6 +666,7 @@ When the backend closes one of these gaps, delete its row here.
 
 | Version | Date | Change |
 |---|---|---|
+| 0.6.0 | 2026-11-28 | `minutes/generate` uses the reviewed Extractions (LLM writes only the summary); allowed in `review`; refuses with `409 UNRESOLVED_CONFLICTS` |
 | 0.5.0 | 2026-11-25 | Confirmed meetings are saved to disk and reload after a restart; `PUT .../minutes` also allowed when `archived`; `GET /meetings`, `GET/POST /workspaces`, `PATCH/DELETE /workspaces/{id}`, `PUT /meetings/{id}/workspace` (new, §6.16); `Meeting.workspace_id` (new) |
 | 0.4.0 | 2026-11-25 | `GET /settings` and `PUT /settings` (new, §6.15): API keys entered in the UI; values are never returned |
 | 0.3.0 | 2026-11-22 | `Conflict.extraction_id` (new); conflict detection, `GET .../conflicts`, `POST .../conflicts/{cid}/resolve`; `minutes/confirm` refuses with `409 UNRESOLVED_CONFLICTS`; `needs_confirmation` recomputed, not sticky |
